@@ -1,25 +1,65 @@
-LICENÇA PROPRIETÁRIA DE SOFTWARE — TODOS OS DIREITOS RESERVADOS
+# LICENÇA PROPRIETÁRIA DE SOFTWARE
 
-Copyright © 2026 Tetsuo Rodolfo Okubo. Todos os direitos reservados.
+## TODOS OS DIREITOS RESERVADOS
+**Titular dos direitos:** Tetsuo Rodolfo Okubo
+**Ano de publicação:** 2026
+**Natureza da licença:** Proprietária, de código-fonte fechado e mediante autorização expressa.
 
-Este software, incluindo seu código-fonte, código-objeto, arquitetura, documentação, ferramentas auxiliares e demais componentes originais, é protegido pela legislação aplicável de propriedade intelectual.
+### 1. TITULARIDADE E PROPRIEDADE INTELECTUAL
+Este software, incluindo seu código-fonte, código-objeto, estrutura, arquitetura, interfaces, documentação técnica, componentes originais, materiais auxiliares e demais elementos protegidos, constitui propriedade intelectual de seu respectivo titular, observada a titularidade legalmente aplicável a cada componente.
 
-É proibido, sem autorização prévia e expressa por escrito do titular dos direitos:
+Todos os direitos não expressamente concedidos por escrito permanecem reservados ao titular, nos termos da legislação aplicável.
 
-1. Copiar, reproduzir ou redistribuir o código-fonte ou partes substanciais do software.
-2. Modificar, adaptar ou criar obras derivadas do software.
-3. Comercializar, sublicenciar ou disponibilizar o software a terceiros.
-4. Utilizar o software ou seu código-fonte para fins comerciais ou corporativos.
-5. Incorporar o código-fonte em outros produtos ou projetos.
+### 2. RESTRIÇÕES DE USO
+É proibido, sem autorização prévia e expressa por escrito do titular:
 
-Nenhum direito de uso, reprodução, modificação, distribuição ou exploração comercial é concedido implicitamente por esta licença.
+a) Copiar, reproduzir, distribuir ou disponibilizar o software, integralmente ou em partes, fora das hipóteses legalmente permitidas;
 
-Qualquer autorização de uso deverá ser concedida expressamente pelo titular dos direitos, mediante instrumento escrito próprio.
+b) Modificar, adaptar, traduzir, descompilar, realizar engenharia reversa ou criar obras derivadas, ressalvadas as hipóteses permitidas pela legislação aplicável;
 
-Esta licença não transfere a titularidade da propriedade intelectual do software.
+c) Utilizar, instalar, executar ou disponibilizar o software em ambientes corporativos ou comerciais sem a correspondente autorização de uso;
 
-Os componentes de terceiros eventualmente utilizados permanecem sujeitos às respectivas licenças e condições.
+d) Comercializar, sublicenciar, ceder, transferir ou disponibilizar o software a terceiros;
 
-A ausência de autorização não implica concessão de qualquer direito de uso, ressalvadas as hipóteses previstas na legislação aplicável.
+e) Incorporar o código-fonte ou componentes proprietários do software em outros sistemas, produtos ou serviços sem autorização;
 
-Todos os direitos reservados.
+f) Remover ou alterar avisos de direitos autorais, identificação de titularidade ou outros avisos de propriedade intelectual.
+
+### 3. LICENCIAMENTO COMERCIAL
+O titular poderá conceder licenças de uso a pessoas físicas ou jurídicas, mediante negociação comercial e formalização de instrumento contratual próprio.
+
+As condições comerciais poderão considerar, entre outros fatores, a quantidade de usuários, instalações, equipamentos, unidades operacionais, funcionalidades contratadas, prazo de utilização, suporte técnico e modalidade de implantação.
+
+A concessão de licença poderá ser onerosa, conforme os valores e as condições acordados entre as partes.
+
+A eventual disponibilização de demonstrações, avaliações ou versões de teste não implica concessão de licença comercial permanente nem autorização para uso produtivo, salvo disposição expressa em contrário.
+
+### 4. LIMITES DA LICENÇA
+Salvo previsão contratual expressa, a licença concedida autoriza exclusivamente o uso do software dentro dos limites e das condições estabelecidos no respectivo instrumento.
+
+A concessão de licença não implica cessão, transferência ou renúncia aos direitos de propriedade intelectual do titular.
+
+O acesso ao código-fonte, sua modificação, redistribuição ou utilização para desenvolvimento de produtos derivados dependerá de autorização específica, formalizada por escrito.
+
+### 5. AUSÊNCIA DE AUTORIZAÇÃO IMPLÍCITA
+A publicação de informações sobre o software, a disponibilização de versões demonstrativas, a comunicação com potenciais clientes ou a apresentação de propostas comerciais não constituem, por si só, autorização para utilização do software.
+
+Qualquer permissão de uso deverá observar os termos expressamente autorizados pelo titular.
+
+### 6. COMPONENTES DE TERCEIROS
+Bibliotecas, ferramentas, frameworks e demais componentes de terceiros eventualmente incorporados ao software permanecem sujeitos às respectivas licenças e condições de uso.
+
+Esta licença não pretende restringir direitos que terceiros tenham concedido validamente nem afastar obrigações decorrentes de licenças aplicáveis a esses componentes.
+
+### 7. VIOLAÇÕES E MEDIDAS LEGAIS
+A utilização do software em desacordo com as autorizações concedidas poderá sujeitar o responsável às medidas administrativas e judiciais cabíveis, bem como à reparação de danos, quando legalmente aplicável.
+
+### 8. LEGISLAÇÃO APLICÁVEL
+Esta licença será interpretada de acordo com a legislação brasileira aplicável, especialmente as normas relativas à proteção de programas de computador e aos direitos autorais, sem prejuízo de outras disposições legais pertinentes.
+
+### 9. DISPOSIÇÕES FINAIS
+A utilização do software deverá respeitar esta licença, as autorizações específicas eventualmente concedidas e a legislação aplicável.
+
+Nenhuma disposição desta licença deverá ser interpretada como cessão de titularidade ou concessão de direitos além daqueles expressamente autorizados por escrito.
+
+**© 2026 Tetsuo Rodolfo Okubo. Todos os direitos reservados.**

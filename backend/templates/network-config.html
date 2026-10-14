@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Configurações de Rede - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Configurações de Rede
+{% endblock %}
+
+{% block head %}
+<style>
+	.system-form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 16px;
+		align-items: end;
+	}
+
+	.system-result {
+		display: none;
+	}
+
+	.network-view {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+		gap: 14px;
+		margin-bottom: 20px;
+	}
+
+	.system-item {
+		padding: 14px;
+		background: #f8fafc;
+		border-radius: 6px;
+	}
+
+	.system-item label {
+		display: block;
+		margin-bottom: 6px;
+		color: #64748b;
+		font-size: 12px;
+	}
+
+	.system-item span {
+		overflow-wrap: anywhere;
+		font-weight: bold;
+	}
+
+	.network-edit {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+		margin-top: 20px;
+	}
+
+	.network-edit-actions {
+		grid-column: 1 / -1;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.system-error {
+		padding: 15px;
+		border-radius: 6px;
+		background: #fee2e2;
+		color: #991b1b;
+	}
+
+	.network-status {
+		font-size: 13px;
+	}
+
+	.idcloud-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		cursor: pointer;
+		font-weight: bold;
+	}
+
+	.idcloud-toggle input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.idcloud-switch {
+		position: relative;
+		width: 52px;
+		height: 28px;
+		border-radius: 28px;
+		background: #94a3b8;
+		transition: background 0.2s;
+	}
+
+	.idcloud-switch::after {
+		content: "";
+		position: absolute;
+		top: 4px;
+		left: 4px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: white;
+		transition: transform 0.2s;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch {
+		background: #198754;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch::after {
+		transform: translateX(24px);
+	}
+
+	@media (max-width: 650px) {
+		.system-form {
+			grid-template-columns: 1fr;
+		}
+
+		.system-form button {
+			width: 100%;
+		}
+
+		.network-edit {
+			grid-template-columns: 1fr;
+		}
+
+		.network-edit-actions {
+			align-items: stretch;
+			flex-direction: column;
+		}
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Configurações de Rede</h1>
+<p class="page-description">Consulte e configure as definições de rede do equipamento.</p>
+
+<form id="systemForm" class="card system-form">
+	<div class="form-group">
+		<label for="empresa">Empresa</label>
+		<select id="empresa" required>
+			<option value="">Selecione uma empresa</option>
+			{% for empresa in empresas %}
+			<option value="{{ empresa.numero }}">
+				{{ "%02d"|format(empresa.numero) }} - {{ empresa.nome }}
+			</option>
+			{% endfor %}
+		</select>
+	</div>
+	<button type="button" id="btnConsultar">Consultar Configuração</button>
+</form>
+
+<section id="resultado" class="card system-result">
+	<h2 id="resultadoTitulo">Configuração de Rede</h2>
+	<div id="resultadoConteudo" class="network-view"></div>
+
+	<form id="redeForm" class="network-edit">
+		<div class="form-group">
+			<label for="redeIp">Endereço IP</label>
+			<input type="text" id="redeIp" required>
+		</div>
+		<div class="form-group">
+			<label for="redeMascara">Máscara de rede</label>
+			<input type="text" id="redeMascara" required>
+		</div>
+		<div class="form-group">
+			<label for="redeGateway">Gateway</label>
+			<input type="text" id="redeGateway" required>
+		</div>
+		<div class="form-group">
+			<label for="redeDns">DNS</label>
+			<input type="text" id="redeDns">
+		</div>
+		<div class="form-group">
+			<label for="redePorta">Porta</label>
+			<input type="number" id="redePorta" min="1" max="65535">
+		</div>
+		<label class="idcloud-toggle">
+			<input type="checkbox" id="redeDhcp">
+			<span class="idcloud-switch" aria-hidden="true"></span>
+			Usar DHCP
+		</label>
+		<div class="network-edit-actions">
+			<button type="submit" id="btnSalvarRede" class="button-success">Salvar configuração</button>
+			<span id="redeStatus" class="network-status" role="status">Alterar o IP pode interromper a conexão.</span>
+		</div>
+	</form>
+</section>
+
+<script>
+	const empresa = document.getElementById("empresa");
+	const resultado = document.getElementById("resultado");
+	const titulo = document.getElementById("resultadoTitulo");
+	const conteudo = document.getElementById("resultadoConteudo");
+	const botao = document.getElementById("btnConsultar");
+	const redeForm = document.getElementById("redeForm");
+	const redeIp = document.getElementById("redeIp");
+	const redeMascara = document.getElementById("redeMascara");
+	const redeGateway = document.getElementById("redeGateway");
+	const redeDns = document.getElementById("redeDns");
+	const redePorta = document.getElementById("redePorta");
+	const redeDhcp = document.getElementById("redeDhcp");
+	const btnSalvarRede = document.getElementById("btnSalvarRede");
+	const redeStatus = document.getElementById("redeStatus");
+
+	const rotulos = {
+		ip: "Endereço IP",
+		netmask: "Máscara de rede",
+		gateway: "Gateway",
+		dns: "DNS",
+		use_dhcp: "DHCP ativado",
+		port: "Porta"
+	};
+
+	function escapeHtml(value) {
+		return String(value ?? "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#039;");
+	}
+
+	function formatarValor(valor) {
+		if (valor === null || valor === undefined) return "Não informado";
+		if (typeof valor === "boolean") return valor ? "Sim" : "Não";
+		return String(valor);
+	}
+
+	botao.addEventListener("click", async () => {
+		if (!empresa.value) return;
+
+		botao.disabled = true;
+		botao.textContent = "Consultando...";
+		resultado.style.display = "block";
+		conteudo.innerHTML = "Consultando a configuração de rede...";
+		redeForm.style.display = "none";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/network`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar a rede.");
+			}
+
+			titulo.textContent = `Configuração de Rede - ${empresa.options[empresa.selectedIndex].text}`;
+			redeIp.value = dados.ip || "";
+			redeIp.dataset.original = redeIp.value;
+			redeMascara.value = dados.netmask || "";
+			redeGateway.value = dados.gateway || "";
+			redeDns.value = dados.dns || "";
+			redePorta.value = dados.port || "";
+			redeDhcp.checked = Boolean(dados.use_dhcp);
+
+			const itens = Object.entries(dados);
+			conteudo.innerHTML = itens.length
+				? `<div>${itens.map(([chave, valor]) => `
+					<div class="system-item">
+						<label>${escapeHtml(rotulos[chave] || chave)}</label>
+						<span>${escapeHtml(formatarValor(valor))}</span>
+					</div>
+				`).join("")}</div>`
+				: "A API não retornou informações.";
+
+			redeForm.style.display = "grid";
+		} catch (erro) {
+			conteudo.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+			redeForm.style.display = "none";
+		} finally {
+			botao.disabled = false;
+			botao.textContent = "Consultar Configuração";
+		}
+	});
+
+	redeForm.addEventListener("submit", async (evento) => {
+		evento.preventDefault();
+
+		if (!empresa.value) {
+			redeStatus.textContent = "Selecione uma empresa.";
+			redeStatus.style.color = "#991b1b";
+			return;
+		}
+
+		const payload = {
+			ip: redeIp.value || undefined,
+			netmask: redeMascara.value || undefined,
+			gateway: redeGateway.value || undefined,
+			dns: redeDns.value || undefined,
+			port: redePorta.value ? parseInt(redePorta.value) : undefined,
+			use_dhcp: redeDhcp.checked
+		};
+
+		btnSalvarRede.disabled = true;
+		btnSalvarRede.textContent = "Salvando...";
+		redeStatus.textContent = "";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/network`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload)
+			});
+
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const resultado = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (resposta.ok) {
+				redeStatus.textContent = "✅ Configuração salva com sucesso!";
+				redeStatus.style.color = "#166534";
+			} else {
+				throw new Error(resultado.detail || "Não foi possível salvar a configuração.");
+			}
+		} catch (erro) {
+			redeStatus.textContent = `❌ Erro: ${erro.message}`;
+			redeStatus.style.color = "#991b1b";
+		} finally {
+			btnSalvarRede.disabled = false;
+			btnSalvarRede.textContent = "Salvar configuração";
+		}
+	});
+</script>
+
+{% endblock %}

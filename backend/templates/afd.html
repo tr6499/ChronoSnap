@@ -1,0 +1,1777 @@
+{% extends "base.html" %}
+
+{% block title %}
+    AFD - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Download AFD
+{% endblock %}
+
+{% block head %}
+<style>
+    .afd-formato-opcoes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .afd-formato-opcao {
+        position: relative;
+        display: flex;
+        min-height: 118px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+        padding: 18px 18px 18px 48px;
+        border: 1px solid #dbe3ec;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #1a202c;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    #afdForm > .card {
+        border: 1px solid #e7edf4;
+        box-shadow: 0 8px 24px rgba(25, 55, 85, 0.07);
+    }
+
+    #afdForm > .card > h2 {
+        margin-bottom: 8px;
+        color: #183b5b;
+        font-size: 18px;
+        letter-spacing: 0.01em;
+    }
+
+    #afdForm > .card > p {
+        color: #697887;
+        font-size: 13px;
+    }
+
+    .afd-formato-opcao:hover {
+        border-color: #8db9df;
+        background: #f4f9fd;
+    }
+
+    .afd-formato-opcao:has(input:checked) {
+        border-color: #006fc9;
+        background: #eef7ff;
+        box-shadow: 0 0 0 2px rgba(0, 111, 201, 0.1);
+    }
+
+    .afd-formato-opcao input {
+        position: absolute;
+        top: 21px;
+        left: 18px;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #006fc9;
+    }
+
+    .afd-formato-titulo {
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .afd-formato-descricao {
+        color: #5f6b7a;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .afd-processando {
+        cursor: wait;
+        opacity: 0.82;
+    }
+
+    .afd-processando::after {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        margin-left: 8px;
+        vertical-align: -2px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        content: "";
+        animation: afd-girar 0.8s linear infinite;
+    }
+
+    .automacao-panel {
+        display: grid;
+        gap: 18px;
+        padding-top: 2px;
+        border: 1px solid #d9e6f2;
+        background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
+        box-shadow: 0 12px 30px rgba(25, 82, 126, 0.1);
+    }
+
+    .automacao-panel h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #0d4f82;
+    }
+
+    .automacao-panel h2::before {
+        width: 7px;
+        height: 26px;
+        border-radius: 4px;
+        background: #0d6efd;
+        content: "";
+    }
+
+    .automacao-panel > div:first-child p {
+        margin-bottom: 0;
+        color: #607486;
+        font-size: 13px;
+    }
+
+    .automacoes-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1.4fr 1.2fr;
+        gap: 18px;
+        margin-top: 10px;
+    }
+
+    .auto-field {
+        display: grid;
+        gap: 8px;
+        padding: 14px 14px 12px;
+        border: 1px solid #dfe7f1;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f3f7fb 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .auto-field label,
+    .auto-field .label-strong {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+
+    .auto-field input[type="time"],
+    .auto-field input[type="text"] {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: white;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .auto-field input[type="time"]:focus,
+    .auto-field input[type="text"]:focus {
+        border-color: #5a9dcc;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+    }
+
+    .auto-dias {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .auto-dia {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        min-width: 50px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .auto-dia:hover {
+        border-color: #8db9df;
+        background: #f5f9ff;
+    }
+
+    .auto-dia.active {
+        background: linear-gradient(180deg, #0d6efd 0%, #005fce 100%);
+        color: white;
+        border-color: #005fce;
+        box-shadow: 0 6px 18px rgba(13, 110, 253, 0.2);
+    }
+
+    .automacao-opcoes {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding-top: 4px;
+    }
+
+    .automacao-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        cursor: pointer;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .automacao-check input {
+        width: 16px;
+        height: 16px;
+        accent-color: #0d6efd;
+        margin: 0;
+    }
+
+    .automacao-acoes {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+        padding-top: 2px;
+        border-top: 1px solid #e3ebf3;
+    }
+
+    .automacao-acoes button {
+        min-width: 150px;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(15, 43, 67, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .automacao-acoes button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 7px 15px rgba(15, 43, 67, 0.15);
+    }
+
+    .automacao-status {
+        margin-top: 8px;
+        display: grid;
+        gap: 8px;
+        padding-top: 2px;
+    }
+
+    .automacao-status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+        font-size: 13px;
+        box-shadow: 0 2px 5px rgba(25, 55, 85, 0.03);
+    }
+
+    .automacao-status-item.ok {
+        border-color: #86efac;
+        background: #f0fdf4;
+    }
+
+    .automacao-status-item.erro {
+        border-color: #fda4af;
+        background: #fff1f2;
+    }
+
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .estado-badge.ok {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .estado-badge.erro {
+        background: #ffe4e6;
+        color: #9f1239;
+    }
+
+    @keyframes afd-girar {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 960px) {
+        .automacoes-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .afd-formato-opcoes {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">
+    Download AFD
+</h1>
+
+<p class="page-description">
+    Selecione as empresas e o período para geração do AFD.
+</p>
+
+
+<form id="afdForm">
+
+    <!-- ===================================================== -->
+    <!-- LOJAS -->
+    <!-- ===================================================== -->
+
+    <div class="card">
+
+        <h2>Empresas</h2>
+
+        <p>
+            Selecione as empresas que participarão da geração do AFD.
+        </p>
+
+        <label style="
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 5px;
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            color: #555;
+        ">
+            <input
+                type="checkbox"
+                id="selectAllLojas"
+            >
+            Selecionar todas
+        </label>
+
+        <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        ">
+
+            {% for loja in lojas %}
+
+            <label style="
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 14px 10px;
+                text-align: center;
+                cursor: pointer;
+                background: #f8fafc;
+            ">
+
+                <input
+                    type="checkbox"
+                    name="lojas"
+                    value="{{ loja.numero }}"
+                >
+
+                <strong>
+                    {{ "%02d"|format(loja.numero) }}
+                </strong>
+
+                <br>
+
+                <small>
+                    {% if loja.afd_layout == "671" %}
+                        Portaria 671
+                    {% else %}
+                        Legado
+                    {% endif %}
+                </small>
+
+            </label>
+
+            {% else %}
+
+            <p>
+                Nenhuma empresa cadastrada.
+            </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- PERÍODO -->
+    <!-- ===================================================== -->
+
+    <div class="card">
+
+        <h2>Período</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label for="data_inicial">
+                    Data inicial
+                </label>
+
+                <input
+                    type="date"
+                    id="data_inicial"
+                    name="data_inicial"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="data_final">
+                    Data final
+                </label>
+
+                <input
+                    type="date"
+                    id="data_final"
+                    name="data_final"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- FORMATO -->
+    <!-- ===================================================== -->
+
+    <div class="card">
+
+        <h2>Formato do AFD</h2>
+
+        <div class="afd-formato-opcoes">
+            <label class="afd-formato-opcao">
+
+                <input
+                    type="radio"
+                    name="formato"
+                    value="rm_totvs"
+                    checked
+                >
+
+                <span class="afd-formato-titulo">RM TOTVS</span>
+                <span class="afd-formato-descricao">
+                    Compila AFD legado e Portaria 671 das empresas selecionadas
+                </span>
+
+            </label>
+
+            <label class="afd-formato-opcao">
+
+                <input
+                    type="radio"
+                    name="formato"
+                    value="original"
+                >
+
+                <span class="afd-formato-titulo">AFD Original</span>
+                <span class="afd-formato-descricao">
+                    Arquivo original do Control iD
+                </span>
+
+            </label>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- AÇÕES -->
+    <!-- ===================================================== -->
+
+    <div class="card">
+
+        <h2>Ações</h2>
+
+        <button
+            type="submit"
+            id="btnPreview"
+        >
+            Pré-visualizar
+        </button>
+
+        <button
+            type="button"
+            class="button-success"
+            id="btnDownload"
+        >
+            Gerar / Baixar AFD
+        </button>
+
+        <button
+            type="button"
+            class="button-secondary"
+            id="btnExportarPdf"
+            disabled
+        >
+            Exportar PDF
+        </button>
+
+    </div>
+
+</form>
+
+
+<!-- ========================================================= -->
+<!-- RESULTADO -->
+<!-- ========================================================= -->
+
+<div
+    class="card"
+    id="resultado"
+    style="display: none;"
+>
+
+    <h2>Espelho de Ponto</h2>
+
+    <div id="resultadoConteudo"></div>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   DATA FINAL = DIA ATUAL
+   ============================================================ */
+
+function preencherDataAtual() {
+
+    const campo =
+        document.getElementById("data_final");
+
+    if (!campo) {
+        return;
+    }
+
+    const hoje = new Date();
+
+    const ano =
+        hoje.getFullYear();
+
+    const mes =
+        String(
+            hoje.getMonth() + 1
+        ).padStart(2, "0");
+
+    const dia =
+        String(
+            hoje.getDate()
+        ).padStart(2, "0");
+
+    campo.value =
+        `${ano}-${mes}-${dia}`;
+}
+
+
+preencherDataAtual();
+
+
+/* ============================================================
+   ELEMENTOS
+   ============================================================ */
+
+const form =
+    document.getElementById("afdForm");
+
+const resultado =
+    document.getElementById("resultado");
+
+const resultadoConteudo =
+    document.getElementById("resultadoConteudo");
+
+const btnPreview =
+    document.getElementById("btnPreview");
+
+const btnDownload =
+    document.getElementById("btnDownload");
+
+const btnExportarPdf =
+    document.getElementById("btnExportarPdf");
+
+const selectAllLojas =
+    document.getElementById("selectAllLojas");
+
+function iniciarProcessamento(botao, texto) {
+    botao.dataset.textoOriginal = botao.textContent.trim();
+    botao.disabled = true;
+    botao.classList.add("afd-processando");
+    botao.setAttribute("aria-busy", "true");
+    botao.textContent = texto;
+}
+
+function finalizarProcessamento(botao) {
+    botao.disabled = false;
+    botao.classList.remove("afd-processando");
+    botao.removeAttribute("aria-busy");
+    botao.textContent = botao.dataset.textoOriginal || botao.textContent;
+    delete botao.dataset.textoOriginal;
+}
+
+
+/* ============================================================
+   SELECIONAR TODAS
+   ============================================================ */
+
+selectAllLojas.addEventListener(
+    "change",
+    function() {
+
+        const checkboxes =
+            document.querySelectorAll(
+                'input[name="lojas"]'
+            );
+
+        checkboxes.forEach(
+            checkbox => {
+                checkbox.checked =
+                    selectAllLojas.checked;
+            }
+        );
+
+    }
+);
+
+
+/* ============================================================
+   PRÉ-VISUALIZAÇÃO
+   ============================================================ */
+
+function obterLojasSelecionadas() {
+    return Array.from(
+        document.querySelectorAll('input[name="lojas"]:checked')
+    ).map(checkbox => Number(checkbox.value));
+}
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const lojas =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="lojas"]:checked'
+                )
+            ).map(
+                checkbox => checkbox.value
+            );
+
+
+        const dataInicial =
+            document.getElementById(
+                "data_inicial"
+            ).value;
+
+
+        const dataFinal =
+            document.getElementById(
+                "data_final"
+            ).value;
+
+
+        const formato =
+            document.querySelector(
+                'input[name="formato"]:checked'
+            ).value;
+
+
+        /* ----------------------------------------------------
+           VALIDAÇÕES
+           ---------------------------------------------------- */
+
+        if (lojas.length === 0) {
+
+            alert(
+                "Selecione pelo menos uma empresa."
+            );
+
+            return;
+        }
+
+
+        if (!dataInicial || !dataFinal) {
+
+            alert(
+                "Informe a data inicial e a data final."
+            );
+
+            return;
+        }
+
+
+        if (dataInicial > dataFinal) {
+
+            alert(
+                "A data inicial não pode ser maior que a data final."
+            );
+
+            return;
+        }
+
+
+        /* ----------------------------------------------------
+           BOTÃO
+           ---------------------------------------------------- */
+
+        btnPreview.disabled = true;
+        btnPreview.textContent = "Consultando...";
+
+
+        /* ----------------------------------------------------
+           FORM DATA
+           ---------------------------------------------------- */
+
+        const dados =
+            new FormData();
+
+
+        lojas.forEach(
+            function(numero) {
+
+                dados.append(
+                    "lojas",
+                    numero
+                );
+
+            }
+        );
+
+
+        dados.append(
+            "data_inicial",
+            dataInicial
+        );
+
+
+        dados.append(
+            "data_final",
+            dataFinal
+        );
+
+
+        dados.append(
+            "formato",
+            formato
+        );
+
+
+        /* ----------------------------------------------------
+           CONSULTA
+           ---------------------------------------------------- */
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "/afd/preview",
+                    {
+                        method: "POST",
+                        body: dados
+                    }
+                );
+
+
+            let resultadoJson;
+
+
+            try {
+
+                resultadoJson =
+                    await resposta.json();
+
+            } catch (erro) {
+
+                throw new Error(
+                    "O servidor retornou uma resposta inválida."
+                );
+
+            }
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    resultadoJson.detail ||
+                    "Erro ao processar o AFD."
+                );
+
+            }
+
+
+            mostrarResultado(
+                resultadoJson
+            );
+
+            btnExportarPdf.disabled = false;
+
+
+        } catch (erro) {
+
+            btnExportarPdf.disabled = true;
+
+            resultado.style.display =
+                "block";
+
+
+            resultadoConteudo.innerHTML = `
+                <div style="
+                    padding: 15px;
+                    border-radius: 6px;
+                    background: #fee2e2;
+                    color: #991b1b;
+                ">
+
+                    <strong>Erro:</strong>
+
+                    ${escapeHtml(
+                        erro.message
+                    )}
+
+                </div>
+            `;
+
+        } finally {
+
+            btnPreview.disabled = false;
+            btnPreview.textContent = "Pré-visualizar";
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   MOSTRAR RESULTADO
+   ============================================================ */
+
+function mostrarResultado(dados) {
+
+    resultado.style.display =
+        "block";
+
+
+    let html = "";
+
+
+    /* --------------------------------------------------------
+       RESUMO
+       -------------------------------------------------------- */
+
+    html += `
+        <div style="
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        ">
+
+            <div>
+                <strong>Funcionários</strong>
+                <br>
+                ${dados.total_funcionarios}
+            </div>
+
+            <div>
+                <strong>Marcações</strong>
+                <br>
+                ${dados.total_marcacoes}
+            </div>
+
+            <div>
+                <strong>Período</strong>
+                <br>
+                ${escapeHtml(
+                    dados.data_inicial
+                )}
+
+                até
+
+                ${escapeHtml(
+                    dados.data_final
+                )}
+            </div>
+
+        </div>
+    `;
+
+
+    /* --------------------------------------------------------
+       LOJAS
+       -------------------------------------------------------- */
+
+    html += `
+        <h3>
+            Empresas processadas
+        </h3>
+    `;
+
+
+    for (
+        const loja of dados.lojas
+    ) {
+
+
+        /* ----------------------------------------------------
+           ERRO
+           ---------------------------------------------------- */
+
+        if (!loja.success) {
+
+            html += `
+                <div style="
+                    margin-top: 10px;
+                    padding: 12px;
+                    border-radius: 6px;
+                    background: #fee2e2;
+                    color: #991b1b;
+                ">
+
+                    <strong>
+                        Empresa
+                        ${String(
+                            loja.loja
+                        ).padStart(2, "0")}
+                    </strong>
+
+                    <br>
+
+                    Erro:
+
+                    ${escapeHtml(
+                        loja.erro
+                    )}
+
+                </div>
+            `;
+
+            continue;
+        }
+
+
+        /* ----------------------------------------------------
+           CARD DA LOJA
+           ---------------------------------------------------- */
+
+        html += `
+            <div style="
+                margin-top: 20px;
+                padding: 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+            ">
+
+                <h3 style="
+                    margin-top: 0;
+                ">
+
+                    Empresa
+                    ${String(
+                        loja.loja
+                    ).padStart(2, "0")}
+
+                </h3>
+
+                <div style="
+                    margin-bottom: 15px;
+                ">
+
+                    <strong>Layout:</strong>
+
+                    ${escapeHtml(
+                        formatarLayout(
+                            loja.layout
+                        )
+                    )}
+
+                    <br>
+
+                    <strong>Funcionários:</strong>
+
+                    ${loja.total_funcionarios}
+
+                    <br>
+
+                    <strong>Marcações:</strong>
+
+                    ${loja.total_marcacoes}
+
+                </div>
+        `;
+
+
+        /* ----------------------------------------------------
+           FUNCIONÁRIOS
+           ---------------------------------------------------- */
+
+        if (
+            loja.funcionarios &&
+            loja.funcionarios.length > 0
+        ) {
+
+            for (
+                const funcionario
+                of [...loja.funcionarios].sort(
+                    (primeiro, segundo) =>
+                        String(primeiro.nome || "").localeCompare(
+                            String(segundo.nome || ""),
+                            "pt-BR",
+                            { sensitivity: "base" }
+                        )
+                )
+            ) {
+
+                html += `
+                    <div style="
+                        margin-top: 20px;
+                        padding: 15px;
+                        background: #f8fafc;
+                        border-radius: 6px;
+                    ">
+
+                        <strong>
+                            ${escapeHtml(
+                                funcionario.nome ||
+                                "Funcionário sem nome"
+                            )}
+                        </strong>
+
+                        <br>
+
+                        <small>
+                            ${escapeHtml(
+                                funcionario.tipo_documento || "PIS"
+                            )}:
+                            ${escapeHtml(
+                                funcionario.documento ||
+                                funcionario.pis ||
+                                funcionario.cpf ||
+                                funcionario.identificador ||
+                                ""
+                            )}
+                        </small>
+
+                        <br>
+
+                        <small>
+                            Marcações:
+                            ${
+                                funcionario.marcacoes
+                                ? funcionario.marcacoes.length
+                                : 0
+                            }
+                        </small>
+
+                `;
+
+
+                /* ------------------------------------------------
+                   MARCAÇÕES
+                   ------------------------------------------------ */
+
+                const rotuloDocumento =
+                    funcionario.tipo_documento || "PIS";
+
+                if (
+                    funcionario.marcacoes &&
+                    funcionario.marcacoes.length > 0
+                ) {
+
+                    html += `
+                        <div style="
+                            overflow-x: auto;
+                            margin-top: 12px;
+                        ">
+
+                            <table style="
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 14px;
+                            ">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th style="
+                                            text-align: left;
+                                            padding: 8px;
+                                            border-bottom: 1px solid #ccc;
+                                        ">
+                                            NSR
+                                        </th>
+
+                                        <th style="
+                                            text-align: left;
+                                            padding: 8px;
+                                            border-bottom: 1px solid #ccc;
+                                        ">
+                                            Data
+                                        </th>
+
+                                        <th style="
+                                            text-align: left;
+                                            padding: 8px;
+                                            border-bottom: 1px solid #ccc;
+                                        ">
+                                            Hora
+                                        </th>
+
+                                        <th style="
+                                            text-align: left;
+                                            padding: 8px;
+                                            border-bottom: 1px solid #ccc;
+                                        ">
+                                            ${escapeHtml(
+                                                rotuloDocumento
+                                            )}
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+                    `;
+
+
+                    for (
+                        const marcacao
+                        of funcionario.marcacoes
+                    ) {
+
+                        const dataHora = {
+                            data: marcacao.data || "",
+                            hora: marcacao.hora || ""
+                        };
+
+
+                        html += `
+                            <tr>
+
+                                <td style="
+                                    padding: 8px;
+                                    border-bottom: 1px solid #eee;
+                                ">
+                                    ${escapeHtml(
+                                        marcacao.nsr || ""
+                                    )}
+                                </td>
+
+                                <td style="
+                                    padding: 8px;
+                                    border-bottom: 1px solid #eee;
+                                ">
+                                    ${escapeHtml(
+                                        dataHora.data
+                                    )}
+                                </td>
+
+                                <td style="
+                                    padding: 8px;
+                                    border-bottom: 1px solid #eee;
+                                ">
+                                    ${escapeHtml(
+                                        dataHora.hora
+                                    )}
+                                </td>
+
+                                <td style="
+                                    padding: 8px;
+                                    border-bottom: 1px solid #eee;
+                                ">
+                                    ${escapeHtml(
+                                        marcacao.pis ||
+                                        marcacao.documento ||
+                                        marcacao.identificador ||
+                                        ""
+                                    )}
+                                </td>
+
+                            </tr>
+                        `;
+
+                    }
+
+
+                                        html += `
+                                                    </tbody>
+
+                                                </table>
+
+                                            </div>
+                                        `;
+
+                                    } else {
+
+                                        html += `
+                                            <div style="
+                                                margin-top: 12px;
+                                                padding: 10px;
+                                                border-radius: 5px;
+                                                background: #f1f5f9;
+                                            ">
+
+                                                Nenhuma marcação encontrada
+                                                para este funcionário.
+
+                                            </div>
+                                        `;
+
+                                    }
+
+
+                html += `
+                    </div>
+                `;
+
+            }
+
+        } else {
+
+            html += `
+                <div style="
+                    margin-top: 12px;
+                    padding: 10px;
+                    border-radius: 5px;
+                    background: #f1f5f9;
+                ">
+
+                    Nenhum funcionário encontrado.
+
+                </div>
+            `;
+
+        }
+
+
+        html += `
+            </div>
+        `;
+
+    }
+
+
+    resultadoConteudo.innerHTML =
+        html;
+
+}
+
+
+btnExportarPdf.addEventListener(
+    "click",
+    function() {
+
+        const janelaPdf = window.open("", "_blank");
+
+        if (!janelaPdf) {
+            alert("Não foi possível abrir a visualização para impressão.");
+            return;
+        }
+
+        janelaPdf.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>Pré-visualização AFD</title>
+                <style>
+                    body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 28px; }
+                    h1 { color: #192535; font-size: 22px; }
+                    h2, h3 { color: #192535; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                    th, td { padding: 6px; border-bottom: 1px solid #d9e0e8; text-align: left; }
+                    th { background: #f3f5f8; }
+                    div { break-inside: avoid; }
+                    @media print { body { margin: 12mm; } }
+                </style>
+            </head>
+            <body>
+                <h1>Pré-visualização AFD</h1>
+                ${resultadoConteudo.innerHTML}
+            </body>
+            </html>
+        `);
+
+        janelaPdf.document.close();
+        janelaPdf.focus();
+        janelaPdf.print();
+
+    }
+);
+
+
+/* ============================================================
+   FORMATA LAYOUT
+   ============================================================ */
+
+function formatarLayout(layout) {
+
+    if (
+        layout === 671 ||
+        String(layout) === "671"
+    ) {
+
+        return "Portaria 671";
+
+    }
+
+
+    if (
+        layout === "legado" ||
+        layout === "595"
+    ) {
+
+        return "Legado";
+
+    }
+
+
+    return layout || "";
+
+}
+
+
+/* ============================================================
+   FORMATA DATA/HORA
+   ============================================================ */
+
+function formatarDataHora(
+    valor,
+    textoOriginal
+) {
+
+    /* --------------------------------------------------------
+       PORTARIA 671
+       -------------------------------------------------------- */
+
+    if (
+        textoOriginal &&
+        /^\d{4}-\d{2}-\d{2}T/.test(
+            textoOriginal
+        )
+    ) {
+
+        const match =
+            textoOriginal.match(
+                /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
+            );
+
+
+        if (match) {
+
+            return {
+                data:
+                    `${match[3]}/${match[2]}/${match[1]}`,
+
+                hora:
+                    `${match[4]}:${match[5]}:${match[6]}`
+            };
+
+        }
+
+    }
+
+
+    /* --------------------------------------------------------
+       FORMATO ISO SERIALIZADO PELO FASTAPI
+       -------------------------------------------------------- */
+
+    if (
+        typeof valor === "string" &&
+        valor.includes("T")
+    ) {
+
+        const match =
+            valor.match(
+                /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
+            );
+
+
+        if (match) {
+
+            return {
+                data:
+                    `${match[3]}/${match[2]}/${match[1]}`,
+
+                hora:
+                    `${match[4]}:${match[5]}:${match[6]}`
+            };
+
+        }
+
+    }
+
+
+    /* --------------------------------------------------------
+       DATA PADRÃO
+       -------------------------------------------------------- */
+
+    if (valor) {
+
+        const data =
+            new Date(valor);
+
+
+        if (!isNaN(data.getTime())) {
+
+            return {
+
+                data:
+                    String(
+                        data.getDate()
+                    ).padStart(2, "0")
+                    + "/"
+                    +
+                    String(
+                        data.getMonth() + 1
+                    ).padStart(2, "0")
+                    + "/"
+                    +
+                    data.getFullYear(),
+
+                hora:
+                    String(
+                        data.getHours()
+                    ).padStart(2, "0")
+                    + ":"
+                    +
+                    String(
+                        data.getMinutes()
+                    ).padStart(2, "0")
+                    + ":"
+                    +
+                    String(
+                        data.getSeconds()
+                    ).padStart(2, "0")
+
+            };
+
+        }
+
+    }
+
+
+    return {
+        data: "",
+        hora: ""
+    };
+
+}
+
+
+/* ============================================================
+   ESCAPE HTML
+   ============================================================ */
+
+function escapeHtml(valor) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        valor ?? "";
+
+    return div.innerHTML;
+
+}
+
+
+/* ============================================================
+   DOWNLOAD AFD
+   ============================================================ */
+
+btnDownload.addEventListener(
+    "click",
+    async function() {
+
+        const lojas =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="lojas"]:checked'
+                )
+            ).map(
+                checkbox => checkbox.value
+            );
+
+
+        const dataInicial =
+            document.getElementById(
+                "data_inicial"
+            ).value;
+
+
+        const dataFinal =
+            document.getElementById(
+                "data_final"
+            ).value;
+
+
+        const formato =
+            document.querySelector(
+                'input[name="formato"]:checked'
+            ).value;
+
+
+        /* ----------------------------------------------------
+           VALIDAÇÕES
+           ---------------------------------------------------- */
+
+        if (lojas.length === 0) {
+
+            alert(
+                "Selecione pelo menos uma empresa."
+            );
+
+            return;
+        }
+
+
+        if (!dataInicial || !dataFinal) {
+
+            alert(
+                "Informe a data inicial e a data final."
+            );
+
+            return;
+        }
+
+
+        if (dataInicial > dataFinal) {
+
+            alert(
+                "A data inicial não pode ser maior que a data final."
+            );
+
+            return;
+        }
+
+
+        /* ----------------------------------------------------
+           BOTÃO
+           ---------------------------------------------------- */
+
+        iniciarProcessamento(btnDownload, "Gerando arquivo...");
+
+
+        /* ----------------------------------------------------
+           FORM DATA
+           ---------------------------------------------------- */
+
+        const dados =
+            new FormData();
+
+
+        lojas.forEach(
+            function(numero) {
+
+                dados.append(
+                    "lojas",
+                    numero
+                );
+
+            }
+        );
+
+
+        dados.append(
+            "data_inicial",
+            dataInicial
+        );
+
+
+        dados.append(
+            "data_final",
+            dataFinal
+        );
+
+
+        dados.append(
+            "formato",
+            formato
+        );
+
+
+        /* ----------------------------------------------------
+           DOWNLOAD
+           ---------------------------------------------------- */
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "/afd/download",
+                    {
+                        method: "POST",
+                        body: dados
+                    }
+                );
+
+
+            if (!resposta.ok) {
+
+                let mensagem =
+                    "Erro ao gerar o AFD.";
+
+
+                try {
+
+                    const erro =
+                        await resposta.json();
+
+                    mensagem =
+                        erro.detail ||
+                        mensagem;
+
+                } catch (_) {
+                    /* resposta não JSON */
+                }
+
+
+                throw new Error(
+                    mensagem
+                );
+
+            }
+
+
+            const blob =
+                await resposta.blob();
+
+
+            /* ------------------------------------------------
+               OBTÉM NOME DO ARQUIVO
+               ------------------------------------------------ */
+
+            let nomeArquivo =
+                "AFD.txt";
+
+
+            const disposition =
+                resposta.headers.get(
+                    "Content-Disposition"
+                );
+
+
+            if (disposition) {
+
+                const match =
+                    disposition.match(
+                        /filename="?([^"]+)"?/i
+                    );
+
+
+                if (match) {
+
+                    nomeArquivo =
+                        match[1];
+
+                }
+
+            }
+
+
+            /* ------------------------------------------------
+               CRIA DOWNLOAD
+               ------------------------------------------------ */
+
+            const url =
+                window.URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+            link.download =
+                nomeArquivo;
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            window.URL.revokeObjectURL(
+                url
+            );
+
+
+        } catch (erro) {
+
+            alert(
+                "Erro ao gerar o AFD:\n\n" +
+                erro.message
+            );
+
+        } finally {
+
+            finalizarProcessamento(btnDownload);
+
+        }
+
+    }
+);
+
+</script>
+
+
+{% endblock %}

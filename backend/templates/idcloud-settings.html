@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}
+	iDCloud - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Configurações do iDCloud
+{% endblock %}
+
+{% block head %}
+<style>
+	.system-form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 16px;
+		align-items: end;
+	}
+
+	.idcloud-panel {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+		padding: 22px;
+		background: white;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+	}
+
+	.idcloud-state {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 6px;
+	}
+
+	.idcloud-state-icon {
+		width: 48px;
+		height: 48px;
+	}
+
+	.idcloud-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		cursor: pointer;
+		font-weight: bold;
+	}
+
+	.idcloud-toggle input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.idcloud-switch {
+		position: relative;
+		width: 52px;
+		height: 28px;
+		border-radius: 28px;
+		background: #94a3b8;
+		transition: background 0.2s;
+	}
+
+	.idcloud-switch::after {
+		content: "";
+		position: absolute;
+		top: 4px;
+		left: 4px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: white;
+		transition: transform 0.2s;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch {
+		background: #198754;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch::after {
+		transform: translateX(24px);
+	}
+
+	.idcloud-status {
+		font-size: 13px;
+		margin-top: 8px;
+		min-height: 20px;
+	}
+
+	.idcloud-info {
+		flex: 1;
+	}
+
+	.idcloud-controls {
+		display: flex;
+		align-items: center;
+		gap: 20px;
+	}
+
+	.system-error {
+		padding: 15px;
+		border-radius: 6px;
+		background: #fee2e2;
+		color: #991b1b;
+	}
+
+	@media (max-width: 650px) {
+		.system-form {
+			grid-template-columns: 1fr;
+		}
+
+		.system-form button {
+			width: 100%;
+		}
+
+		.idcloud-panel {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.idcloud-controls {
+			width: 100%;
+			flex-direction: column;
+		}
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Configurações do iDCloud</h1>
+<p class="page-description">Ative ou desative o iDCloud para sincronização de dados em nuvem do equipamento.</p>
+
+<form id="systemForm" class="card system-form">
+	<div class="form-group">
+		<label for="empresa">Empresa</label>
+		<select id="empresa" required>
+			<option value="">Selecione uma empresa</option>
+			{% for empresa in empresas %}
+			<option value="{{ empresa.numero }}">
+				{{ "%02d"|format(empresa.numero) }} - {{ empresa.nome }}
+			</option>
+			{% endfor %}
+		</select>
+	</div>
+	<button type="button" id="btnConsultar">Consultar Estado</button>
+</form>
+
+<section id="resultado" class="card idcloud-panel" style="display: none;">
+	<div class="idcloud-info">
+		<div class="idcloud-state">
+			<img id="idcloudStateIcon" class="idcloud-state-icon" src="/static/ico3.svg" alt="iDCloud desativado">
+			<div>
+				<h2 style="margin: 0;">iDCloud</h2>
+				<div id="idcloudStatus" class="idcloud-status" role="status">Consultando...</div>
+			</div>
+		</div>
+	</div>
+	<div class="idcloud-controls">
+		<label class="idcloud-toggle" for="idcloudToggle">
+			<span id="idcloudLabel">Desligado</span>
+			<input type="checkbox" id="idcloudToggle" disabled>
+			<span class="idcloud-switch" aria-hidden="true"></span>
+		</label>
+	</div>
+</section>
+
+<script>
+	const empresa = document.getElementById("empresa");
+	const resultado = document.getElementById("resultado");
+	const botao = document.getElementById("btnConsultar");
+	const idcloudStatus = document.getElementById("idcloudStatus");
+	const idcloudToggle = document.getElementById("idcloudToggle");
+	const idcloudLabel = document.getElementById("idcloudLabel");
+	const idcloudStateIcon = document.getElementById("idcloudStateIcon");
+
+	function atualizarIconeIdcloud(enable) {
+		idcloudStateIcon.src = enable ? "/static/ico2.svg" : "/static/ico3.svg";
+		idcloudStateIcon.alt = enable ? "iDCloud ativado" : "iDCloud desativado";
+	}
+
+	async function consultarIdcloud() {
+		if (!empresa.value) return;
+
+		botao.disabled = true;
+		botao.textContent = "Consultando...";
+		resultado.style.display = "flex";
+		idcloudStatus.textContent = "Consultando o equipamento...";
+		idcloudToggle.disabled = true;
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/idcloud`, {
+				cache: "no-store"
+			});
+
+			if (!resposta.ok) {
+				const dados = await resposta.json().catch(() => ({ detail: "Erro ao consultar" }));
+				throw new Error(dados.detail || "Não foi possível consultar o iDCloud.");
+			}
+
+			const dados = await resposta.json();
+			const isEnabled = dados.idcloud || dados.enabled || false;
+
+			idcloudToggle.checked = isEnabled;
+			idcloudLabel.textContent = isEnabled ? "Ligado" : "Desligado";
+			atualizarIconeIdcloud(isEnabled);
+			idcloudStatus.textContent = isEnabled ? "✅ iDCloud ativado" : "⚠️ iDCloud desativado";
+			idcloudStatus.style.color = isEnabled ? "#166534" : "#b45309";
+			idcloudToggle.disabled = false;
+		} catch (erro) {
+			idcloudStatus.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${erro.message}</div>`;
+			idcloudToggle.disabled = true;
+		} finally {
+			botao.disabled = false;
+			botao.textContent = "Consultar Estado";
+		}
+	}
+
+	botao.addEventListener("click", consultarIdcloud);
+
+	idcloudToggle.addEventListener("change", async () => {
+		if (!empresa.value) return;
+
+		const novoEstado = idcloudToggle.checked;
+		idcloudToggle.disabled = true;
+		idcloudStatus.textContent = novoEstado ? "Ativando..." : "Desativando...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/idcloud`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ enable: novoEstado })
+			});
+
+			if (!resposta.ok) {
+				const dados = await resposta.json().catch(() => ({ detail: "Erro ao atualizar" }));
+				throw new Error(dados.detail || "Não foi possível atualizar o iDCloud.");
+			}
+
+			idcloudLabel.textContent = novoEstado ? "Ligado" : "Desligado";
+			atualizarIconeIdcloud(novoEstado);
+			idcloudStatus.textContent = novoEstado ? "✅ iDCloud ativado com sucesso!" : "✅ iDCloud desativado com sucesso!";
+			idcloudStatus.style.color = "#166534";
+		} catch (erro) {
+			idcloudToggle.checked = !novoEstado;
+			idcloudStatus.textContent = `❌ Erro: ${erro.message}`;
+			idcloudStatus.style.color = "#991b1b";
+		} finally {
+			idcloudToggle.disabled = false;
+		}
+	});
+</script>
+
+{% endblock %}

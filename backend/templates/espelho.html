@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Espelho de Ponto - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Espelho de Ponto
+{% endblock %}
+
+{% block head %}
+<style>
+    .espelho-form {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        align-items: end;
+    }
+
+    .espelho-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .espelho-result {
+        display: none;
+    }
+
+    .espelho-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .espelho-summary div,
+    .espelho-employee {
+        padding: 14px;
+        background: #f8fafc;
+        border-radius: 6px;
+    }
+
+    .espelho-employee {
+        margin-top: 16px;
+    }
+
+    .espelho-table-wrap {
+        overflow-x: auto;
+        margin-top: 12px;
+    }
+
+    .espelho-table th,
+    .espelho-table td {
+        padding: 8px;
+    }
+
+    .espelho-error {
+        padding: 15px;
+        border-radius: 6px;
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    @media (max-width: 800px) {
+        .espelho-form,
+        .espelho-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .espelho-actions {
+            justify-content: stretch;
+        }
+
+        .espelho-actions button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Espelho de Ponto</h1>
+<p class="page-description">Consulte as marcações dos funcionários por período e empresa.</p>
+
+<form id="espelhoForm" class="card">
+    <div class="espelho-form">
+        <div class="form-group">
+            <label for="loja">Empresa</label>
+            <select id="loja" name="loja">
+                <option value="">Selecione uma empresa</option>
+                {% for loja in lojas %}
+                <option value="{{ loja.numero }}">
+                    {{ "%02d"|format(loja.numero) }} - {{ loja.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="data_inicial">Data inicial</label>
+            <input type="date" id="data_inicial" name="data_inicial" required>
+        </div>
+
+        <div class="form-group">
+            <label for="data_final">Data final</label>
+            <input type="date" id="data_final" name="data_final" required>
+        </div>
+
+        <div class="form-group">
+            <label for="busca">Funcionário</label>
+            <input
+                type="search"
+                id="busca"
+                name="busca"
+                placeholder="Matrícula, nome ou documento"
+            >
+        </div>
+    </div>
+
+    <div class="espelho-actions" style="margin-top: 20px;">
+        <button type="submit" id="btnConsultar">Consultar</button>
+        <button
+            type="button"
+            id="btnExportarPdf"
+            class="button-secondary"
+            style="margin-left: 10px;"
+            disabled
+        >
+            Exportar PDF
+        </button>
+    </div>
+</form>
+
+<section id="resultado" class="card espelho-result">
+    <h2>Resultado da consulta</h2>
+    <div id="resultadoConteudo"></div>
+</section>
+
+<script>
+    const form = document.getElementById("espelhoForm");
+    const resultado = document.getElementById("resultado");
+    const conteudo = document.getElementById("resultadoConteudo");
+    const botao = document.getElementById("btnConsultar");
+    const botaoExportarPdf = document.getElementById("btnExportarPdf");
+
+    const dataFinal = document.getElementById("data_final");
+    const hoje = new Date();
+    dataFinal.value = [
+        hoje.getFullYear(),
+        String(hoje.getMonth() + 1).padStart(2, "0"),
+        String(hoje.getDate()).padStart(2, "0")
+    ].join("-");
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function formatarLayout(layout) {
+        return String(layout) === "671" ? "Portaria 671" : "Legado";
+    }
+
+    function mostrarResultado(dados) {
+        const loja = dados.lojas[0];
+        let html = `
+            <div class="espelho-summary">
+                <div><strong>Funcionários</strong><br>${dados.total_funcionarios}</div>
+                <div><strong>Marcações</strong><br>${dados.total_marcacoes}</div>
+                <div><strong>Período</strong><br>${escapeHtml(dados.data_inicial)} até ${escapeHtml(dados.data_final)}</div>
+            </div>
+        `;
+
+        if (!loja || !loja.success) {
+            conteudo.innerHTML = html + `<div class="espelho-error"><strong>Erro:</strong> ${escapeHtml(loja?.erro || "Nenhum resultado encontrado.")}</div>`;
+            resultado.style.display = "block";
+            botaoExportarPdf.disabled = true;
+            return;
+        }
+
+        html += `<h3>${escapeHtml(loja.nome || "Empresa")} (${String(loja.loja).padStart(2, "0")})</h3>`;
+        html += `<p><strong>Layout:</strong> ${escapeHtml(formatarLayout(loja.layout))} &nbsp; <strong>Funcionários:</strong> ${loja.total_funcionarios} &nbsp; <strong>Marcações:</strong> ${loja.total_marcacoes}</p>`;
+
+        if (!loja.funcionarios || loja.funcionarios.length === 0) {
+            html += `<div class="espelho-employee">Nenhum funcionário encontrado.</div>`;
+        } else {
+            const funcionarios = [...loja.funcionarios].sort((primeiro, segundo) =>
+                String(primeiro.nome || "").localeCompare(String(segundo.nome || ""), "pt-BR", { sensitivity: "base" })
+            );
+
+            funcionarios.forEach(funcionario => {
+                const documento = funcionario.documento || funcionario.pis || funcionario.cpf || "";
+                const marcacoes = funcionario.marcacoes || [];
+                html += `
+                    <div class="espelho-employee">
+                        <strong>${escapeHtml(funcionario.nome || "Funcionário sem nome")}</strong><br>
+                        <small>${escapeHtml(funcionario.tipo_documento || "PIS")}: ${escapeHtml(documento)}</small><br>
+                        <small>Marcações: ${marcacoes.length}</small>
+                `;
+
+                if (marcacoes.length) {
+                    html += `<div class="espelho-table-wrap"><table class="espelho-table"><thead><tr><th>NSR</th><th>Data</th><th>Hora</th><th>${escapeHtml(funcionario.tipo_documento || "PIS")}</th></tr></thead><tbody>`;
+                    marcacoes.forEach(marcacao => {
+                        html += `<tr><td>${escapeHtml(marcacao.nsr)}</td><td>${escapeHtml(marcacao.data)}</td><td>${escapeHtml(marcacao.hora)}</td><td>${escapeHtml(marcacao.documento || marcacao.identificador)}</td></tr>`;
+                    });
+                    html += `</tbody></table></div>`;
+                } else {
+                    html += `<div class="espelho-employee">Nenhuma marcação encontrada para este funcionário.</div>`;
+                }
+
+                html += `</div>`;
+            });
+        }
+
+        conteudo.innerHTML = html;
+        resultado.style.display = "block";
+        botaoExportarPdf.disabled = false;
+    }
+
+    botaoExportarPdf.addEventListener("click", () => {
+        const janelaPdf = window.open("", "_blank");
+
+        if (!janelaPdf) {
+            alert("Não foi possível abrir a visualização para impressão.");
+            return;
+        }
+
+        janelaPdf.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>Espelho de Ponto</title>
+                <style>
+                    body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 28px; }
+                    h1 { color: #192535; font-size: 22px; margin: 0 0 6px; }
+                    h2 { font-size: 18px; margin-top: 24px; }
+                    h3 { font-size: 16px; margin-top: 22px; }
+                    .espelho-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+                    .espelho-summary div, .espelho-employee { border: 1px solid #d9e0e8; border-radius: 5px; padding: 10px; }
+                    .espelho-employee { margin-top: 14px; break-inside: avoid; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                    th, td { border-bottom: 1px solid #d9e0e8; padding: 6px; text-align: left; }
+                    th { background: #f3f5f8; }
+                    @media print { body { margin: 12mm; } }
+                </style>
+            </head>
+            <body>
+                <h1>Espelho de Ponto</h1>
+                ${conteudo.innerHTML}
+            </body>
+            </html>
+        `);
+
+        janelaPdf.document.close();
+        janelaPdf.focus();
+        janelaPdf.print();
+    });
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const loja = document.getElementById("loja").value;
+        const dataInicial = document.getElementById("data_inicial").value;
+        const dataFinal = document.getElementById("data_final").value;
+        const busca = document.getElementById("busca").value.trim();
+
+        if (dataInicial > dataFinal) {
+            alert("A data inicial não pode ser maior que a data final.");
+            return;
+        }
+
+        const dados = new FormData();
+        if (loja) {
+            dados.append("lojas", loja);
+        }
+        dados.append("data_inicial", dataInicial);
+        dados.append("data_final", dataFinal);
+        dados.append("busca", busca);
+        dados.append("formato", "original");
+
+        botao.disabled = true;
+        botao.textContent = "Consultando...";
+        botaoExportarPdf.disabled = true;
+
+        try {
+            const resposta = await fetch("/afd/preview", { method: "POST", body: dados });
+            const resultadoJson = await resposta.json();
+            if (!resposta.ok) {
+                throw new Error(resultadoJson.detail || "Erro ao consultar o espelho.");
+            }
+            mostrarResultado(resultadoJson);
+        } catch (erro) {
+            resultado.style.display = "block";
+            conteudo.innerHTML = `<div class="espelho-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+            botaoExportarPdf.disabled = true;
+        } finally {
+            botao.disabled = false;
+            botao.textContent = "Consultar";
+        }
+    });
+</script>
+
+{% endblock %}

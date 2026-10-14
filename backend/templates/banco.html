@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Banco de dados - ChronoSnap{% endblock %}
+{% block topbar_title %}Banco de dados{% endblock %}
+
+{% block head %}
+<style>
+    .banco-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .banco-kpi { padding: 14px; border: 1px solid #dfe7f1; border-radius: 6px; background: #f8fbff; }
+    .banco-kpi span { display: block; color: #718096; font-size: 11px; text-transform: uppercase; }
+    .banco-kpi strong { display: block; margin-top: 6px; color: #102a43; font-size: 20px; }
+    .banco-caminho { padding: 10px; overflow-wrap: anywhere; border: 1px solid #dfe7f1; background: #f8fbff; color: #526b7f; font-family: Consolas, monospace; font-size: 12px; }
+    .banco-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .banco-resultado { margin-top: 14px; color: #526b7f; font-size: 13px; white-space: pre-wrap; }
+    .banco-tabelas { columns: 3; margin: 0; padding-left: 18px; color: #526b7f; font-size: 13px; }
+    @media (max-width: 700px) { .banco-grid { grid-template-columns: 1fr; } .banco-tabelas { columns: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Banco de dados</h1>
+<p class="page-description">Informações e ferramentas de manutenção do banco local.</p>
+
+<section class="card">
+    <h2>Informações</h2>
+    <div class="banco-grid">
+        <div class="banco-kpi"><span>Marcações armazenadas</span><strong>{{ marcacoes_total }}</strong></div>
+        <div class="banco-kpi"><span>Tamanho do arquivo</span><strong>{{ "%.1f KB"|format(banco_tamanho / 1024) }}</strong></div>
+        <div class="banco-kpi"><span>Tabelas</span><strong>{{ tabelas|length }}</strong></div>
+    </div>
+    <p class="banco-caminho">{{ banco_caminho }}</p>
+</section>
+
+<section class="card">
+    <h2>Retenção de dados</h2>
+    <p class="page-description">Marcações mais antigas que o período definido são apagadas automaticamente (verificação a cada hora). Use 0 para desativar.</p>
+    <div class="banco-grid">
+        <div class="form-group"><label for="retencao-valor">Manter as marcações dos últimos</label><input id="retencao-valor" type="number" min="0" max="3650" value="{{ retencao_valor }}"></div>
+        <div class="form-group"><label for="retencao-unidade">Unidade</label><select id="retencao-unidade">{% for u, nome in [('dias','Dias'),('meses','Meses'),('anos','Anos')] %}<option value="{{ u }}" {% if u == retencao_unidade %}selected{% endif %}>{{ nome }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="banco-acoes"><button type="button" id="salvar-retencao">Salvar retenção</button></div>
+    <div class="banco-resultado" id="retencao-resultado"></div>
+</section>
+
+<section class="card">
+    <h2>Compactação do banco</h2>
+    <p class="page-description">A compactação recupera espaço em disco após exclusões, mas pode levar algum tempo e requer espaço livre temporário. Execute quando houver pouca atividade no sistema.</p>
+    <div class="banco-acoes"><button type="button" id="compactar-banco">Compactar banco agora</button></div>
+    <div class="banco-resultado" id="compactar-resultado"></div>
+</section>
+
+<section class="card">
+    <h2>Ferramentas de marcações</h2>
+    <div class="banco-grid">
+        <div class="form-group"><label for="carga-inicial">Data inicial</label><input id="carga-inicial" type="date"></div>
+        <div class="form-group"><label for="carga-final">Data final</label><input id="carga-final" type="date"></div>
+        <div class="form-group"><label for="carga-lojas">Empresas</label><select id="carga-lojas"><option value="todas">Todas</option>{% for loja in lojas %}<option value="{{ loja.numero }}">{{ "%02d"|format(loja.numero) }} - {{ loja.nome }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="banco-acoes">
+        <button type="button" id="carregar">Carregar marcações</button>
+        <button type="button" id="diagnosticar">Diagnosticar duplicidades</button>
+        <button type="button" class="button-danger" id="reparar">Reparar duplicidades</button>
+    </div>
+    <div class="banco-resultado" id="resultado">Nenhuma operação executada.</div>
+</section>
+
+<section class="card">
+    <h2>Tabelas existentes</h2>
+    <ul class="banco-tabelas">{% for tabela in tabelas %}<li>{{ tabela }}</li>{% endfor %}</ul>
+</section>
+
+<script>
+    const resultado = document.querySelector('#resultado');
+    async function bancoJson(url, options) {
+        const resposta = await fetch(url, options);
+        const dados = await resposta.json();
+        if (!resposta.ok) throw new Error(dados.detail || 'Operação não concluída.');
+        return dados;
+    }
+    document.querySelector('#salvar-retencao').addEventListener('click', async () => {
+        const saida = document.querySelector('#retencao-resultado');
+        const valor = Number(document.querySelector('#retencao-valor').value || 0);
+        const unidade = document.querySelector('#retencao-unidade').value;
+        if (valor > 0 && !confirm('Registros mais antigos que o período serão apagados permanentemente. Continuar?')) return;
+        try {
+            const dados = await bancoJson('/config/banco/retencao', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({valor, unidade})
+            });
+            saida.textContent = `${dados.mensagem} Registros removidos: ${dados.removidos}`;
+        } catch (erro) { saida.textContent = erro.message; }
+    });
+    document.querySelector('#compactar-banco').addEventListener('click', async event => {
+        const botao = event.currentTarget;
+        const saida = document.querySelector('#compactar-resultado');
+        if (!confirm('A compactação pode deixar o banco temporariamente ocupado. Deseja continuar?')) return;
+        botao.disabled = true;
+        saida.textContent = 'Compactando o banco...';
+        try {
+            const dados = await bancoJson('/config/banco/compactar', {method: 'POST'});
+            const mbLiberados = (dados.espaco_liberado / (1024 * 1024)).toFixed(2);
+            saida.textContent = `${dados.mensagem} Espaço recuperado: ${mbLiberados} MB.`;
+            window.location.reload();
+        } catch (erro) {
+            saida.textContent = erro.message;
+        } finally {
+            botao.disabled = false;
+        }
+    });
+    document.querySelector('#carregar').addEventListener('click', async () => {
+        const inicial = document.querySelector('#carga-inicial').value;
+        const final = document.querySelector('#carga-final').value || inicial;
+        const loja = document.querySelector('#carga-lojas').value;
+        if (!inicial) { resultado.textContent = 'Informe a data inicial.'; return; }
+        try {
+            const dados = await bancoJson('/afd/marcacoes/carga', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({data_inicial: inicial, data_final: final, selecionar_todas: loja === 'todas', lojas: loja === 'todas' ? [] : [Number(loja)]})
+            });
+            resultado.textContent = JSON.stringify(dados.resultados, null, 2);
+        } catch (erro) { resultado.textContent = erro.message; }
+    });
+    document.querySelector('#diagnosticar').addEventListener('click', async () => {
+        try {
+            const dados = await bancoJson('/config/marcacoes/diagnostico');
+            resultado.textContent = `Total: ${dados.total}\nPossíveis reinícios de NSR: ${dados.possiveis_reinicios_nsr}`;
+        } catch (erro) { resultado.textContent = erro.message; }
+    });
+    document.querySelector('#reparar').addEventListener('click', async () => {
+        if (!confirm('Reparar duplicidades confirmadas?')) return;
+        try {
+            const dados = await bancoJson('/config/marcacoes/reparar', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({confirmar: true})
+            });
+            resultado.textContent = `Registros removidos: ${dados.removidos}`;
+        } catch (erro) { resultado.textContent = erro.message; }
+    });
+</script>
+{% endblock %}

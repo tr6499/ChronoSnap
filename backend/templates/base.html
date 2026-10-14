@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% block title %}
+        ChronoSnap
+        {% endblock %}
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f3f5f8;
+            color: #222;
+        }
+
+        /* =====================================================
+           LAYOUT
+           ===================================================== */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           MENU LATERAL
+           ===================================================== */
+
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            background: #192535;
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar-logo {
+            width: 175px;
+            height: auto;
+            display: block;
+        }
+
+        /* =====================================================
+           MENU
+           ===================================================== */
+
+        .menu {
+            padding: 15px 10px;
+        }
+
+        .menu-title {
+            padding: 12px 12px 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #a9bfd1;
+            font-weight: bold;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #e8f0f6;
+            padding: 11px 13px;
+            margin: 3px 0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .menu a:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .menu a.active {
+            background: #006fc9;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* =====================================================
+           ÍCONES
+           ===================================================== */
+
+        .menu-icon {
+            width: 28px;
+            min-width: 28px;
+            margin-right: 8px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        /* =====================================================
+           SUBMENU
+           ===================================================== */
+
+        .submenu {
+            margin-left: 10px;
+            border-left: 2px solid rgba(255,255,255,0.12);
+            padding-left: 5px;
+        }
+
+        .submenu a {
+            font-size: 13px;
+            padding: 9px 12px;
+        }
+
+        /* =====================================================
+           CONTEÚDO
+           ===================================================== */
+
+        .main {
+            margin-left: 240px;
+            width: calc(100% - 240px);
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           TOPO
+           ===================================================== */
+
+        .topbar {
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .topbar-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .topbar-status {
+            font-size: 13px;
+            color: #555;
+        }
+
+        /* =====================================================
+           ÁREA DA PÁGINA
+           ===================================================== */
+
+        .content {
+            padding: 28px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* =====================================================
+           TÍTULOS
+           ===================================================== */
+
+        .page-title {
+            margin: 0 0 6px 0;
+            font-size: 26px;
+        }
+
+        .page-description {
+            margin: 0 0 25px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           CARDS
+           ===================================================== */
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        /* =====================================================
+           GRID
+           ===================================================== */
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        /* =====================================================
+           BOTÕES
+           ===================================================== */
+
+        button,
+        .button {
+            border: none;
+            border-radius: 5px;
+            padding: 10px 16px;
+            cursor: pointer;
+            background: #006fc9;
+            color: white;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        button:hover,
+        .button:hover {
+            background: #005a9e;
+        }
+
+        .button-secondary {
+            background: #6c757d;
+        }
+
+        .button-danger {
+            background: #c62828;
+        }
+
+        .button-success {
+            background: #198754;
+        }
+
+        /* =====================================================
+           TABELAS
+           ===================================================== */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #005a9e;
+            color: white;
+            padding: 11px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #e5e5e5;
+            font-size: 13px;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        /* =====================================================
+           STATUS
+           ===================================================== */
+
+        .status {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-online {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #664d03;
+        }
+
+        /* =====================================================
+           FORMULÁRIOS
+           ===================================================== */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: inherit;
+            background: white;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #006fc9;
+        }
+
+        /* =====================================================
+           ALERTAS
+           ===================================================== */
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #664d03;
+        }
+
+        /* =====================================================
+           RESPONSIVIDADE
+           ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .sidebar {
+                width: 200px;
+                min-width: 200px;
+            }
+
+            .main {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+
+            .grid-3,
+            .grid-4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                min-width: 100%;
+                min-height: auto;
+            }
+
+            .app {
+                display: block;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .topbar {
+                position: relative;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .grid-2,
+            .grid-3,
+            .grid-4,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+    <link rel="stylesheet" href="/static/css.css">
+
+    {% block head %}
+    {% endblock %}
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+    <!-- =====================================================
+         MENU LATERAL
+         ===================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+
+            <a href="/" aria-label="Voltar para o dashboard">
+                <img
+                    src="/static/logo.jpg"
+                    alt="ChronoSnap"
+                    class="sidebar-logo"
+                >
+            </a>
+
+        </div>
+
+
+        <nav class="menu">
+
+            <!-- =================================================
+                 PRINCIPAL
+                 ================================================= -->
+
+            <div class="menu-title">
+                Principal
+            </div>
+
+            <a
+                href="/"
+                class="{% if request.url.path == '/' %}active{% endif %}"
+            >
+                Dashboard
+            </a>
+
+
+            <!-- =================================================
+                 EQUIPAMENTOS
+                 ================================================= -->
+
+            <div class="menu-title">
+                Operação
+            </div>
+
+            <a
+                href="/lojas"
+                class="{% if request.url.path.startswith('/lojas') %}active{% endif %}"
+            >
+                Empresas
+            </a>
+
+            <a
+                href="/funcionarios"
+                class="{% if request.url.path.startswith('/funcionarios') %}active{% endif %}"
+            >
+                Funcionários
+            </a>
+
+
+            <!-- =================================================
+                 AFD
+                 ================================================= -->
+
+            <div class="menu-title">
+                Marcações
+            </div>
+
+            <a
+                href="/afd"
+                class="{% if request.url.path == '/afd' or request.url.path.startswith('/afd/download') %}active{% endif %}"
+            >
+                Arquivos AFD
+            </a>
+
+            <a href="/afd">
+                AFD Original
+            </a>
+
+            <a href="/afd">
+                RM TOTVS
+            </a>
+
+            <a
+                href="/afd/espelho"
+                class="{% if request.url.path.startswith('/afd/espelho') %}active{% endif %}"
+            >
+                Espelho de Ponto
+            </a>
+
+            <a
+                href="/afd/automacoes"
+                class="{% if request.url.path.startswith('/afd/automacoes') %}active{% endif %}"
+            >
+                Automações
+            </a>
+
+
+              {% if request.state.perfil == "Completo" %}
+
+              <!-- =================================================
+                 AJUSTES
+                 ================================================= -->
+
+            <div class="menu-title">
+                AJUSTES
+            </div>
+
+                <a
+                    href="/system/datetime"
+                    class="{% if request.url.path == '/system/datetime' %}active{% endif %}"
+                >
+                    Data e Hora
+                </a>
+
+                <a
+                    href="/system/info"
+                    class="{% if request.url.path == '/system/info' %}active{% endif %}"
+                >
+                    Informações do Sistema
+                </a>
+
+                <a
+                    href="/system/rep"
+                    class="{% if request.url.path == '/system/rep' %}active{% endif %}"
+                >
+                    Informações do REP
+                </a>
+
+                <a
+                    href="/system/network"
+                    class="{% if request.url.path == '/system/network' %}active{% endif %}"
+                >
+                    Configurações de Rede
+                </a>
+
+                <a
+                    href="/system/idcloud"
+                    class="{% if request.url.path == '/system/idcloud' %}active{% endif %}"
+                >
+                    iDCloud
+                </a>
+
+
+            <!-- =================================================
+                 CONFIGURAÇÃO
+                 ================================================= -->
+
+            <div class="menu-title">
+                Administração
+            </div>
+
+                <a
+                    href="/config/auditoria"
+                    class="{% if request.url.path.startswith('/config/auditoria') %}active{% endif %}"
+                >
+                    Auditoria
+                </a>
+
+                <a
+                    href="/config/banco"
+                    class="{% if request.url.path.startswith('/config/banco') %}active{% endif %}"
+                >
+                    Banco de dados
+                </a>
+
+                <a
+                    href="/config/usuarios"
+                    class="{% if request.url.path == '/config/usuarios' %}active{% endif %}"
+                >
+                    Listar Usuários
+                </a>
+
+                <a
+                    href="/config/senha-admin"
+                    class="{% if request.url.path == '/config/senha-admin' %}active{% endif %}"
+                >
+                    Mudar Senha Admin
+                </a>
+
+                <a
+                    href="/config/modo-admin"
+                    class="{% if request.url.path == '/config/modo-admin' %}active{% endif %}"
+                >
+                    Modo Admin
+                </a>
+
+                <a
+                    href="/config/layout-rm"
+                    class="{% if request.url.path.startswith('/config/layout-rm') %}active{% endif %}"
+                >
+                    Editor de Layout AFD
+                </a>
+
+            {% endif %}
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTEÚDO PRINCIPAL
+         ================================================= -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-title">
+
+                {% block topbar_title %}
+                ChronoSnap
+                {% endblock %}
+
+            </div>
+
+            <div class="topbar-status" style="display: flex; align-items: center; gap: 16px;">
+                <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <strong>{{ request.state.usuario or "Usuário" }}</strong>
+                    <span class="status {% if request.state.perfil == 'Completo' %}status-online{% else %}status-warning{% endif %}" style="padding: 3px 8px;">
+                        {{ "Admin" if request.state.perfil == "Completo" else "Usuário" }}
+                    </span>
+                </span>
+                <button onclick="fazerLogout()" style="padding: 6px 12px; font-size: 12px; background: #c62828; border: none; border-radius: 4px; color: white; cursor: pointer;">
+                    Logout
+                </button>
+            </div>
+
+        </header>
+
+
+        <section class="content">
+
+            {% block content %}
+            {% endblock %}
+
+        </section>
+
+    </main>
+
+</div>
+
+
+{% block scripts %}
+<script>
+    // Verificar autenticação ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar se está na página de login
+        if (window.location.pathname.startsWith('/auth/login')) {
+            return; // Não fazer verificação na página de login
+        }
+
+        // Fazer uma requisição HEAD para verificar autenticação
+        fetch(window.location.pathname, { method: 'HEAD' })
+            .then(response => {
+                // Se receber 303 (redirect), será automaticamente redirecionado pelo middleware
+                // Se receber qualquer outro código, está autenticado
+                if (response.status === 401) {
+                    window.location.href = '/auth/login';
+                }
+            })
+            .catch(() => {
+                // Em caso de erro, tentar redirecionar
+                window.location.href = '/auth/login';
+            });
+    });
+
+    // Função para logout
+    function fazerLogout() {
+        fetch('/auth/logout')
+            .then(() => {
+                window.location.href = '/auth/login';
+            });
+    }
+
+    // Adicionar listener para quando fecha a aba/navegador
+    // Nota: JavaScript não pode detectar fechamento de aba por questões de segurança
+    // Mas podemos usar beforeunload para limpar dados locais
+    window.addEventListener('beforeunload', function() {
+        // Limpar token do localStorage (opcional)
+        // localStorage.removeItem('chronosnap_token');
+    });
+</script>
+{% endblock %}
+
+</body>
+
+</html>

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Informações do Sistema - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Informações do Sistema
+{% endblock %}
+
+{% block head %}
+<style>
+	.system-form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 16px;
+		align-items: end;
+	}
+
+	.system-result {
+		display: none;
+	}
+
+	.system-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+		gap: 14px;
+	}
+
+	.system-item {
+		padding: 14px;
+		background: #f8fafc;
+		border-radius: 6px;
+	}
+
+	.system-item label {
+		display: block;
+		margin-bottom: 6px;
+		color: #64748b;
+		font-size: 12px;
+	}
+
+	.system-item span {
+		overflow-wrap: anywhere;
+		font-weight: bold;
+	}
+
+	.system-error {
+		padding: 15px;
+		border-radius: 6px;
+		background: #fee2e2;
+		color: #991b1b;
+	}
+
+	.system-status {
+		font-size: 13px;
+	}
+
+	@media (max-width: 650px) {
+		.system-form {
+			grid-template-columns: 1fr;
+		}
+
+		.system-form button {
+			width: 100%;
+		}
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Informações do Sistema</h1>
+<p class="page-description">Consulte as informações e estatísticas do equipamento pela API IDClass.</p>
+
+<form id="systemForm" class="card system-form">
+	<div class="form-group">
+		<label for="empresa">Empresa</label>
+		<select id="empresa" required>
+			<option value="">Selecione uma empresa</option>
+			{% for empresa in empresas %}
+			<option value="{{ empresa.numero }}">
+				{{ "%02d"|format(empresa.numero) }} - {{ empresa.nome }}
+			</option>
+			{% endfor %}
+		</select>
+	</div>
+	<button type="button" id="btnConsultar">Consultar Informações</button>
+</form>
+
+<section id="resultado" class="card system-result">
+	<h2 id="resultadoTitulo">Dados do sistema</h2>
+	<div id="resultadoConteudo"></div>
+</section>
+
+<script>
+	const empresa = document.getElementById("empresa");
+	const resultado = document.getElementById("resultado");
+	const titulo = document.getElementById("resultadoTitulo");
+	const conteudo = document.getElementById("resultadoConteudo");
+	const botao = document.getElementById("btnConsultar");
+
+	const rotulos = {
+		uptime: "Tempo ligado",
+		user_count: "Usuários cadastrados",
+		template_count: "Digitais cadastradas",
+		number_of_faces: "Faces cadastradas",
+		ticks: "Tempo ligado (ticks)",
+		cuts: "Cortes de papel",
+		coil_paper: "Bobina restante",
+		total_paper: "Total de bobina",
+		paper_ok: "Papel disponível",
+		low_paper: "Pouco papel",
+		memory: "Memória utilizada",
+		used_mrp: "MRP utilizado",
+		last_nsr: "Última NSR"
+	};
+
+	function escapeHtml(value) {
+		return String(value ?? "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#039;");
+	}
+
+	function formatarValor(valor) {
+		if (valor === null || valor === undefined) return "Não informado";
+		if (typeof valor === "boolean") return valor ? "Sim" : "Não";
+		return String(valor);
+	}
+
+	botao.addEventListener("click", async () => {
+		if (!empresa.value) return;
+
+		botao.disabled = true;
+		botao.textContent = "Consultando...";
+		resultado.style.display = "block";
+		conteudo.innerHTML = "Consultando o equipamento...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/information`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar o equipamento.");
+			}
+
+			titulo.textContent = `Dados do sistema - ${empresa.options[empresa.selectedIndex].text}`;
+			const itens = Object.entries(dados);
+			conteudo.innerHTML = itens.length
+				? `<div class="system-grid">${itens.map(([chave, valor]) => `
+					<div class="system-item">
+						<label>${escapeHtml(rotulos[chave] || chave)}</label>
+						<span>${escapeHtml(formatarValor(valor))}</span>
+					</div>
+				`).join("")}</div>`
+				: "A API não retornou informações para este equipamento.";
+		} catch (erro) {
+			conteudo.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+		} finally {
+			botao.disabled = false;
+			botao.textContent = "Consultar Informações";
+		}
+	});
+</script>
+
+{% endblock %}

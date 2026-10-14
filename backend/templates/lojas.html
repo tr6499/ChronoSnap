@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Empresas - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Gerenciamento de Empresas
+{% endblock %}
+
+{% block head %}
+<style>
+    .lojas-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .lojas-header h1 { margin-bottom: 4px; }
+
+    .lojas-add-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .lojas-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .lojas-summary-item {
+        padding: 14px 16px;
+        border: 1px solid #d9e6f2;
+        border-radius: 6px;
+        background: #f8fbff;
+    }
+
+    .lojas-summary-item span {
+        display: block;
+        color: #718096;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    .lojas-summary-item strong {
+        display: block;
+        margin-top: 5px;
+        color: #102a43;
+        font-size: 22px;
+    }
+
+    .lojas-form-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .lojas-form-grid .wide { grid-column: span 2; }
+    .lojas-form-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+    .lojas-table-wrap { overflow-x: auto; }
+    .lojas-table { min-width: 840px; }
+    .lojas-table td, .lojas-table th { vertical-align: middle; }
+    .lojas-table .empresa-nome { min-width: 180px; font-weight: 600; color: #102a43; }
+    .lojas-table .endereco { color: #526b7f; font-family: Consolas, monospace; font-size: 12px; }
+    .lojas-acoes {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-width: 330px;
+    }
+    .lojas-acoes form { margin: 0; }
+    .lojas-acoes button,
+    .lojas-acoes a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 7px 11px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .lojas-acoes .button-edit {
+        background: #198754;
+        border-color: #198754;
+        color: #fff;
+    }
+
+    .lojas-acoes .button-edit:hover {
+        background: #146c43;
+        border-color: #146c43;
+    }
+
+    .lojas-acoes .button-sync {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .lojas-acoes .button-delete {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+    }
+
+    @media (max-width: 900px) {
+        .lojas-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lojas-form-grid .wide { grid-column: span 1; }
+    }
+
+    @media (max-width: 650px) {
+        .lojas-header { display: block; }
+        .lojas-summary { grid-template-columns: 1fr; }
+        .lojas-form-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="lojas-header">
+    <div>
+        <h1 class="page-title">Empresas</h1>
+        <p class="page-description">Cadastre, monitore e sincronize os equipamentos Control iD.</p>
+    </div>
+    <a class="button button-success lojas-add-btn" href="/company/novo">+ Adicionar empresa</a>
+</div>
+
+{% if request.query_params.get("sucesso") %}
+
+<div class="card" style="border-left: 4px solid #28a745;">
+    <strong style="color:#28a745;">Sucesso</strong>
+    <p>{{ request.query_params.get("sucesso") }}</p>
+</div>
+
+{% endif %}
+
+{% if request.query_params.get("erro") %}
+
+<div class="card" style="border-left: 4px solid #dc3545;">
+    <strong style="color:#dc3545;">Atenção</strong>
+    <p>{{ request.query_params.get("erro") }}</p>
+</div>
+
+{% endif %}
+
+
+<!-- ===================================================== -->
+<!-- CADASTRO -->
+<!-- ===================================================== -->
+
+<div class="lojas-summary">
+    <div class="lojas-summary-item"><span>Total</span><strong>{{ lojas|length }}</strong></div>
+    <div class="lojas-summary-item"><span>Online</span><strong>{{ lojas|selectattr('online')|list|length }}</strong></div>
+    <div class="lojas-summary-item"><span>Offline</span><strong>{{ lojas|rejectattr('online')|list|length }}</strong></div>
+</div>
+
+<!-- ===================================================== -->
+<!-- EMPRESAS CADASTRADAS -->
+<!-- ===================================================== -->
+
+<div class="card">
+
+    <div class="lojas-header">
+
+        <h2 style="margin: 0;">Empresas cadastradas</h2>
+
+        <form
+            method="post"
+            action="/lojas/sincronizar-usuarios/todas"
+            onsubmit="return confirm('Sincronizar usuários de todas as empresas cadastradas?');"
+        >
+
+            <button
+                type="submit"
+                class="button-success"
+            >
+                Sincronizar todas
+            </button>
+
+        </form>
+
+    </div>
+
+    <div class="lojas-table-wrap">
+    <table class="lojas-table">
+
+        <thead>
+
+            <tr>
+
+                <th>Empresa</th>
+
+                <th>Nome</th>
+
+                <th>IP</th>
+
+                <th>Porta</th>
+
+                <th>AFD</th>
+
+                <th>Status</th>
+
+                <th>Ações</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for loja in lojas %}
+
+            <tr>
+
+                <td>
+                    {{ "%02d"|format(loja.numero) }}
+                </td>
+
+
+                <td>
+                    {{ loja.nome }}
+                </td>
+
+
+                <td>
+                    {{ loja.ip }}
+                </td>
+
+
+                <td>
+                    {{ loja.porta }}
+                </td>
+
+
+                <td>
+
+                    {% if loja.afd_layout == "671" %}
+
+                        Portaria 671
+
+                    {% else %}
+
+                        Legado
+
+                    {% endif %}
+
+                </td>
+
+
+                <td>
+
+                    {% if loja.online %}
+
+                        <span class="status status-online">
+                            Online
+                        </span>
+
+                    {% else %}
+
+                        <span class="status status-offline">
+                            Offline
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- ===================================== -->
+                <!-- AÇÕES -->
+                <!-- ===================================== -->
+
+                <td>
+                    <div class="lojas-acoes">
+
+                    <a
+                        class="button button-edit"
+                        href="/company/editar/{{ loja.id }}"
+                    >
+                        Editar empregador
+                    </a>
+
+                    <!-- SINCRONIZAR -->
+
+                    <form
+                        method="post"
+                        action="/lojas/{{ loja.id }}/sincronizar-usuarios"
+                        
+                    >
+
+                        <button
+                            type="submit"
+                            class="button-sync"
+                        >
+                            Sincronizar usuários
+                        </button>
+
+                    </form>
+
+
+                    <!-- EXCLUIR -->
+
+                    <form
+                        method="post"
+                        action="/lojas/{{ loja.id }}/excluir"
+                        onsubmit="return confirm('Tem certeza que deseja excluir a empresa {{ loja.numero }}?');"
+                    >
+
+                        <button
+                            type="submit"
+                            class="button-delete"
+                        >
+                            Excluir
+                        </button>
+
+                    </form>
+                    </div>
+
+                </td>
+
+            </tr>
+
+
+            {% else %}
+
+            <tr>
+
+                <td colspan="7">
+                    Nenhuma empresa cadastrada.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+    </div>
+
+</div>
+
+{% endblock %}

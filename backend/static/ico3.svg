@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="250" height="250">
+  <!-- Círculo Vermelho -->
+  <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="7"/>
+  <!-- X Central -->
+  <path d="M 36 36 L 64 64 M 64 36 L 36 64" stroke="#ef4444" stroke-width="7" stroke-linecap="round"/>
+</svg>

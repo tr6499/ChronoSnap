@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}{% if novo %}Adicionar empresa{% else %}Empregador{% endif %} - ChronoSnap{% endblock %}
+
+{% block topbar_title %}{% if novo %}Adicionar empresa{% else %}Editar empregador{% endif %}{% endblock %}
+
+{% block head %}
+<style>
+	.empresa-header { margin-bottom: 20px; }
+	.empresa-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 14px;
+	}
+	.empresa-grid .wide { grid-column: 1 / -1; }
+	.empresa-section {
+		grid-column: 1 / -1;
+		margin: 8px 0 0;
+		padding-top: 16px;
+		border-top: 1px solid #d9e6f2;
+		color: #102a43;
+	}
+	.empresa-actions { display: flex; gap: 10px; margin-top: 18px; }
+	@media (max-width: 650px) {
+		.empresa-grid { grid-template-columns: 1fr; }
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="empresa-header">
+	<h1 class="page-title">{% if novo %}Adicionar empresa{% else %}Empregador do relógio {{ "%02d"|format(loja.numero) }}{% endif %}</h1>
+	<p class="page-description">{% if novo %}Configure o relógio e os dados do empregador em uma única tela.{% else %}{{ loja.nome }} · {{ loja.ip }}{% endif %}</p>
+</div>
+
+{% if request.query_params.get("sucesso") or sucesso %}
+<div class="card" style="border-left: 4px solid #28a745;">
+	{{ sucesso or request.query_params.get("sucesso") }}
+</div>
+{% endif %}
+
+{% if request.query_params.get("erro") or erro %}
+<div class="card" style="border-left: 4px solid #dc3545;">
+	{{ erro or request.query_params.get("erro") }}
+</div>
+{% endif %}
+
+<div class="card">
+	<form method="post" action="{% if novo %}/company/novo{% else %}/company/editar/{{ loja.id }}{% endif %}">
+		<div class="empresa-grid">
+			<h2 class="empresa-section">Relógio e integração</h2>
+
+			{% if novo %}
+			<div class="form-group">
+				<label for="numero">Número da empresa</label>
+				<input id="numero" name="numero" type="number" min="1" max="100" required>
+			</div>
+			{% endif %}
+
+			<div class="form-group wide">
+				<label for="loja_nome">Nome da empresa no sistema</label>
+				<input id="loja_nome" name="loja_nome" value="{{ loja.nome if loja else '' }}" required>
+			</div>
+
+			<div class="form-group wide">
+				<label for="ip">IP / Host</label>
+				<input id="ip" name="ip" value="{{ loja.ip if loja else '' }}" required>
+			</div>
+
+			<div class="form-group">
+				<label for="porta">Porta</label>
+				<input id="porta" name="porta" type="number" value="{{ loja.porta if loja else 443 }}" min="1" max="65535" required>
+			</div>
+
+			<div class="form-group">
+				<label for="usuario">Usuário do relógio</label>
+				<input id="usuario" name="usuario" value="{{ loja.usuario if loja else '' }}" required>
+			</div>
+
+			<div class="form-group">
+				<label for="senha">Senha do relógio</label>
+				<input id="senha" name="senha" type="password" placeholder="Manter a senha atual">
+			</div>
+
+			<div class="form-group">
+				<label for="afd_layout">Tipo do relógio / AFD</label>
+				<select id="afd_layout" name="afd_layout" required>
+					<option value="legado" {% if not loja or loja.afd_layout == 'legado' %}selected{% endif %}>Legado / PIS</option>
+					<option value="671" {% if loja and loja.afd_layout == '671' %}selected{% endif %}>Portaria 671 / CPF</option>
+				</select>
+			</div>
+
+			<h2 class="empresa-section">Dados do empregador no relógio</h2>
+
+			<div class="form-group wide">
+				<label for="name">Nome da empresa</label>
+				<input id="name" name="name" value="{{ empresa.get('name', '') }}" {% if novo %}required{% endif %}>
+			</div>
+
+			<div class="form-group wide">
+				<label for="address">Endereço</label>
+				<input id="address" name="address" value="{{ empresa.get('address', '') }}">
+			</div>
+
+			<div class="form-group">
+				<label for="tipo_doc">Documento principal</label>
+				<select id="tipo_doc" name="tipo_doc" required>
+					<option value="1" {% if empresa.get('tipo_doc')|int == 1 %}selected{% endif %}>CNPJ</option>
+					<option value="2" {% if empresa.get('tipo_doc')|int == 2 %}selected{% endif %}>CPF</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="cpf_cnpj">CPF/CNPJ</label>
+				<input id="cpf_cnpj" name="cpf_cnpj" value="{{ empresa.get('cpf_cnpj', '') }}" {% if novo %}required{% endif %}>
+			</div>
+
+			<div class="form-group">
+				<label for="cei">CEI / CAEPF / CNO</label>
+				<input id="cei" name="cei" value="{{ empresa.get('cei', '') }}">
+			</div>
+
+			<div class="form-group">
+				<label for="cpf">CPF do responsável</label>
+				<input id="cpf" name="cpf" value="{{ empresa.get('cpf', '') }}">
+			</div>
+		</div>
+
+		<div class="empresa-actions">
+			{% if not novo %}
+			<button type="submit" name="acao" value="salvar_conexao" formnovalidate class="button button-secondary">Salvar dados de conexão</button>
+			{% endif %}
+			<button type="submit" name="acao" value="carregar" class="button button-secondary">Carregar do relógio</button>
+			<button type="submit" name="acao" value="salvar" class="button button-success">Salvar no relógio</button>
+			<a href="/lojas" class="button button-secondary">Voltar</a>
+		</div>
+	</form>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Local database and SQLite sidecar files
+banco/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+
+# Operational data, logs, AFD files, and generated exports
+backend/afd/
+backend/downloads/
+backend/logs/
+afd/
+downloads/
+logs/
+*.log
+*.tmp
+*.temp
+*.bak
+
+# Local editor settings
+.vscode/

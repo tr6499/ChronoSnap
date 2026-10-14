@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Automações - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Automações
+{% endblock %}
+
+{% block head %}
+<style>
+    .automacao-page {
+        display: grid;
+        gap: 18px;
+    }
+
+    .automacao-panel {
+        border: 1px solid #d9e6f2;
+        background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
+        box-shadow: 0 12px 30px rgba(25, 82, 126, 0.1);
+    }
+
+    .automacao-panel h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #0d4f82;
+    }
+
+    .automacao-panel h2::before {
+        width: 7px;
+        height: 26px;
+        border-radius: 4px;
+        background: #0d6efd;
+        content: "";
+    }
+
+    .automacao-intro {
+        margin-top: 4px;
+        color: #607486;
+        font-size: 13px;
+    }
+
+    .automacoes-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1.4fr 1.2fr;
+        gap: 18px;
+        margin-top: 20px;
+    }
+
+    .auto-field {
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid #dfe7f1;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f3f7fb 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .auto-field label,
+    .auto-field .label-strong {
+        color: #475569;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .auto-field input[type="time"],
+    .auto-field input[type="text"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+        background: white;
+        color: #0f172a;
+        font-size: 14px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .auto-field input[type="time"]:focus,
+    .auto-field input[type="text"]:focus {
+        border-color: #5a9dcc;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+    }
+
+    .diretorio-controles {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+
+    .diretorio-controles button {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .diretorio-ajuda {
+        margin: 0;
+        color: #718096;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .diretorio-selecionado {
+        display: none;
+        margin: 0;
+        color: #0d6b42;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .diretorio-selecionado.visivel {
+        display: block;
+    }
+
+    .auto-dias {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .auto-dia {
+        min-width: 50px;
+        padding: 8px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #334155;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        transition: all 0.2s ease;
+    }
+
+    .auto-dia:hover {
+        border-color: #8db9df;
+        background: #f5f9ff;
+    }
+
+    .auto-dia.active {
+        border-color: #005fce;
+        background: linear-gradient(180deg, #0d6efd 0%, #005fce 100%);
+        box-shadow: 0 6px 18px rgba(13, 110, 253, 0.2);
+        color: white;
+    }
+
+    .automacao-lojas {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .automacao-loja {
+        padding: 12px 8px;
+        border: 1px solid #dbe3ec;
+        border-radius: 8px;
+        background: #f8fafc;
+        cursor: pointer;
+        text-align: center;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .automacao-loja:has(input:checked) {
+        border-color: #75aeda;
+        background: #eef7ff;
+        box-shadow: 0 0 0 2px rgba(0, 111, 201, 0.08);
+    }
+
+    .automacao-loja input {
+        margin-right: 5px;
+        accent-color: #0d6efd;
+    }
+
+    .automacao-opcoes {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #e3ebf3;
+    }
+
+    .automacao-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        cursor: pointer;
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .automacao-check input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: #0d6efd;
+    }
+
+    .automacao-acoes {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .automacao-acoes button {
+        min-width: 150px;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(15, 43, 67, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .automacao-acoes button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 7px 15px rgba(15, 43, 67, 0.15);
+    }
+
+    .automacao-status {
+        display: grid;
+        gap: 8px;
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid #e3ebf3;
+    }
+
+    .automacao-status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+        box-shadow: 0 2px 5px rgba(25, 55, 85, 0.03);
+        font-size: 13px;
+    }
+
+    .automacao-status-item.ok { border-color: #86efac; background: #f0fdf4; }
+    .automacao-status-item.erro { border-color: #fda4af; background: #fff1f2; }
+
+    .automacao-captura-status {
+        display: inline-block;
+        margin-top: 5px;
+        color: #526b7f;
+        font-size: 11px;
+    }
+
+    .automacao-captura-status.ativa { color: #168052; font-weight: 600; }
+
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .estado-badge.ok { background: #dcfce7; color: #166534; }
+    .estado-badge.erro { background: #ffe4e6; color: #9f1239; }
+
+    @media (max-width: 960px) {
+        .automacoes-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Automações</h1>
+<p class="page-description">Configure rotinas que geram arquivos RM TOTVS consolidados conforme o horário definido.</p>
+
+<div class="automacao-page">
+    <div class="card automacao-panel">
+        <div>
+            <h2 id="tituloFormulario">Nova rotina</h2>
+            <p class="automacao-intro">As empresas selecionadas serão reunidas em um único arquivo RM TOTVS consolidado.</p>
+        </div>
+
+        <div class="automacoes-grid">
+            <div class="auto-field">
+                <label for="automacaoNome">Nome da rotina</label>
+                <input type="text" id="automacaoNome" value="" placeholder="Ex.: Captura diária">
+            </div>
+
+            <div class="auto-field">
+                <label for="automacaoHora">Hora da captura</label>
+                <input type="time" id="automacaoHora" value="02:00">
+            </div>
+
+            <div class="auto-field">
+                <span class="label-strong">Dias da semana</span>
+                <div class="auto-dias">
+                    {% for dia, nome in [('seg', 'Seg'), ('ter', 'Ter'), ('qua', 'Qua'), ('qui', 'Qui'), ('sex', 'Sex'), ('sab', 'Sáb'), ('dom', 'Dom')] %}
+                    <button type="button" class="auto-dia{% if dia in ['seg', 'ter', 'qua', 'qui', 'sex'] %} active{% endif %}" data-dia="{{ dia }}">{{ nome }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="auto-field">
+                <label for="automacaoDiretorio">Diretório do arquivo</label>
+                <div class="diretorio-controles">
+                    <input type="text" id="automacaoDiretorio" value="{{ config_downloads }}" placeholder="Caminho completo da pasta de destino">
+                    <button type="button" class="button-secondary" id="btnUsarPastaPadrao">Usar pasta padrão</button>
+                </div>
+                <p class="diretorio-ajuda">Informe o caminho completo da pasta no computador onde o ChronoSnap está executando.</p>
+            </div>
+        </div>
+
+        <div>
+            <label class="label-strong">Empresas incluídas</label>
+            <label class="automacao-check" style="margin-top: 10px;">
+                <input type="checkbox" id="selectAllLojas">
+                Selecionar todas
+            </label>
+            <div class="automacao-lojas">
+                {% for loja in lojas %}
+                <label class="automacao-loja">
+                    <input type="checkbox" name="lojas" value="{{ loja.numero }}">
+                    <strong>{{ "%02d"|format(loja.numero) }}</strong><br>
+                    <small>{% if loja.afd_layout == "671" %}Portaria 671{% else %}Legado{% endif %}</small>
+                </label>
+                {% else %}
+                <p>Nenhuma empresa cadastrada.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="automacao-opcoes">
+            <label class="automacao-check">
+                <input type="checkbox" id="automacaoDiaAnterior" checked>
+                Capturar automaticamente o dia anterior
+            </label>
+            <label class="automacao-check">
+                <input type="checkbox" id="capturarMarcacoes">
+                Capturar novas marcações de todas as lojas no banco
+            </label>
+            <label class="automacao-check">
+                A cada
+                <input type="number" id="intervaloMarcacoes" min="1" max="1440" value="30" style="width: 80px;">
+                minutos
+            </label>
+        </div>
+
+        <div class="automacao-acoes">
+            <button type="button" id="btnSalvarAutomacao">Salvar rotina</button>
+            <button type="button" id="btnCancelarEdicao" class="button-secondary" hidden>Cancelar edição</button>
+            <button type="button" id="btnExecutarAutomacao" class="button-success">Executar agora</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Rotinas gravadas</h2>
+        <div class="automacao-status" id="automacoesList">
+            <div class="automacao-status-item"><span>Carregando rotinas...</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const obterLojasSelecionadas = () => Array.from(document.querySelectorAll('input[name="lojas"]:checked')).map(checkbox => Number(checkbox.value));
+const automacoesList = document.getElementById('automacoesList');
+const selectAllLojas = document.getElementById('selectAllLojas');
+const btnExecutarAutomacao = document.getElementById('btnExecutarAutomacao');
+const btnUsarPastaPadrao = document.getElementById('btnUsarPastaPadrao');
+const campoDiretorio = document.getElementById('automacaoDiretorio');
+const pastaPadrao = {{ config_downloads | tojson }};
+let automacoes = [];
+let automacaoEditando = null;
+
+selectAllLojas.addEventListener('change', () => document.querySelectorAll('input[name="lojas"]').forEach(checkbox => checkbox.checked = selectAllLojas.checked));
+document.getElementById('capturarMarcacoes').addEventListener('change', event => {
+    if (!event.target.checked) return;
+    selectAllLojas.checked = true;
+    document.querySelectorAll('input[name="lojas"]').forEach(checkbox => checkbox.checked = true);
+});
+document.querySelectorAll('.auto-dia').forEach(botao => botao.addEventListener('click', () => botao.classList.toggle('active')));
+btnUsarPastaPadrao.addEventListener('click', () => {
+    campoDiretorio.value = pastaPadrao;
+    campoDiretorio.focus();
+});
+
+function limparFormulario() {
+    automacaoEditando = null;
+    document.getElementById('tituloFormulario').textContent = 'Nova rotina';
+    document.getElementById('automacaoNome').value = '';
+    document.getElementById('automacaoHora').value = '02:00';
+    document.getElementById('automacaoDiretorio').value = {{ config_downloads | tojson }};
+    document.getElementById('automacaoDiaAnterior').checked = true;
+    document.getElementById('capturarMarcacoes').checked = false;
+    document.getElementById('intervaloMarcacoes').value = 30;
+    selectAllLojas.checked = false;
+    document.querySelectorAll('input[name="lojas"]').forEach(checkbox => checkbox.checked = false);
+    document.querySelectorAll('.auto-dia').forEach(botao => botao.classList.toggle('active', ['seg', 'ter', 'qua', 'qui', 'sex'].includes(botao.dataset.dia)));
+    document.getElementById('btnCancelarEdicao').hidden = true;
+}
+
+function formularioPayload() {
+    return {
+        nome: document.getElementById('automacaoNome').value.trim() || 'Captura diária',
+        hora: document.getElementById('automacaoHora').value || '02:00',
+        dias: Array.from(document.querySelectorAll('.auto-dia.active')).map(botao => botao.dataset.dia),
+        lojas: obterLojasSelecionadas(),
+        selecionar_todas: selectAllLojas.checked,
+        capturar_dia_anterior: document.getElementById('automacaoDiaAnterior').checked,
+        capturar_marcacoes: document.getElementById('capturarMarcacoes').checked,
+        intervalo_marcacoes_minutos: Number(document.getElementById('intervaloMarcacoes').value) || 30,
+        diretorio: document.getElementById('automacaoDiretorio').value.trim()
+    };
+}
+
+function editarAutomacao(automacao) {
+    automacaoEditando = automacao.id;
+    document.getElementById('tituloFormulario').textContent = 'Editar rotina';
+    document.getElementById('automacaoNome').value = automacao.nome || '';
+    document.getElementById('automacaoHora').value = automacao.hora || '02:00';
+    document.getElementById('automacaoDiretorio').value = automacao.diretorio || '';
+    document.getElementById('automacaoDiaAnterior').checked = automacao.capturar_dia_anterior;
+    document.getElementById('capturarMarcacoes').checked = Boolean(automacao.capturar_marcacoes);
+    document.getElementById('intervaloMarcacoes').value = automacao.intervalo_marcacoes_minutos || 30;
+    selectAllLojas.checked = automacao.selecionar_todas;
+    document.querySelectorAll('input[name="lojas"]').forEach(checkbox => checkbox.checked = automacao.lojas.includes(Number(checkbox.value)));
+    document.querySelectorAll('.auto-dia').forEach(botao => botao.classList.toggle('active', automacao.dias.includes(botao.dataset.dia)));
+    document.getElementById('btnCancelarEdicao').hidden = false;
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function renderizarAutomacoes() {
+    automacoesList.innerHTML = automacoes.length ? automacoes.map(automacao => `
+        <div class="automacao-status-item ${automacao.ativo ? 'ok' : ''}">
+            <div><strong>${automacao.nome}</strong><br><small>${automacao.hora} | ${automacao.dias.join(', ')} | ${automacao.diretorio || 'Diretório não informado'}</small><br><span class="automacao-captura-status ${automacao.capturar_marcacoes ? 'ativa' : ''}">${automacao.capturar_marcacoes ? `Captura ativa a cada ${automacao.intervalo_marcacoes_minutos || 30} min` : 'Captura de marcações desativada'}${automacao.ultima_carga_marcacoes ? ` | Última: ${automacao.ultima_carga_marcacoes}` : ''}</span></div>
+            <div class="automacao-acoes" style="margin: 0;"><button type="button" onclick='editarAutomacao(${JSON.stringify(automacao)})'>Editar</button><button type="button" class="button-danger" onclick="excluirAutomacao('${automacao.id}')">Excluir</button><button type="button" class="button-success" onclick="executarAutomacaoSalva('${automacao.id}')">Executar</button></div>
+        </div>`).join('') : '<div class="automacao-status-item"><span>Nenhuma rotina gravada.</span></div>';
+}
+
+async function carregarAutomacoes() {
+    const resposta = await fetch('/afd/automacoes/status');
+    const dados = await resposta.json();
+    automacoes = dados.automacoes || [];
+    renderizarAutomacoes();
+}
+
+async function salvarAutomacao() {
+    const payload = formularioPayload();
+    if (!payload.diretorio) { alert('Informe o diretório completo para salvar o arquivo.'); return; }
+    const url = automacaoEditando ? `/afd/automacoes/${automacaoEditando}` : '/afd/automacoes';
+    const resposta = await fetch(url, {method: automacaoEditando ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+    if (!resposta.ok) {
+        let erro = 'Não foi possível salvar a rotina.';
+        try { const dadosErro = await resposta.json(); erro = dadosErro.detail || erro; } catch (_) {}
+        alert(erro);
+        return;
+    }
+    const dados = await resposta.json();
+    alert(payload.capturar_marcacoes ? `Rotina salva. Captura automática ativa a cada ${payload.intervalo_marcacoes_minutos} minutos.` : 'Rotina salva com sucesso.');
+    if (dados.automacao) {
+        editarAutomacao(dados.automacao);
+    }
+    await carregarAutomacoes();
+}
+
+async function excluirAutomacao(id) {
+    if (!confirm('Excluir esta rotina programada?')) return;
+    const resposta = await fetch(`/afd/automacoes/${id}`, {method: 'DELETE'});
+    if (!resposta.ok) { alert('Não foi possível excluir a rotina.'); return; }
+    if (automacaoEditando === id) limparFormulario();
+    await carregarAutomacoes();
+}
+
+async function executarAutomacaoSalva(id) {
+    const resposta = await fetch(`/afd/automacoes/${id}/executar`, {method: 'POST'});
+    const dados = await resposta.json();
+    if (!resposta.ok) { alert(dados.detail || 'Erro ao executar a rotina.'); return; }
+    alert(`Captura concluída. Arquivo: ${dados.arquivo}`);
+}
+
+document.getElementById('btnSalvarAutomacao').addEventListener('click', salvarAutomacao);
+document.getElementById('btnCancelarEdicao').addEventListener('click', limparFormulario);
+btnExecutarAutomacao.addEventListener('click', async () => {
+    if (automacaoEditando) return executarAutomacaoSalva(automacaoEditando);
+    alert('Salve a rotina antes de executá-la.');
+});
+carregarAutomacoes();
+</script>
+{% endblock %}

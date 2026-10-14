@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Gerenciamento de Usuários - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Gerenciamento de Usuários
+{% endblock %}
+
+{% block head %}
+<style>
+    .usuarios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+    }
+
+    .usuario-card {
+        display: flex;
+        min-height: 248px;
+        flex-direction: column;
+        background: white;
+        border-radius: 8px;
+        padding: 22px;
+        border: 1px solid #e2e8f0;
+        border-top: 4px solid #006fc9;
+        box-shadow: 0 4px 14px rgba(25, 37, 53, 0.07);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .usuario-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(25, 37, 53, 0.11);
+    }
+
+    .usuario-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .usuario-identidade {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .usuario-avatar {
+        display: grid;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 50%;
+        background: #e6f0fa;
+        color: #005a9e;
+        font-size: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .usuario-nome {
+        overflow: hidden;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a202c;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .usuario-login {
+        margin-top: 3px;
+        overflow: hidden;
+        color: #718096;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .usuario-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .badge-completo {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-restrito {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .usuario-info {
+        padding: 10px 0;
+        border-top: 1px solid #edf2f7;
+    }
+
+    .usuario-label {
+        font-size: 12px;
+        color: #718096;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .usuario-valor {
+        font-size: 13px;
+        color: #2d3748;
+        font-weight: 500;
+    }
+
+    .usuario-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        margin-top: auto;
+        margin-bottom: 16px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: #f0fff4;
+    }
+
+    .usuario-status.inativo {
+        background: #fff5f5;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #48bb78;
+    }
+
+    .status-dot.inativo {
+        background: #f56565;
+    }
+
+    .usuario-status-text {
+        font-size: 12px;
+        color: #4a5568;
+    }
+
+    .usuario-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 0;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn-small {
+        flex: 1;
+        min-height: 34px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+
+    .btn-edit {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .btn-edit:hover {
+        background: #bfdbfe;
+    }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .btn-delete:hover {
+        background: #fecaca;
+    }
+
+    .btn-protegido,
+    .btn-protegido:hover {
+        background: #edf2f7;
+        color: #718096;
+        cursor: not-allowed;
+    }
+
+    .btn-protegido {
+        font-size: 11px;
+    }
+
+    .integridade-aviso {
+        margin: 0 0 20px;
+        padding: 12px 16px;
+        border: 1px solid #f6ad55;
+        border-radius: 6px;
+        background: #fffaf0;
+        color: #7b341e;
+        font-size: 13px;
+    }
+
+    .usuarios-list {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: #f7fafc;
+    }
+
+    th {
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+        color: #2d3748;
+        font-size: 12px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 13px;
+    }
+
+    tr:hover td {
+        background: #f7fafc;
+    }
+
+    .tab-buttons {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-btn {
+        padding: 12px 16px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-weight: bold;
+        color: #718096;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+        color: #006fc9;
+        border-bottom-color: #006fc9;
+    }
+
+    .usuarios-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        padding: 20px;
+        background: rgba(25, 37, 53, 0.55);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-backdrop.open {
+        display: flex;
+    }
+
+    .usuario-modal {
+        width: min(100%, 560px);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        padding: 24px;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+    }
+
+    @media (max-width: 768px) {
+        .usuarios-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .usuario-card {
+            min-height: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Gerenciamento de Usuários</h1>
+<p class="page-description">Visualize, adicione e gerencie os usuários do sistema.</p>
+
+<div class="integridade-aviso" role="alert">
+    <strong>Proteção de integridade:</strong>
+    o usuário Administrador não pode ser editado, desativado ou excluído para evitar que o sistema fique sem administrador.
+</div>
+
+<div class="card">
+    <div class="usuarios-toolbar">
+        <h2 style="margin: 0;">Usuários do sistema</h2>
+        <button type="button" id="btnNovoUsuario">Adicionar usuário</button>
+    </div>
+
+    <div class="tab-buttons">
+        <button class="tab-btn active" id="btnGridView" onclick="alternarVisao('grid')">
+            📊 Visualização em Grid
+        </button>
+        <button class="tab-btn" id="btnListView" onclick="alternarVisao('lista')">
+            📋 Visualização em Lista
+        </button>
+    </div>
+
+    <div id="gridView" class="usuarios-grid" style="display: grid;">
+        <!-- Usuários serão carregados aqui -->
+    </div>
+
+    <div id="listaView" class="usuarios-list" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Nome</th>
+                    <th>Perfil</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="usuariosTabela">
+                <!-- Usuários serão carregados aqui -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="mensagemVazio" style="text-align: center; padding: 40px; color: #718096;">
+        <p style="font-size: 16px;">Nenhum usuário encontrado</p>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <form class="usuario-modal" id="usuarioForm">
+        <h2 id="modalTitulo" style="margin-top: 0;">Adicionar usuário</h2>
+        <input type="hidden" id="usuarioId">
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="usuarioNome">Nome</label>
+                <input type="text" id="usuarioNome" required maxlength="150">
+            </div>
+            <div class="form-group">
+                <label for="usuarioLogin">Usuário</label>
+                <input type="text" id="usuarioLogin" required maxlength="50" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="usuarioEmail">E-mail</label>
+                <input type="email" id="usuarioEmail" maxlength="100" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="usuarioPerfil">Perfil</label>
+                <select id="usuarioPerfil">
+                    <option value="Restrito">Usuário comum</option>
+                    <option value="Completo">Administrador</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="usuarioSenha">Senha</label>
+                <input type="password" id="usuarioSenha" minlength="6" autocomplete="new-password">
+                <small id="senhaAjuda">Mínimo de 6 caracteres.</small>
+            </div>
+            <div class="form-group" style="display: flex; align-items: end; padding-bottom: 10px;">
+                <label style="text-transform: none; font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="usuarioAtivo" checked>
+                    Usuário ativo
+                </label>
+            </div>
+        </div>
+
+        <div id="usuarioMensagem" class="espelho-error" style="display: none;"></div>
+
+        <div class="modal-actions">
+            <button type="button" class="button-secondary" id="btnCancelarUsuario">Cancelar</button>
+            <button type="submit" id="btnSalvarUsuario">Salvar usuário</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let usuarios = [];
+    let visaoAtual = 'grid';
+    const usuarioModal = document.getElementById('usuarioModal');
+    const usuarioForm = document.getElementById('usuarioForm');
+    const usuarioMensagem = document.getElementById('usuarioMensagem');
+
+    // Carregar usuários ao iniciar
+    async function carregarUsuarios() {
+        try {
+            const response = await fetch('/config/usuarios/list');
+            if (response.ok) {
+                usuarios = await response.json();
+                renderizarUsuarios();
+            } else {
+                console.error('Erro ao carregar usuários');
+            }
+        } catch (erro) {
+            console.error('Erro:', erro.message);
+        }
+    }
+
+    function renderizarUsuarios() {
+        const gridView = document.getElementById('gridView');
+        const listaView = document.getElementById('usuariosTabela');
+        const mensagemVazio = document.getElementById('mensagemVazio');
+
+        if (usuarios.length === 0) {
+            mensagemVazio.style.display = 'block';
+            gridView.innerHTML = '';
+            listaView.innerHTML = '';
+            return;
+        }
+
+        mensagemVazio.style.display = 'none';
+
+        // Grid
+        gridView.innerHTML = usuarios.map(user => `
+            <div class="usuario-card">
+                <div class="usuario-header">
+                    <div class="usuario-identidade">
+                        <div class="usuario-avatar">${iniciaisUsuario(user.nome)}</div>
+                        <div>
+                            <div class="usuario-nome">${escapeHtml(user.nome)}</div>
+                            <div class="usuario-login">@${escapeHtml(user.username)}</div>
+                        </div>
+                    </div>
+                    <span class="usuario-badge ${user.perfil === 'Completo' ? 'badge-completo' : 'badge-restrito'}">
+                        ${user.perfil === 'Completo' ? 'Admin' : 'Usuário'}
+                    </span>
+                </div>
+                
+                ${user.email ? `
+                    <div class="usuario-info">
+                        <div class="usuario-label">E-mail</div>
+                        <div class="usuario-valor">${escapeHtml(user.email)}</div>
+                    </div>
+                ` : ''}
+
+                <div class="usuario-status ${user.ativo ? '' : 'inativo'}">
+                    <span class="status-dot ${user.ativo ? '' : 'inativo'}"></span>
+                    <span class="usuario-status-text">${user.ativo ? 'Ativo' : 'Inativo'}</span>
+                </div>
+
+                <div class="usuario-actions">
+                    ${botoesAcoesUsuario(user)}
+                </div>
+            </div>
+        `).join('');
+
+        // Lista
+        listaView.innerHTML = usuarios.map(user => `
+            <tr>
+                <td><strong>@${escapeHtml(user.username)}</strong></td>
+                <td>${escapeHtml(user.nome)}</td>
+                <td>
+                    <span class="usuario-badge ${user.perfil === 'Completo' ? 'badge-completo' : 'badge-restrito'}">
+                        ${user.perfil}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-dot ${user.ativo ? '' : 'inativo'}" style="display: inline-block;"></span>
+                    ${user.ativo ? 'Ativo' : 'Inativo'}
+                </td>
+                <td>
+                    ${botoesAcoesUsuario(user)}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function alternarVisao(visao) {
+        visaoAtual = visao;
+        document.getElementById('gridView').style.display = visao === 'grid' ? 'grid' : 'none';
+        document.getElementById('listaView').style.display = visao === 'lista' ? 'block' : 'none';
+        
+        document.getElementById('btnGridView').classList.toggle('active', visao === 'grid');
+        document.getElementById('btnListView').classList.toggle('active', visao === 'lista');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function iniciaisUsuario(nome) {
+        return nome.trim().split(/\s+/).slice(0, 2).map(parte => parte[0]).join('');
+    }
+
+    function usuarioAdministrador(user) {
+        return user.username.trim().toLowerCase() === 'admin';
+    }
+
+    function botoesAcoesUsuario(user) {
+        if (usuarioAdministrador(user)) {
+            return `
+                <button class="btn-small btn-protegido" type="button" disabled title="Usuário Administrador protegido">Protegido</button>
+                <button class="btn-small btn-protegido" type="button" disabled title="Usuário Administrador protegido">Protegido</button>
+            `;
+        }
+
+        return `
+            <button class="btn-small btn-edit" onclick="editarUsuario(${user.id})">Editar</button>
+            <button class="btn-small btn-delete" onclick="deletarUsuario(${user.id})">Deletar</button>
+        `;
+    }
+
+    function editarUsuario(id) {
+        const usuario = usuarios.find(item => item.id === id);
+        if (!usuario) return;
+        if (usuarioAdministrador(usuario)) {
+            alert('Violação de integridade do sistema: o usuário Administrador é protegido.');
+            return;
+        }
+        abrirModal(usuario);
+    }
+
+    async function deletarUsuario(id) {
+        const usuario = usuarios.find(item => item.id === id);
+        if (!usuario) return;
+        if (usuarioAdministrador(usuario)) {
+            alert('Violação de integridade do sistema: o usuário Administrador não pode ser excluído.');
+            return;
+        }
+        if (!confirm(`Excluir o usuário ${usuario.username}?`)) return;
+
+        const resposta = await fetch(`/config/usuarios/${id}`, { method: 'DELETE' });
+        const dados = await resposta.json();
+        if (!resposta.ok) {
+            alert(dados.detail || 'Não foi possível excluir o usuário.');
+            return;
+        }
+        carregarUsuarios();
+    }
+
+    function abrirModal(usuario = null) {
+        usuarioForm.reset();
+        usuarioMensagem.style.display = 'none';
+        document.getElementById('usuarioId').value = usuario?.id || '';
+        document.getElementById('usuarioNome').value = usuario?.nome || '';
+        document.getElementById('usuarioLogin').value = usuario?.username || '';
+        document.getElementById('usuarioEmail').value = usuario?.email || '';
+        document.getElementById('usuarioPerfil').value = usuario?.perfil || 'Restrito';
+        document.getElementById('usuarioAtivo').checked = usuario?.ativo ?? true;
+        document.getElementById('usuarioAtivo').disabled = usuario ? usuarioAdministrador(usuario) : false;
+        document.getElementById('modalTitulo').textContent = usuario ? 'Editar usuário' : 'Adicionar usuário';
+        document.getElementById('senhaAjuda').textContent = usuario ? 'Preencha apenas para redefinir a senha.' : 'Mínimo de 6 caracteres.';
+        document.getElementById('usuarioSenha').required = !usuario;
+        usuarioModal.classList.add('open');
+        document.getElementById('usuarioNome').focus();
+    }
+
+    function fecharModal() {
+        usuarioModal.classList.remove('open');
+    }
+
+    document.getElementById('btnNovoUsuario').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCancelarUsuario').addEventListener('click', fecharModal);
+    usuarioModal.addEventListener('click', event => {
+        if (event.target === usuarioModal) fecharModal();
+    });
+
+    usuarioForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const usuarioId = document.getElementById('usuarioId').value;
+        const dados = {
+            nome: document.getElementById('usuarioNome').value.trim(),
+            username: document.getElementById('usuarioLogin').value.trim(),
+            email: document.getElementById('usuarioEmail').value.trim() || null,
+            perfil: document.getElementById('usuarioPerfil').value,
+            ativo: document.getElementById('usuarioAtivo').checked,
+            senha: document.getElementById('usuarioSenha').value || null
+        };
+
+        const resposta = await fetch(
+            usuarioId ? `/config/usuarios/${usuarioId}` : '/config/usuarios',
+            {
+                method: usuarioId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            }
+        );
+        const retorno = await resposta.json();
+
+        if (!resposta.ok) {
+            usuarioMensagem.textContent = retorno.detail || 'Não foi possível salvar o usuário.';
+            usuarioMensagem.style.display = 'block';
+            return;
+        }
+
+        fecharModal();
+        carregarUsuarios();
+    });
+
+    // Carregar ao iniciar
+    carregarUsuarios();
+</script>
+
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoria - ChronoSnap{% endblock %}
+{% block topbar_title %}Auditoria{% endblock %}
+
+{% block head %}
+<style>
+    .auditoria-toolbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .auditoria-retencao {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+    }
+
+    .auditoria-retencao input { width: 110px; }
+    .auditoria-table-wrap { overflow-x: auto; }
+    .auditoria-table { min-width: 780px; }
+    .auditoria-detalhes { max-width: 280px; white-space: normal; word-break: break-word; }
+    .auditoria-sucesso { color: #168052; font-weight: 600; }
+    .auditoria-falha { color: #b93846; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Auditoria</h1>
+<p class="page-description">Acompanhe as ações realizadas pelos usuários do sistema.</p>
+
+<section class="card">
+    <div class="auditoria-toolbar">
+        <div>
+            <h2>Retenção dos registros</h2>
+            <p class="page-description">Registros anteriores ao prazo são removidos automaticamente.</p>
+        </div>
+        <form class="auditoria-retencao" id="retencao-form">
+            <div class="form-group">
+                <label for="retencao-dias">Dias</label>
+                <input id="retencao-dias" type="number" min="1" max="3650" value="{{ retencao_dias }}" required>
+            </div>
+            <button type="submit">Salvar prazo</button>
+            <button type="button" class="button-danger" id="limpar-logs">Limpar vencidos</button>
+        </form>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Registros recentes</h2>
+    <div class="auditoria-table-wrap">
+        <table class="auditoria-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Usuário</th>
+                    <th>Ação</th>
+                    <th>Recurso</th>
+                    <th>Resultado</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.criado_em.strftime("%d/%m/%Y %H:%M:%S") if log.criado_em else "-" }}</td>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.acao }}</td>
+                    <td>{{ log.recurso }}</td>
+                    <td class="{{ 'auditoria-sucesso' if log.sucesso else 'auditoria-falha' }}">
+                        {{ "Sucesso" if log.sucesso else "Falha" }}
+                    </td>
+                    <td class="auditoria-detalhes">{{ log.detalhes or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6">Nenhum registro de auditoria.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+    async function enviarAuditoria(url, body) {
+        const resposta = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) throw new Error(dados.detail || "Não foi possível concluir a operação.");
+        return dados;
+    }
+
+    document.querySelector("#retencao-form").addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+            const dados = await enviarAuditoria("/config/auditoria/configuracao", {
+                dias: document.querySelector("#retencao-dias").value
+            });
+            alert(dados.mensagem);
+            window.location.reload();
+        } catch (erro) {
+            alert(erro.message);
+        }
+    });
+
+    document.querySelector("#limpar-logs").addEventListener("click", async () => {
+        if (!confirm("Limpar somente os registros vencidos?")) return;
+        try {
+            const dados = await enviarAuditoria("/config/auditoria/limpar");
+            alert(dados.mensagem);
+            window.location.reload();
+        } catch (erro) {
+            alert(erro.message);
+        }
+    });
+</script>
+{% endblock %}

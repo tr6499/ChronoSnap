@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Informações do Sistema - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Informações do Sistema
+{% endblock %}
+
+{% block head %}
+<style>
+	.system-form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 16px;
+		align-items: end;
+	}
+
+	.system-result {
+		display: none;
+	}
+
+	.datetime-form {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	.clock-card {
+		padding: 20px;
+		background: linear-gradient(135deg, #006fc9 0%, #005a9e 100%);
+		color: white;
+		border-radius: 8px;
+		text-align: center;
+		box-shadow: 0 4px 12px rgba(0, 111, 201, 0.2);
+		margin-top: 8px;
+	}
+
+	.clock-card-label {
+		font-size: 12px;
+		text-transform: uppercase;
+		opacity: 0.9;
+		margin-bottom: 8px;
+		letter-spacing: 0.5px;
+	}
+
+	.clock-card-time {
+		font-size: 32px;
+		font-weight: bold;
+		margin-bottom: 8px;
+		font-family: 'Courier New', monospace;
+	}
+
+	.clock-card-status {
+		font-size: 13px;
+		opacity: 0.95;
+	}
+
+	.sync-all-result {
+		margin-top: 12px;
+		font-size: 13px;
+	}
+
+	.system-actions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+
+	.idcloud-status {
+		font-size: 13px;
+	}
+
+	.idcloud-state {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 6px;
+	}
+
+	.idcloud-state-icon {
+		width: 28px;
+		height: 28px;
+	}
+
+	.idcloud-panel {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.idcloud-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		cursor: pointer;
+		font-weight: bold;
+	}
+
+	.idcloud-toggle input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.idcloud-switch {
+		position: relative;
+		width: 52px;
+		height: 28px;
+		border-radius: 28px;
+		background: #94a3b8;
+		transition: background 0.2s;
+	}
+
+	.idcloud-switch::after {
+		content: "";
+		position: absolute;
+		top: 4px;
+		left: 4px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: white;
+		transition: transform 0.2s;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch {
+		background: #198754;
+	}
+
+	.idcloud-toggle input:checked + .idcloud-switch::after {
+		transform: translateX(24px);
+	}
+
+	.system-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+		gap: 14px;
+	}
+
+	.system-item {
+		padding: 14px;
+		background: #f8fafc;
+		border-radius: 6px;
+	}
+
+	.system-item label {
+		display: block;
+		margin-bottom: 6px;
+		color: #64748b;
+		font-size: 12px;
+	}
+
+	.system-item span {
+		overflow-wrap: anywhere;
+		font-weight: bold;
+	}
+
+	.network-edit {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+		margin-top: 20px;
+	}
+
+	.network-edit-actions {
+		grid-column: 1 / -1;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.system-error {
+		padding: 15px;
+		border-radius: 6px;
+		background: #fee2e2;
+		color: #991b1b;
+	}
+
+	@media (max-width: 650px) {
+		.system-form {
+			grid-template-columns: 1fr;
+		}
+
+		.system-form button {
+			width: 100%;
+		}
+
+		.system-actions {
+			flex-direction: column;
+		}
+
+		.idcloud-panel {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+
+		.datetime-form {
+			grid-template-columns: 1fr;
+		}
+
+		.network-edit {
+			grid-template-columns: 1fr;
+		}
+
+		.network-edit-actions {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.clock-card-time {
+			font-size: 24px;
+		}
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Informações do Sistema</h1>
+<p class="page-description">Consulte as informações e estatísticas do equipamento pela API IDClass.</p>
+
+<form id="systemForm" class="card system-form">
+	<div class="form-group">
+		<label for="empresa">Empresa</label>
+		<select id="empresa" required>
+			<option value="">Selecione uma empresa</option>
+			{% for empresa in empresas %}
+			<option value="{{ empresa.numero }}">
+				{{ "%02d"|format(empresa.numero) }} - {{ empresa.nome }}
+			</option>
+			{% endfor %}
+		</select>
+	</div>
+</form>
+
+<div class="clock-card">
+	<div class="clock-card-label">🕐 Relógio do Equipamento</div>
+	<div class="clock-card-time" id="clockDatetime">--:--:--</div>
+	<div class="clock-card-status" id="clockStatus">Selecione uma empresa para consultar</div>
+</div>
+
+<form id="systemActionsForm" class="card">
+	<div class="system-actions">
+		<button type="button" id="btnConsultar">Informações do Sistema</button>
+		<button type="button" id="btnConsultarRep" class="button-secondary">Informações do REP</button>
+		<button type="button" id="btnConsultarRede" class="button-secondary">Configuração de Rede</button>
+	</div>
+</form>
+
+<section class="card">
+	<h2>Sincronização geral</h2>
+	<p>Atualize a data e hora de todas as empresas com o horário deste servidor.</p>
+	<button type="button" id="btnSincronizarTodos" class="button-success">Sincronizar todos</button>
+	<div id="syncAllStatus" class="sync-all-result" role="status"></div>
+</section>
+
+<section id="resultado" class="card system-result">
+	<h2 id="resultadoTitulo">Dados do sistema</h2>
+	<div id="resultadoConteudo"></div>
+</section>
+
+<section id="resultadoRep" class="card system-result">
+	<h2 id="resultadoRepTitulo">Dados do REP</h2>
+	<div id="resultadoRepConteudo"></div>
+</section>
+
+<section id="resultadoRede" class="card system-result">
+	<h2 id="resultadoRedeTitulo">Configuração de Rede</h2>
+	<div id="resultadoRedeConteudo"></div>
+	<form id="redeForm" class="network-edit">
+		<div class="form-group">
+			<label for="redeIp">Endereço IP</label>
+			<input type="text" id="redeIp" required>
+		</div>
+		<div class="form-group">
+			<label for="redeMascara">Máscara de rede</label>
+			<input type="text" id="redeMascara" required>
+		</div>
+		<div class="form-group">
+			<label for="redeGateway">Gateway</label>
+			<input type="text" id="redeGateway" required>
+		</div>
+		<div class="form-group">
+			<label for="redeDns">DNS</label>
+			<input type="text" id="redeDns">
+		</div>
+		<div class="form-group">
+			<label for="redePorta">Porta</label>
+			<input type="number" id="redePorta" min="1" max="65535">
+		</div>
+		<label class="idcloud-toggle">
+			<input type="checkbox" id="redeDhcp">
+			<span class="idcloud-switch" aria-hidden="true"></span>
+			Usar DHCP
+		</label>
+		<div class="network-edit-actions">
+			<button type="submit" id="btnSalvarRede" class="button-success">Salvar configuração</button>
+			<span id="redeStatus" class="idcloud-status" role="status">Alterar o IP pode interromper a conexão.</span>
+		</div>
+	</form>
+</section>
+
+<section class="card">
+	<h2>Ajustar data e hora</h2>
+	<p>Defina a data e hora do equipamento selecionado conforme a API IDClass.</p>
+	<form id="datetimeForm">
+		<div class="datetime-form">
+			<div class="form-group">
+				<label for="dataHora">Data e hora</label>
+				<input type="datetime-local" id="dataHora" required>
+			</div>
+			<div class="form-group">
+				<label for="timezone">Fuso horário</label>
+				<input type="text" id="timezone" value="-0300" pattern="[+-][0-9]{4}" required>
+			</div>
+		</div>
+		<button type="submit" id="btnAjustarData">Ajustar data e hora</button>
+		<span id="datetimeStatus" class="idcloud-status" role="status"></span>
+	</form>
+</section>
+
+<section class="card idcloud-panel">
+	<div>
+		<div class="idcloud-state">
+			<img id="idcloudStateIcon" class="idcloud-state-icon" src="/static/ico3.svg" alt="iDCloud desativado">
+			<h2 style="margin: 0;">iDCloud</h2>
+		</div>
+		<div id="idcloudStatus" class="idcloud-status" role="status">Selecione uma empresa para alterar o iDCloud.</div>
+	</div>
+	<label class="idcloud-toggle" for="idcloudToggle">
+		<span id="idcloudLabel">Desligado</span>
+		<input type="checkbox" id="idcloudToggle" disabled>
+		<span class="idcloud-switch" aria-hidden="true"></span>
+	</label>
+</section>
+
+<script>
+	const form = document.getElementById("systemForm");
+	const empresa = document.getElementById("empresa");
+	const resultado = document.getElementById("resultado");
+	const titulo = document.getElementById("resultadoTitulo");
+	const conteudo = document.getElementById("resultadoConteudo");
+	const botao = document.getElementById("btnConsultar");
+	const resultadoRep = document.getElementById("resultadoRep");
+	const tituloRep = document.getElementById("resultadoRepTitulo");
+	const conteudoRep = document.getElementById("resultadoRepConteudo");
+	const botaoRep = document.getElementById("btnConsultarRep");
+	const botaoRede = document.getElementById("btnConsultarRede");
+	const resultadoRede = document.getElementById("resultadoRede");
+	const tituloRede = document.getElementById("resultadoRedeTitulo");
+	const conteudoRede = document.getElementById("resultadoRedeConteudo");
+	const redeForm = document.getElementById("redeForm");
+	const redeIp = document.getElementById("redeIp");
+	const redeMascara = document.getElementById("redeMascara");
+	const redeGateway = document.getElementById("redeGateway");
+	const redeDns = document.getElementById("redeDns");
+	const redePorta = document.getElementById("redePorta");
+	const redeDhcp = document.getElementById("redeDhcp");
+	const btnSalvarRede = document.getElementById("btnSalvarRede");
+	const redeStatus = document.getElementById("redeStatus");
+	const datetimeForm = document.getElementById("datetimeForm");
+	const dataHora = document.getElementById("dataHora");
+	const timezone = document.getElementById("timezone");
+	const botaoAjustarData = document.getElementById("btnAjustarData");
+	const datetimeStatus = document.getElementById("datetimeStatus");
+	const clockDatetime = document.getElementById("clockDatetime");
+	const clockStatus = document.getElementById("clockStatus");
+	const botaoSincronizarTodos = document.getElementById("btnSincronizarTodos");
+	const syncAllStatus = document.getElementById("syncAllStatus");
+	const idcloudStatus = document.getElementById("idcloudStatus");
+	const idcloudToggle = document.getElementById("idcloudToggle");
+	const idcloudLabel = document.getElementById("idcloudLabel");
+	const idcloudStateIcon = document.getElementById("idcloudStateIcon");
+
+	const agora = new Date();
+	agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+	dataHora.value = agora.toISOString().slice(0, 16);
+
+	const rotulos = {
+		uptime: "Tempo ligado",
+		user_count: "Usuários cadastrados",
+		template_count: "Digitais cadastradas",
+		number_of_faces: "Faces cadastradas",
+		ticks: "Tempo ligado (ticks)",
+		cuts: "Cortes de papel",
+		coil_paper: "Bobina restante",
+		total_paper: "Total de bobina",
+		paper_ok: "Papel disponível",
+		low_paper: "Pouco papel",
+		memory: "Memória utilizada",
+		used_mrp: "MRP utilizado",
+		last_nsr: "Última NSR",
+		ip: "Endereço IP",
+		netmask: "Máscara de rede",
+		gateway: "Gateway",
+		use_dhcp: "DHCP ativado",
+		port: "Porta"
+	};
+
+	function escapeHtml(value) {
+		return String(value ?? "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#039;");
+	}
+
+	function formatarValor(valor) {
+		if (valor === null || valor === undefined) return "Não informado";
+		if (typeof valor === "boolean") return valor ? "Sim" : "Não";
+		return String(valor);
+	}
+
+	function atualizarIconeIdcloud(enable) {
+		idcloudStateIcon.src = enable ? "/static/ico2.svg" : "/static/ico3.svg";
+		idcloudStateIcon.alt = enable ? "iDCloud ativado" : "iDCloud desativado";
+	}
+
+	async function consultarSistema() {
+		if (!empresa.value) return;
+
+		botao.disabled = true;
+		botao.textContent = "Consultando...";
+		resultado.style.display = "block";
+		conteudo.innerHTML = "Consultando o equipamento...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/information`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar o equipamento.");
+			}
+
+			titulo.textContent = `Dados do sistema - ${empresa.options[empresa.selectedIndex].text}`;
+			const itens = Object.entries(dados);
+			conteudo.innerHTML = itens.length
+				? `<div class="system-grid">${itens.map(([chave, valor]) => `
+					<div class="system-item">
+						<label>${escapeHtml(rotulos[chave] || chave)}</label>
+						<span>${escapeHtml(formatarValor(valor))}</span>
+					</div>
+				`).join("")}</div>`
+				: "A API não retornou informações para este equipamento.";
+		} catch (erro) {
+			conteudo.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+		} finally {
+			botao.disabled = false;
+			botao.textContent = "Consultar";
+		}
+	}
+
+	async function consultarRep() {
+		if (!empresa.value) return;
+
+		botaoRep.disabled = true;
+		botaoRep.textContent = "Consultando...";
+		resultadoRep.style.display = "block";
+		conteudoRep.innerHTML = "Consultando o equipamento...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/rep-information`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar o REP.");
+			}
+
+			tituloRep.textContent = `Dados do REP - ${empresa.options[empresa.selectedIndex].text}`;
+			const itens = Object.entries(dados);
+			conteudoRep.innerHTML = itens.length
+				? `<div class="system-grid">${itens.map(([chave, valor]) => `
+					<div class="system-item">
+						<label>${escapeHtml(rotulos[chave] || chave)}</label>
+						<span>${escapeHtml(formatarValor(valor))}</span>
+					</div>
+				`).join("")}</div>`
+				: "A API não retornou informações para este REP.";
+		} catch (erro) {
+			conteudoRep.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+		} finally {
+			botaoRep.disabled = false;
+			botaoRep.textContent = "Consultar informações do REP";
+		}
+	}
+
+	async function consultarRede() {
+		if (!empresa.value) return;
+
+		botaoRede.disabled = true;
+		botaoRede.textContent = "Consultando...";
+		resultadoRede.style.display = "block";
+		conteudoRede.innerHTML = "Consultando a configuração de rede...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/network`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar a rede.");
+			}
+
+			tituloRede.textContent = `Configuração de Rede - ${empresa.options[empresa.selectedIndex].text}`;
+			redeIp.value = dados.ip || "";
+			redeIp.dataset.original = redeIp.value;
+			redeMascara.value = dados.netmask || "";
+			redeGateway.value = dados.gateway || "";
+			redeDns.value = dados.dns || "";
+			redePorta.value = dados.port || "";
+			redeDhcp.checked = Boolean(dados.use_dhcp);
+			const itens = Object.entries(dados);
+			conteudoRede.innerHTML = itens.length
+				? `<div class="system-grid">${itens.map(([chave, valor]) => `
+					<div class="system-item">
+						<label>${escapeHtml(rotulos[chave] || chave)}</label>
+						<span>${escapeHtml(formatarValor(valor))}</span>
+					</div>
+				`).join("")}</div>`
+				: "A API não retornou configuração de rede.";
+		} catch (erro) {
+			conteudoRede.innerHTML = `<div class="system-error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+		} finally {
+			botaoRede.disabled = false;
+			botaoRede.textContent = "Configuração de Rede";
+		}
+	}
+
+	redeForm.addEventListener("submit", async event => {
+		event.preventDefault();
+		if (!empresa.value) return;
+
+		if (redeIp.value !== (redeIp.dataset.original || redeIp.value)) {
+			if (!confirm("Alterar o IP pode desconectar o equipamento. Deseja continuar?")) return;
+		}
+
+		const payload = {
+			ip: redeIp.value.trim(),
+			netmask: redeMascara.value.trim(),
+			gateway: redeGateway.value.trim(),
+			dns: redeDns.value.trim(),
+			port: redePorta.value ? Number(redePorta.value) : undefined,
+			use_dhcp: redeDhcp.checked
+		};
+
+		btnSalvarRede.disabled = true;
+		btnSalvarRede.textContent = "Salvando...";
+		redeStatus.textContent = "Salvando configuração de rede...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/network`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload)
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+			if (!resposta.ok) throw new Error(dados.detail || "Não foi possível salvar a rede.");
+
+			redeStatus.textContent = "Configuração de rede salva com sucesso.";
+			redeIp.dataset.original = redeIp.value;
+		} catch (erro) {
+			redeStatus.textContent = `Erro: ${erro.message}`;
+		} finally {
+			btnSalvarRede.disabled = false;
+			btnSalvarRede.textContent = "Salvar configuração";
+		}
+	});
+
+	async function consultarDataHoraRelogio() {
+		if (!empresa.value) {
+			clockDatetime.textContent = "--:--:--";
+			clockStatus.textContent = "Selecione uma empresa para consultar";
+			return;
+		}
+
+		clockStatus.textContent = "Consultando...";
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/datetime`, { cache: "no-store" });
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+			if (!resposta.ok) throw new Error(dados.detail || "Não foi possível consultar a data e hora.");
+
+			const data = dados.day && dados.month && dados.year
+				? `${String(dados.day).padStart(2, "0")}/${String(dados.month).padStart(2, "0")}/${dados.year}`
+				: "Data não informada";
+			const hora = dados.hour !== undefined
+				? `${String(dados.hour).padStart(2, "0")}:${String(dados.minute || 0).padStart(2, "0")}:${String(dados.second || 0).padStart(2, "0")}`
+				: "Hora não informada";
+			clockDatetime.textContent = hora;
+			clockStatus.textContent = data;
+		} catch (erro) {
+			clockDatetime.textContent = "--:--:--";
+			clockStatus.textContent = `Erro: ${erro.message}`;
+		}
+	}
+
+	datetimeForm.addEventListener("submit", async event => {
+		event.preventDefault();
+		if (!empresa.value) {
+			datetimeStatus.textContent = "Selecione uma empresa antes de continuar.";
+			return;
+		}
+
+		// Parse seguro do datetime-local
+		const [data, hora] = dataHora.value.split("T");
+		const [ano, mes, dia] = data.split("-").map(x => parseInt(x, 10));
+		const [h, m] = hora.split(":").map(x => parseInt(x, 10));
+
+		const payload = {
+			day: dia,
+			month: mes,
+			year: ano,
+			hour: h,
+			minute: m,
+			second: 0,
+			timezone: timezone.value
+		};
+
+		botaoAjustarData.disabled = true;
+		botaoAjustarData.textContent = "Ajustando...";
+		datetimeStatus.textContent = "";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/datetime`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload)
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível ajustar a data e hora.");
+			}
+
+			datetimeStatus.textContent = "Data e hora ajustadas com sucesso.";
+			consultarDataHoraRelogio();
+		} catch (erro) {
+			datetimeStatus.textContent = `Erro: ${erro.message}`;
+		} finally {
+			botaoAjustarData.disabled = false;
+			botaoAjustarData.textContent = "Ajustar data e hora";
+		}
+	});
+
+	botaoSincronizarTodos.addEventListener("click", async () => {
+		botaoSincronizarTodos.disabled = true;
+		botaoSincronizarTodos.textContent = "Sincronizando...";
+		syncAllStatus.textContent = "Atualizando todos os relógios...";
+		try {
+			const resposta = await fetch("/system/datetime/sync-all", { method: "POST" });
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+			if (!resposta.ok) throw new Error(dados.detail || "Não foi possível sincronizar os relógios.");
+
+			const falhas = (dados.resultados || []).filter(resultado => !resultado.success);
+			syncAllStatus.textContent = falhas.length
+				? `${dados.data_hora}: ${falhas.length} empresa(s) não sincronizada(s).`
+				: `Sincronização concluída em ${dados.data_hora}.`;
+		} catch (erro) {
+			syncAllStatus.textContent = `Erro: ${erro.message}`;
+		} finally {
+			botaoSincronizarTodos.disabled = false;
+			botaoSincronizarTodos.textContent = "Sincronizar todos";
+		}
+	});
+
+	async function alterarIdcloud(enable) {
+		if (!empresa.value) {
+			idcloudStatus.textContent = "Selecione uma empresa antes de continuar.";
+			idcloudToggle.checked = !enable;
+			return;
+		}
+
+		idcloudToggle.disabled = true;
+		idcloudLabel.textContent = "Consultando...";
+		idcloudStatus.textContent = enable
+			? "Ativando iDCloud..."
+			: "Desativando iDCloud...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/idcloud`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ enable })
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível alterar o iDCloud.");
+			}
+
+			idcloudStatus.textContent = enable
+				? "iDCloud ativado com sucesso."
+				: "iDCloud desativado com sucesso.";
+			idcloudLabel.textContent = enable ? "Ligado" : "Desligado";
+			atualizarIconeIdcloud(enable);
+		} catch (erro) {
+			idcloudToggle.checked = !enable;
+			idcloudLabel.textContent = enable ? "Desligado" : "Ligado";
+			atualizarIconeIdcloud(!enable);
+			idcloudStatus.textContent = `Erro: ${erro.message}`;
+		} finally {
+			idcloudToggle.disabled = false;
+		}
+	}
+
+	async function consultarEstadoIdcloud() {
+		idcloudToggle.disabled = true;
+		idcloudLabel.textContent = "Consultando...";
+		idcloudStatus.textContent = "Consultando o estado atual do iDCloud...";
+
+		try {
+			const resposta = await fetch(`/system/${encodeURIComponent(empresa.value)}/idcloud`, {
+				cache: "no-store"
+			});
+			const tipoResposta = resposta.headers.get("content-type") || "";
+			const dados = tipoResposta.includes("application/json")
+				? await resposta.json()
+				: { detail: await resposta.text() };
+
+			if (!resposta.ok) {
+				throw new Error(dados.detail || "Não foi possível consultar o estado do iDCloud.");
+			}
+
+			idcloudToggle.checked = Boolean(dados.enable);
+			idcloudLabel.textContent = idcloudToggle.checked ? "Ligado" : "Desligado";
+			atualizarIconeIdcloud(idcloudToggle.checked);
+			idcloudStatus.textContent = "Estado atual do iDCloud carregado.";
+		} catch (erro) {
+			idcloudToggle.checked = false;
+			idcloudLabel.textContent = "Indisponível";
+			idcloudStatus.textContent = `Erro: ${erro.message}`;
+		} finally {
+			idcloudToggle.disabled = false;
+		}
+	}
+
+	botao.addEventListener("click", consultarSistema);
+	botaoRep.addEventListener("click", consultarRep);
+	botaoRede.addEventListener("click", consultarRede);
+	idcloudToggle.addEventListener("change", () => alterarIdcloud(idcloudToggle.checked));
+	empresa.addEventListener("change", () => {
+		if (empresa.value) {
+			consultarEstadoIdcloud();
+			consultarDataHoraRelogio();
+		} else {
+			idcloudToggle.checked = false;
+			idcloudToggle.disabled = true;
+			idcloudLabel.textContent = "Desligado";
+			atualizarIconeIdcloud(false);
+			idcloudStatus.textContent = "Selecione uma empresa para consultar o iDCloud.";
+		}
+	});
+</script>
+
+{% endblock %}

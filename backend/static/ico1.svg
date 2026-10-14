@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="250" height="250">
+  <g fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Toldo -->
+    <path d="M 20 38 L 20 28 C 20 24 24 20 28 20 L 72 20 C 76 20 80 24 80 28 L 80 38 Z"/>
+    <path d="M 20 38 C 20 44 26 44 30 38 C 34 44 40 44 44 38 C 48 44 54 44 58 38 C 62 44 68 44 72 38 C 76 44 80 44 80 38"/>
+    <!-- Parede da loja -->
+    <path d="M 25 44 L 25 76 C 25 79 27 80 30 80 L 70 80 C 73 80 75 79 75 76 L 75 44"/>
+    <!-- Porta -->
+    <path d="M 43 80 L 43 60 C 43 57 45 55 48 55 L 52 55 C 55 55 57 57 57 60 L 57 80"/>
+  </g>
+</svg>

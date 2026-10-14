@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Editor de Layout AFD{% endblock %}
+{% block topbar_title %}Editor de Layout AFD{% endblock %}
+{% block content %}
+<h1 class="page-title">Editor de Layout AFD</h1>
+<p class="page-description">Configure a composição do registro exportado. O padrão atual é mantido como valor inicial.</p>
+<section class="card">
+    <form id="layout-form" class="form-grid">
+        <div class="form-group"><label for="nsr_largura">Largura do NSR</label><input id="nsr_largura" type="number" min="1" max="30" value="{{ layout.nsr_largura }}"></div>
+        <div class="form-group"><label for="identificador_largura">Largura do identificador</label><input id="identificador_largura" type="number" min="1" max="30" value="{{ layout.identificador_largura }}"></div>
+        <div class="form-group"><label for="data_formato">Formato da data</label><input id="data_formato" value="{{ layout.data_formato }}" placeholder="%d%m%Y"></div>
+        <div class="form-group"><label for="hora_formato">Formato da hora</label><input id="hora_formato" value="{{ layout.hora_formato }}" placeholder="%H%M"></div>
+        <div class="form-group"><label for="preenchimento">Caractere de preenchimento</label><input id="preenchimento" maxlength="1" value="{{ layout.preenchimento }}"></div>
+        <div class="form-group"><label for="separador">Separador</label><input id="separador" maxlength="5" value="{{ layout.separador }}" placeholder="Vazio para registro fixo"></div>
+        <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; gap:10px;"><button type="submit">Salvar layout</button><button type="button" class="button-secondary" id="padrao">Restaurar padrão</button></div>
+    </form>
+    <p id="resultado" class="page-description"></p>
+</section>
+<section class="card">
+    <h2>Preview</h2>
+    <p id="preview" style="font-family:Consolas,monospace; overflow-wrap:anywhere;">0000000003 02012024 0304 12345678901</p>
+</section>
+<script>
+const ids = ['nsr_largura','identificador_largura','data_formato','hora_formato','preenchimento','separador'];
+const padrao = {nsr_largura:10, identificador_largura:12, data_formato:'%d%m%Y', hora_formato:'%H%M', preenchimento:'0', separador:''};
+function payload() { return Object.fromEntries(ids.map(id => [id, document.querySelector('#' + id).value])); }
+function preview() { const p=payload(); document.querySelector('#preview').textContent = String('3').padStart(Number(p.nsr_largura), p.preenchimento || '0') + (p.separador || '') + '02012024' + (p.separador || '') + '0304' + (p.separador || '') + '12345678901'.padStart(Number(p.identificador_largura), p.preenchimento || '0'); }
+ids.forEach(id => document.querySelector('#' + id).addEventListener('input', preview));
+document.querySelector('#padrao').addEventListener('click', () => { ids.forEach(id => document.querySelector('#' + id).value = padrao[id]); preview(); });
+document.querySelector('#layout-form').addEventListener('submit', async event => { event.preventDefault(); const response=await fetch('/config/layout-rm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}); const data=await response.json(); document.querySelector('#resultado').textContent=response.ok?'Layout salvo com sucesso.':(data.detail||'Erro ao salvar.'); });
+preview();
+</script>
+{% endblock %}

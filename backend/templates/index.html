@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Dashboard - ChronoSnap
+{% endblock %}
+
+{% block topbar_title %}
+Dashboard
+{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard-heading {
+        margin-bottom: 20px;
+    }
+
+    .dashboard-heading h1 {
+        margin: 0 0 4px;
+        font-size: 26px;
+    }
+
+    .dashboard-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .dashboard-stat {
+        min-height: 116px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-stat h2 {
+        margin: 0;
+        font-size: 32px;
+    }
+
+    .dashboard-stat p {
+        margin: 0;
+    }
+
+    .dashboard-stat-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 42px;
+        height: 42px;
+    }
+
+    .dashboard-section {
+        margin-top: 20px;
+    }
+
+    .dashboard-section h2 {
+        margin: 0 0 10px;
+        font-size: 24px;
+    }
+
+    .dashboard-section p {
+        margin: 0 0 14px;
+    }
+
+    .dashboard-visuals {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr);
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .dashboard-visual h2 {
+        margin: 0 0 16px;
+        color: #0d4f82;
+        font-size: 18px;
+    }
+
+    .status-chart {
+        display: grid;
+        grid-template-columns: 144px 1fr;
+        align-items: center;
+        gap: 22px;
+    }
+
+    .status-donut {
+        position: relative;
+        display: grid;
+        width: 144px;
+        height: 144px;
+        place-items: center;
+        border-radius: 50%;
+        background: conic-gradient(#168052 0 0%, #e4ebf1 0 100%);
+    }
+
+    .status-donut::after {
+        width: 94px;
+        height: 94px;
+        border-radius: 50%;
+        background: #ffffff;
+        content: "";
+    }
+
+    .status-donut-value {
+        position: absolute;
+        color: #102a43;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .status-legend {
+        display: grid;
+        gap: 12px;
+    }
+
+    .status-legend-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: #526b7f;
+        font-size: 13px;
+    }
+
+    .status-legend-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    .status-dot.online { background: #168052; }
+    .status-dot.offline { background: #b93846; }
+
+    .ping-overview {
+        display: grid;
+        gap: 18px;
+    }
+
+    .ping-average {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .ping-average strong {
+        color: #102a43;
+        font-size: 34px;
+        font-weight: 600;
+    }
+
+    .ping-average span,
+    .ping-caption {
+        color: #718096;
+        font-size: 12px;
+    }
+
+    .ping-track {
+        display: flex;
+        height: 16px;
+        overflow: hidden;
+        border-radius: 3px;
+        background: #e7eef4;
+    }
+
+    .ping-segment { min-width: 0; transition: width 0.2s ease; }
+    .ping-segment.fast { background: #168052; }
+    .ping-segment.attention { background: #d49a24; }
+    .ping-segment.slow { background: #b93846; }
+    .ping-segment.offline { background: #aebdca; }
+
+    .ping-legend {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+
+    .ping-legend-item {
+        display: grid;
+        gap: 3px;
+        color: #526b7f;
+        font-size: 11px;
+    }
+
+    .ping-legend-item strong { color: #102a43; font-size: 14px; }
+    .ping-legend-label { display: flex; align-items: center; gap: 5px; }
+    .ping-mark { width: 8px; height: 8px; border-radius: 2px; }
+    .ping-mark.fast { background: #168052; }
+    .ping-mark.attention { background: #d49a24; }
+    .ping-mark.slow { background: #b93846; }
+    .ping-mark.offline { background: #aebdca; }
+
+    .ping-highlights {
+        display: grid;
+        gap: 7px;
+        max-height: 112px;
+        overflow-y: auto;
+    }
+
+    .ping-highlight {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: #526b7f;
+        font-size: 12px;
+    }
+
+    .ping-highlight span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dashboard-empty {
+        color: #718096;
+        font-size: 13px;
+    }
+
+    .equipment-chart {
+        height: 235px;
+        margin-top: 4px;
+        padding: 4px 0 0;
+        border-top: 1px solid #edf2f6;
+    }
+
+    .equipment-chart svg {
+        width: 100%;
+        height: 190px;
+        overflow: visible;
+    }
+
+    .equipment-chart-grid line {
+        stroke: #e5edf3;
+        stroke-width: 1;
+    }
+
+    .equipment-chart-bar {
+        opacity: 0.9;
+        transition: opacity 0.15s ease;
+    }
+
+    .equipment-chart-bar:hover {
+        opacity: 1;
+    }
+
+    .equipment-chart-scale {
+        fill: #718096;
+        font-size: 10px;
+    }
+
+    .equipment-chart-empty {
+        display: grid;
+        height: 190px;
+        place-items: center;
+        color: #718096;
+        font-size: 13px;
+    }
+
+    .equipment-note {
+        margin: 0;
+        color: #718096;
+        font-size: 11px;
+    }
+
+    .latency-scale {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 0 0 10px;
+        color: #718096;
+        font-size: 10px;
+    }
+
+    .latency-scale-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .latency-scale-point {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .latency-scale-point.excellent { background: #168052; }
+    .latency-scale-point.good { background: #0d6efd; }
+    .latency-scale-point.attention { background: #d49a24; }
+    .latency-scale-point.critical { background: #b93846; }
+
+    .health-distribution {
+        display: grid;
+        gap: 18px;
+    }
+
+    .health-summary {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .health-summary strong {
+        color: #102a43;
+        font-size: 32px;
+        font-weight: 600;
+    }
+
+    .health-summary span,
+    .health-note {
+        color: #718096;
+        font-size: 12px;
+    }
+
+    .health-ring-layout {
+        display: grid;
+        grid-template-columns: 132px 1fr;
+        align-items: center;
+        gap: 22px;
+    }
+
+    .health-ring {
+        position: relative;
+        display: grid;
+        width: 132px;
+        height: 132px;
+        place-items: center;
+        border-radius: 50%;
+        background: conic-gradient(#168052 0 25%, #d49a24 25% 50%, #b93846 50% 75%, #8b9baa 75% 100%);
+    }
+
+    .health-ring::after {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        background: #ffffff;
+        content: "";
+    }
+
+    .health-ring-value {
+        position: absolute;
+        color: #102a43;
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .health-legend {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .health-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: #526b7f;
+        font-size: 12px;
+    }
+
+    .health-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .health-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    .health-dot.fast { background: #168052; }
+    .health-dot.attention { background: #d49a24; }
+    .health-dot.slow { background: #b93846; }
+    .health-dot.offline { background: #8b9baa; }
+
+    .server-info {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .server-info-item {
+        padding: 12px;
+        border: 1px solid #dfe7f1;
+        border-radius: 6px;
+        background: #f8fbff;
+    }
+
+    .server-info-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #718096;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    .server-info-value {
+        display: block;
+        overflow: hidden;
+        color: #102a43;
+        font-size: 14px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+        .dashboard-visuals {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-stat {
+            margin-bottom: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="dashboard-heading">
+    <h1>Dashboard</h1>
+    <p>Visão geral dos equipamentos Control ID cadastrados no sistema.</p>
+</section>
+
+<div class="grid grid-3">
+    <div class="card dashboard-stat">
+        <img class="dashboard-stat-icon" src="/static/ico1.svg" alt="">
+        <h2 id="total-lojas">{{ total_lojas }}</h2>
+        <p>Empresas cadastradas</p>
+    </div>
+    <div class="card dashboard-stat dashboard-stat-online">
+        <img class="dashboard-stat-icon" src="/static/ico2.svg" alt="">
+        <h2 id="lojas-online">{{ lojas_online }}</h2>
+        <p>Último status: <strong>Online</strong></p>
+    </div>
+    <div class="card dashboard-stat dashboard-stat-offline">
+        <img class="dashboard-stat-icon" src="/static/ico3.svg" alt="">
+        <h2 id="lojas-offline">{{ lojas_offline }}</h2>
+        <p>Último status: <strong>Offline</strong></p>
+    </div>
+</div>
+
+<div class="dashboard-visuals">
+    <section class="card dashboard-visual">
+        <h2>Status das empresas</h2>
+        <div class="status-chart">
+            <div class="status-donut" id="status-donut">
+                <span class="status-donut-value" id="status-percent">0/0</span>
+            </div>
+            <div class="status-legend">
+                <div class="status-legend-item">
+                    <span class="status-legend-label"><span class="status-dot online"></span>Online</span>
+                    <strong id="chart-online">{{ lojas_online }}</strong>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-label"><span class="status-dot offline"></span>Offline</span>
+                    <strong id="chart-offline">{{ lojas_offline }}</strong>
+                </div>
+                <div class="status-legend-item">
+                    <span>Total</span>
+                    <strong id="chart-total">{{ total_lojas }}</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card dashboard-visual">
+        <h2>Servidor</h2>
+        <div class="server-info">
+            <div class="server-info-item"><span class="server-info-label">Sistema operacional</span><strong class="server-info-value">{{ servidor.sistema }}</strong></div>
+            <div class="server-info-item"><span class="server-info-label">Versão</span><strong class="server-info-value">{{ servidor.versao }}</strong></div>
+            <div class="server-info-item"><span class="server-info-label">Arquitetura</span><strong class="server-info-value">{{ servidor.arquitetura }}</strong></div>
+            <div class="server-info-item"><span class="server-info-label">Processador</span><strong class="server-info-value" title="{{ servidor.cpu }}">{{ servidor.cpu }}</strong></div>
+            <div class="server-info-item"><span class="server-info-label">Núcleos disponíveis</span><strong class="server-info-value">{{ servidor.nucleos }}</strong></div>
+            <div class="server-info-item"><span class="server-info-label">Memória RAM</span><strong class="server-info-value">{{ servidor.memoria_total_gb or "Não disponível" }} GB total{% if servidor.memoria_disponivel_gb %} · {{ servidor.memoria_disponivel_gb }} GB livre{% endif %}</strong></div>
+        </div>
+        <span class="health-note">Servidor: {{ servidor.nome }}</span>
+    </section>
+
+</div>
+
+<div class="card dashboard-section">
+    <h2>Gerenciamento</h2>
+    <p>Para visualizar, cadastrar ou alterar os equipamentos, acesse o gerenciamento de empresas.</p>
+    <a href="/lojas" class="button">Gerenciar empresas</a>
+</div>
+
+<div class="card dashboard-section">
+    <h2>AFD</h2>
+    <p>Baixe e processe os arquivos AFD dos equipamentos Control ID.</p>
+    <a href="/afd" class="button">Acessar AFD</a>
+</div>
+
+<div class="card dashboard-section">
+    <h2>Atalhos</h2>
+    <p>Consulte os funcionários importados ou baixe e processe o AFD.</p>
+    <a href="/funcionarios" class="button">Consultar funcionários</a>
+    <a href="/afd" class="button button-secondary">Acessar AFD</a>
+</div>
+
+<script>
+    const dashboardInterval = {{ ping_interval * 1000 }};
+    const coresEquipamentos = ["#0d6efd", "#168052", "#b93846", "#8a5a00", "#6b4aa1", "#0b7285", "#c2410c", "#475569"];
+    const dadosIniciaisDashboard = {
+        total: {{ total_lojas }},
+        online: {{ lojas_online }},
+        offline: {{ lojas_offline }},
+        lojas: [
+            {% for loja in lojas %}
+            {
+                numero: {{ loja.numero|tojson }},
+                nome: {{ loja.nome|tojson }},
+                online: {{ "true" if loja.online else "false" }},
+                tempo_resposta: {{ loja.tempo_resposta if loja.tempo_resposta is not none else "null" }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+    };
+
+    function escapeDashboard(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    async function atualizarDashboard() {
+        try {
+            const resposta = await fetch("/api/dashboard/status", { cache: "no-store" });
+            if (!resposta.ok) return;
+
+            const dados = await resposta.json();
+            document.querySelector("#total-lojas").textContent = dados.total;
+            document.querySelector("#lojas-online").textContent = dados.online;
+            document.querySelector("#lojas-offline").textContent = dados.offline;
+            atualizarGraficos(dados);
+
+        } catch (erro) {
+            console.warn("Não foi possível atualizar o status dos relógios.", erro);
+        }
+    }
+
+    function atualizarGraficos(dados) {
+        const total = Number(dados.total) || 0;
+        const online = Number(dados.online) || 0;
+        const offline = Number(dados.offline) || 0;
+        document.querySelector("#chart-online").textContent = online;
+        document.querySelector("#chart-offline").textContent = offline;
+        document.querySelector("#chart-total").textContent = total;
+        document.querySelector("#status-percent").textContent = `${online}/${total}`;
+        document.querySelector("#status-donut").style.background =
+            `conic-gradient(#168052 0 ${total ? (online / total) * 100 : 0}%, #b93846 ${total ? (online / total) * 100 : 0}% 100%)`;
+
+    }
+
+    atualizarGraficos(dadosIniciaisDashboard);
+
+    atualizarDashboard();
+    setInterval(atualizarDashboard, dashboardInterval);
+</script>
+
+{% endblock %}

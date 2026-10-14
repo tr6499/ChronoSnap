@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoSnap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #192535;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+            padding: 36px 40px;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 28px;
+        }
+
+        .logo {
+            width: 190px;
+            height: auto;
+            display: block;
+            margin: 0 auto 14px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #192535;
+            margin-bottom: 6px;
+        }
+
+        .logo-subtitle {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #192535;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cfd8e3;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #006fc9;
+            box-shadow: 0 0 0 3px rgba(0, 111, 201, 0.12);
+        }
+
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #006fc9;
+        }
+
+        .login-form {
+            transition: all 0.3s;
+        }
+
+        .login-form.hidden {
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #006fc9;
+            color: white;
+            box-shadow: 0 3px 8px rgba(0, 111, 201, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #005a9e;
+            box-shadow: 0 4px 10px rgba(0, 111, 201, 0.32);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            border-left: 4px solid #c53030;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer-text {
+            margin-top: 24px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 24px;
+            }
+
+            .logo {
+                width: 165px;
+            }
+
+            .logo-text {
+                font-size: 24px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-container">
+                <img
+                    class="logo"
+                    src="/static/logo.jpg"
+                    alt="ChronoSnap"
+                >
+                <div class="logo-text">ChronoSnap</div>
+                <div class="logo-subtitle">Gestão de ponto</div>
+            </div>
+
+            <form id="loginForm" class="login-form" method="POST" action="/auth/login">
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="admin"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberMe" name="rememberMe">
+                    <label for="rememberMe">Lembrar-me</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    Entrar
+                </button>
+            </form>
+
+            <div class="footer-text">
+                © 2026 ChronoSnap. Todos os direitos reservados.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const submitBtn = document.getElementById("submitBtn");
+        const errorMessage = document.getElementById("errorMessage");
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+
+        // Enviar formulário
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: usernameInput.value,
+                        password: passwordInput.value,
+                        remember_me: document.getElementById("rememberMe").checked
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Login bem-sucedido
+                    localStorage.setItem("chronosnap_token", data.token);
+                    errorMessage.classList.remove("show");
+                    
+                    // Redirecionar para dashboard
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 500);
+                } else {
+                    throw new Error(data.detail || "Usuário ou senha incorretos");
+                }
+            } catch (erro) {
+                showError(erro.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Entrar";
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add("show");
+            setTimeout(() => {
+                errorMessage.classList.remove("show");
+            }, 5000);
+        }
+
+        // Focus automático
+        usernameInput.focus();
+    </script>
+</body>
+</html>

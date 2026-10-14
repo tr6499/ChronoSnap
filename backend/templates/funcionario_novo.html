@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}
+Novo funcionário
+{% endblock %}
+
+{% block topbar_title %}
+Novo funcionário
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .admin-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .admin-toggle input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .admin-switch {
+        position: relative;
+        width: 46px;
+        height: 24px;
+        border-radius: 24px;
+        background: #94a3b8;
+        transition: background 0.2s;
+    }
+
+    .admin-switch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.2s;
+    }
+
+    .admin-toggle input:checked + .admin-switch {
+        background: #198754;
+    }
+
+    .admin-toggle input:checked + .admin-switch::after {
+        transform: translateX(22px);
+    }
+
+    .biometria-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 16px 0;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .biometria-option input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #198754;
+    }
+</style>
+
+<h1 class="page-title">
+    Cadastrar funcionário
+</h1>
+
+<p class="page-description">
+    Informe os dados do funcionário e selecione os relógios onde ele será cadastrado.
+</p>
+
+<div class="card">
+
+    <form method="post" action="/funcionarios">
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label for="matricula">Matrícula / Crachá</label>
+                <input type="text" id="matricula" name="matricula" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pis">PIS</label>
+                <input type="text" id="pis" name="pis" placeholder="Ex.: 020639824298">
+                <small>Usado nos relógios com layout legado.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" placeholder="Ex.: 06445230695">
+                <small>Usado nos relógios Portaria 671.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="codigo">Code</label>
+                <input type="number" id="codigo" name="codigo" min="1">
+                <small>Gerado automaticamente se ficar vazio.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="rfid">RFID</label>
+                <input type="number" id="rfid" name="rfid" min="1">
+                <small>Cartão de proximidade; gerado automaticamente se vazio.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="bars">Código de barras</label>
+                <input type="text" id="bars" name="bars">
+                <small>Gerado automaticamente se ficar vazio.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="ativo">Status</label>
+                <select id="ativo" name="ativo">
+                    <option value="true">Ativo</option>
+                    <option value="false">Inativo</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="admin-toggle" for="administrador">
+                    Administrador
+                    <input type="checkbox" id="administrador" name="administrador" value="true">
+                    <span class="admin-switch" aria-hidden="true"></span>
+                </label>
+            </div>
+
+        </div>
+
+        <label class="biometria-option">
+            <input type="checkbox" name="enviar_biometrias" value="true" checked>
+            Enviar biometrias ao cadastrar nos relógios selecionados
+        </label>
+
+        <h3>Relógios onde será cadastrado</h3>
+
+        <p>
+            Portaria 671 usa CPF. Relógio legado usa PIS.
+        </p>
+
+        <div class="grid grid-3">
+
+            {% for loja in lojas %}
+            <label style="border:1px solid #ddd; padding:12px; border-radius:6px; cursor:pointer; display:block;">
+                <input type="checkbox" name="lojas" value="{{ loja.id }}">
+                <strong>{{ "%02d"|format(loja.numero) }}</strong> - {{ loja.nome }}
+                <br>
+                <small>{{ loja.ip }}</small>
+            </label>
+            {% else %}
+            <p>Nenhuma empresa cadastrada.</p>
+            {% endfor %}
+
+        </div>
+
+        <br>
+
+        <button type="submit" class="button-success">
+            Cadastrar funcionário
+        </button>
+
+        <a href="/funcionarios" class="button button-secondary">
+            Cancelar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

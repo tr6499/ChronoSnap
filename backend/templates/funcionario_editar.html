@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}
+Editar Funcionário
+{% endblock %}
+
+{% block topbar_title %}
+Editar Funcionário
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .admin-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .admin-toggle input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .admin-switch {
+        position: relative;
+        width: 46px;
+        height: 24px;
+        border-radius: 24px;
+        background: #94a3b8;
+        transition: background 0.2s;
+    }
+
+    .admin-switch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.2s;
+    }
+
+    .admin-toggle input:checked + .admin-switch {
+        background: #198754;
+    }
+
+    .admin-toggle input:checked + .admin-switch::after {
+        transform: translateX(22px);
+    }
+
+    .biometria-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 16px 0;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .biometria-option input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #198754;
+    }
+</style>
+
+<h1 class="page-title">
+    Editar funcionário
+</h1>
+
+<div class="card">
+
+    <form
+        method="post"
+        action="/funcionarios/{{ funcionario.id }}/editar"
+    >
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>
+                    Matrícula / Crachá
+                </label>
+
+                <input
+                    type="text"
+                    name="matricula"
+                    value="{{ funcionario.matricula }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Nome
+                </label>
+
+                <input
+                    type="text"
+                    name="nome"
+                    value="{{ funcionario.nome }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    PIS
+                </label>
+
+                <input
+                    type="text"
+                    name="pis"
+                    value="{{ funcionario.pis or '' }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    CPF
+                </label>
+
+                <input
+                    type="text"
+                    name="cpf"
+                    value="{{ funcionario.cpf or '' }}"
+                >
+
+            </div>
+
+            <div class="form-group">
+                <label for="codigo">Code</label>
+                <input
+                    type="number"
+                    id="codigo"
+                    name="codigo"
+                    min="1"
+                    value="{{ funcionario.codigo or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="rfid">RFID</label>
+                <input
+                    type="number"
+                    id="rfid"
+                    name="rfid"
+                    min="1"
+                    value="{{ funcionario.rfid or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="bars">Código de barras</label>
+                <input
+                    type="text"
+                    id="bars"
+                    name="bars"
+                    value="{{ funcionario.bars or '' }}"
+                >
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Status
+                </label>
+
+                <select name="ativo">
+
+                    <option
+                        value="true"
+                        {% if funcionario.ativo %}selected{% endif %}
+                    >
+                        Ativo
+                    </option>
+
+                    <option
+                        value="false"
+                        {% if not funcionario.ativo %}selected{% endif %}
+                    >
+                        Inativo
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="admin-toggle" for="administrador">
+                    Administrador
+                    <input
+                        type="checkbox"
+                        id="administrador"
+                        name="administrador"
+                        value="true"
+                        {% if funcionario.administrador %}checked{% endif %}
+                    >
+                    <span class="admin-switch" aria-hidden="true"></span>
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <br>
+
+        <label class="biometria-option">
+            <input type="checkbox" name="enviar_biometrias" value="true" checked>
+            Enviar biometrias aos relógios selecionados
+        </label>
+
+        <h3>
+            Empresas / Relógios
+        </h3>
+
+        <div class="grid grid-3">
+
+            {% for loja in lojas %}
+
+            <label
+                style="
+                    border:1px solid #ddd;
+                    padding:12px;
+                    border-radius:6px;
+                    cursor:pointer;
+                "
+            >
+
+                <input
+                    type="checkbox"
+                    name="lojas"
+                    value="{{ loja.id }}"
+                    {% if loja.id in lojas_selecionadas %}
+                    checked
+                    {% endif %}
+                >
+
+                <strong>
+                    {{ "%02d"|format(loja.numero) }}
+                </strong>
+
+                - {{ loja.nome }}
+
+                <br>
+
+                <small>
+                    {{ loja.ip }}
+                </small>
+
+            </label>
+
+            {% endfor %}
+
+        </div>
+
+
+        <br>
+
+
+        <button
+            type="submit"
+            class="button-success"
+        >
+            Salvar alterações
+        </button>
+
+
+        <a
+            href="/funcionarios"
+            class="button button-secondary"
+        >
+            Cancelar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -19,9 +19,9 @@ banco/
 *.sqlite-*
 
 # Operational data, logs, AFD files, and generated exports
-backend/afd/
-backend/downloads/
-backend/logs/
+server/afd/
+server/downloads/
+server/logs/
 afd/
 downloads/
 logs/

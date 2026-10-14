@@ -1,6 +1,6 @@
 # Autenticação e usuários
 
-O AFD-IDClass usa contas armazenadas no banco SQLite local `banco\afd.db`.
+O ChronoSnap usa contas armazenadas no banco SQLite local `banco\afd.db`.
 Senhas são armazenadas como hashes bcrypt; a senha em texto puro não é gravada
 no banco. O banco e as contas da empresa não são incluídos na distribuição Git.
 
@@ -87,7 +87,7 @@ retornam dados JSON.
 - O banco, os arquivos AFD, as exportações e as configurações operacionais
   locais são ignorados pelo Git. Não os adicione manualmente ao repositório.
 - Para acesso por HTTPS, configure um proxy TLS e ajuste a opção `secure` do
-  cookie de sessão em `backend\routes\auth.py` para `True`. No estado atual,
+  cookie de sessão   em `server\routes\auth.py` para `True`. No estado atual,
   essa opção está desativada para permitir acesso local por HTTP.
 
 ## Solução de problemas
@@ -106,4 +106,4 @@ marcado, e também são perdidas ao reiniciar o servidor. Entre novamente.
 **O servidor não inicia por dependências ausentes**
 
 Ative o ambiente virtual e instale as dependências listadas em
-`backend\requirements.txt`, conforme o [README](./README.md).
+`server\requirements.txt`, conforme o [README](./README.md).

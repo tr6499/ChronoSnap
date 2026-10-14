@@ -1,4 +1,4 @@
-# AFD-IDClass
+# ChronoSnap
 
 Sistema web para gestão de ponto e de equipamentos Control iD iDClass. Permite
 gerenciar empresas, lojas, funcionários e usuários, importar e consultar
@@ -27,25 +27,25 @@ autorização escrita do titular.
 - Python 3.11 ou superior;
 - acesso à rede dos relógios para as operações com equipamentos.
 
-As dependências Python estão listadas em `backend\requirements.txt`.
+As dependências Python estão listadas em `server\requirements.txt`.
 
 ## Instalação
 
 No PowerShell, a partir da pasta do projeto:
 
 ```powershell
-cd C:\Projetos\AFD-IDClass
+cd C:\ChronoSnap
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r .\backend\requirements.txt
+python -m pip install -r .\server\requirements.txt
 ```
 
 Se o PowerShell bloquear a ativação do ambiente virtual, execute o Python e o
 Uvicorn diretamente:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app:app --app-dir .\backend --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m pip install -r .\server\requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app:app --app-dir .\server --host 127.0.0.1 --port 8000
 ```
 
 ## Iniciar o sistema
@@ -53,7 +53,7 @@ Uvicorn diretamente:
 Com o ambiente virtual ativado:
 
 ```powershell
-cd C:\Projetos\AFD-IDClass\backend
+cd C:\ChronoSnap\server
 python -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
@@ -77,9 +77,9 @@ o sistema não redefine a senha do administrador.
 - O banco SQLite é local e fica em `banco\afd.db`. Ele é criado quando o
   sistema inicia e não faz parte desta distribuição.
 - Configurações operacionais de automação ficam em
-  `backend\logs\automacoes.json`; o sistema cria esse arquivo quando
+  `server\logs\automacoes.json`; o sistema cria esse arquivo quando
   necessário. Ele não faz parte desta distribuição.
-- `backend\downloads\` é o destino padrão de arquivos gerados e baixados.
+- `server\downloads\` é o destino padrão de arquivos gerados e baixados.
   Arquivos dessa pasta não fazem parte desta distribuição.
 
 Os dados locais, o banco, as configurações de automação e os arquivos baixados
@@ -88,8 +88,8 @@ são ignorados pelo Git para evitar publicar dados de empresas ou equipamentos.
 ## Estrutura
 
 ```text
-AFD-IDClass/
-├── backend/
+ChronoSnap/
+├── server/
 │   ├── app.py
 │   ├── database.py
 │   ├── models.py

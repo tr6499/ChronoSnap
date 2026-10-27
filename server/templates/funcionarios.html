@@ -113,6 +113,13 @@ Funcionários
                         Selecione uma empresa
                     </option>
 
+                    <option
+                        value="todas"
+                        {% if todas_empresas %}selected{% endif %}
+                    >
+                        Todas as empresas
+                    </option>
+
                     {% for loja in lojas %}
 
                     <option
@@ -179,7 +186,7 @@ Funcionários
      FUNCIONÁRIOS
      ============================================================ -->
 
-{% if loja_id is not none or busca %}
+{% if loja_id is not none or todas_empresas or busca %}
 
 <div class="card">
 
@@ -187,6 +194,20 @@ Funcionários
         Funcionários cadastrados
     </h2>
 
+    <div class="form-grid" style="align-items:center; margin-bottom:16px;">
+        <div>
+            <strong>Total:</strong> {{ total_funcionarios }}
+            &nbsp;|&nbsp;
+            <strong>Ativos:</strong> {{ total_funcionarios_ativos }}
+            &nbsp;|&nbsp;
+            <strong>Inativos:</strong> {{ total_funcionarios_inativos }}
+        </div>
+        <div style="text-align:right;">
+            <button type="button" class="button-secondary" id="btnExportarFuncionariosPdf">
+                Exportar PDF
+            </button>
+        </div>
+    </div>
 
     <table>
 
@@ -218,7 +239,7 @@ Funcionários
                     Status
                 </th>
 
-                <th>
+                <th class="actions-heading">
                     Ações
                 </th>
 
@@ -383,9 +404,56 @@ Funcionários
 {% else %}
 
 <div class="card">
-    Selecione uma empresa e clique em <strong>Consultar</strong> para carregar a lista.
+    Selecione uma empresa ou escolha <strong>Todas as empresas</strong> e clique em
+    <strong>Consultar</strong> para carregar a lista.
 </div>
 
+{% endif %}
+
+{% if loja_id is not none or todas_empresas or busca %}
+<script>
+    document.getElementById("btnExportarFuncionariosPdf").addEventListener("click", () => {
+        const janelaPdf = window.open("", "_blank");
+
+        if (!janelaPdf) {
+            alert("Não foi possível abrir a visualização para impressão.");
+            return;
+        }
+
+        const tabela = document.querySelector(".card table").cloneNode(true);
+        tabela.querySelectorAll(".actions-heading, .actions-cell").forEach(elemento => elemento.remove());
+
+        janelaPdf.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>Funcionários cadastrados</title>
+                <style>
+                    body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 28px; }
+                    h1 { color: #192535; font-size: 22px; margin-bottom: 8px; }
+                    p { margin: 0 0 18px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                    th, td { padding: 7px; border-bottom: 1px solid #d9e0e8; text-align: left; }
+                    th { background: #f3f5f8; }
+                    @media print { body { margin: 12mm; } }
+                </style>
+            </head>
+            <body>
+                <h1>Funcionários cadastrados</h1>
+                <p></p>
+            </body>
+            </html>
+        `);
+
+        const resumo = janelaPdf.document.querySelector("p");
+        resumo.textContent = `Total: {{ total_funcionarios }} | Ativos: {{ total_funcionarios_ativos }} | Inativos: {{ total_funcionarios_inativos }}`;
+        janelaPdf.document.body.appendChild(tabela);
+        janelaPdf.document.close();
+        janelaPdf.focus();
+        janelaPdf.print();
+    });
+</script>
 {% endif %}
 
 {% endblock %}

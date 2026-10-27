@@ -50,6 +50,81 @@ Download AFD
         font-size: 13px;
     }
 
+    .afd-selecionar-todas {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: #555;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 400;
+    }
+
+    .afd-selecionar-todas input[type="checkbox"],
+    .afd-loja-opcao input[type="checkbox"] {
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        padding: 0;
+        accent-color: #006fc9;
+    }
+
+    .afd-lojas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .afd-loja-opcao {
+        display: flex;
+        min-width: 0;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid #dbe3ec;
+        border-radius: 8px;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .afd-loja-opcao:hover {
+        border-color: #8db9df;
+        background: #f4f9fd;
+    }
+
+    .afd-loja-opcao:has(input:checked) {
+        border-color: #006fc9;
+        background: #eef7ff;
+        box-shadow: 0 0 0 2px rgba(0, 111, 201, 0.1);
+    }
+
+    .afd-loja-info {
+        display: grid;
+        min-width: 0;
+        gap: 4px;
+    }
+
+    .afd-loja-info strong {
+        color: #183b5b;
+        font-size: 14px;
+    }
+
+    .afd-loja-info span {
+        overflow-wrap: anywhere;
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .afd-loja-info small {
+        color: #697887;
+        font-size: 11px;
+    }
+
     .afd-formato-opcao:hover {
         border-color: #8db9df;
         background: #f4f9fd;
@@ -352,17 +427,7 @@ Download AFD
             Selecione as empresas que participarão da geração do AFD.
         </p>
 
-        <label style="
-            display: inline-flex;
-            align-items: center;
-            white-space: nowrap;
-            gap: 5px;
-            margin: 0;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 400;
-            color: #555;
-        ">
+        <label class="afd-selecionar-todas">
             <input
                 type="checkbox"
                 id="selectAllLojas"
@@ -370,23 +435,11 @@ Download AFD
             Selecionar todas
         </label>
 
-        <div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
-            margin-top: 8px;
-        ">
+        <div class="afd-lojas-grid">
 
             {% for loja in lojas %}
 
-            <label style="
-                border: 1px solid #ccc;
-                border-radius: 6px;
-                padding: 14px 10px;
-                text-align: center;
-                cursor: pointer;
-                background: #f8fafc;
-            ">
+            <label class="afd-loja-opcao">
 
                 <input
                     type="checkbox"
@@ -394,19 +447,17 @@ Download AFD
                     value="{{ loja.numero }}"
                 >
 
-                <strong>
-                    {{ "%02d"|format(loja.numero) }}
-                </strong>
-
-                <br>
-
-                <small>
-                    {% if loja.afd_layout == "671" %}
-                        Portaria 671
-                    {% else %}
-                        Legado
-                    {% endif %}
-                </small>
+                <span class="afd-loja-info">
+                    <strong>{{ "%02d"|format(loja.numero) }}</strong>
+                    <span>{{ loja.nome }}</span>
+                    <small>
+                        {% if loja.afd_layout == "671" %}
+                            Portaria 671
+                        {% else %}
+                            Legado
+                        {% endif %}
+                    </small>
+                </span>
 
             </label>
 
@@ -531,6 +582,14 @@ Download AFD
 
         <button
             type="button"
+            class="button-secondary"
+            id="btnImportarMarcacoes"
+        >
+            Importar marcações
+        </button>
+
+        <button
+            type="button"
             class="button-success"
             id="btnDownload"
         >
@@ -545,6 +604,13 @@ Download AFD
         >
             Exportar PDF
         </button>
+
+        <div
+            id="resultadoImportacao"
+            role="status"
+            aria-live="polite"
+            style="display: none; margin-top: 14px;"
+        ></div>
 
     </div>
 
@@ -622,6 +688,12 @@ const resultadoConteudo =
 const btnPreview =
     document.getElementById("btnPreview");
 
+const btnImportarMarcacoes =
+    document.getElementById("btnImportarMarcacoes");
+
+const resultadoImportacao =
+    document.getElementById("resultadoImportacao");
+
 const btnDownload =
     document.getElementById("btnDownload");
 
@@ -681,6 +753,70 @@ function obterLojasSelecionadas() {
         document.querySelectorAll('input[name="lojas"]:checked')
     ).map(checkbox => Number(checkbox.value));
 }
+
+btnImportarMarcacoes.addEventListener(
+    "click",
+    async function() {
+        const lojas = obterLojasSelecionadas();
+        const dataInicial = document.getElementById("data_inicial").value;
+        const dataFinal = document.getElementById("data_final").value;
+
+        if (lojas.length === 0) {
+            alert("Selecione pelo menos uma empresa.");
+            return;
+        }
+
+        if (!dataInicial || !dataFinal) {
+            alert("Informe a data inicial e a data final.");
+            return;
+        }
+
+        if (dataInicial > dataFinal) {
+            alert("A data inicial não pode ser maior que a data final.");
+            return;
+        }
+
+        iniciarProcessamento(btnImportarMarcacoes, "Importando marcações...");
+        resultadoImportacao.style.display = "block";
+        resultadoImportacao.textContent = "Consultando os relógios das empresas selecionadas...";
+
+        try {
+            const resposta = await fetch("/afd/marcacoes/carga", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    lojas,
+                    data_inicial: dataInicial,
+                    data_final: dataFinal
+                })
+            });
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                throw new Error(dados.detail || "Erro ao importar marcações.");
+            }
+
+            const itens = (dados.resultados || []).map(item => {
+                const nome = escapeHtml(
+                    item.nome || `Empresa ${String(item.loja).padStart(2, "0")}`
+                );
+                if (!item.success) {
+                    return `<li><strong>${nome}:</strong> ${escapeHtml(item.erro || "Falha na importação.")}</li>`;
+                }
+                return `<li><strong>${nome}:</strong> ${item.inseridas} importada(s), ${item.ignoradas} já existente(s).</li>`;
+            });
+            resultadoImportacao.innerHTML = `
+                <strong>Resultado da importação para ${escapeHtml(dataInicial)} até ${escapeHtml(dataFinal)}:</strong>
+                <ul>${itens.join("")}</ul>
+            `;
+        } catch (erro) {
+            resultadoImportacao.innerHTML =
+                `<strong>Erro ao importar marcações:</strong> ${escapeHtml(erro.message)}`;
+        } finally {
+            finalizarProcessamento(btnImportarMarcacoes);
+        }
+    }
+);
 
 form.addEventListener(
     "submit",
@@ -756,7 +892,7 @@ form.addEventListener(
            ---------------------------------------------------- */
 
         btnPreview.disabled = true;
-        btnPreview.textContent = "Consultando...";
+        btnPreview.textContent = "Consultando banco...";
 
 
         /* ----------------------------------------------------
@@ -970,12 +1106,9 @@ function mostrarResultado(dados) {
                     color: #991b1b;
                 ">
 
-                    <strong>
-                        Empresa
-                        ${String(
-                            loja.loja
-                        ).padStart(2, "0")}
-                    </strong>
+                    <strong>${escapeHtml(
+                        loja.nome || `Empresa ${String(loja.loja).padStart(2, "0")}`
+                    )}</strong>
 
                     <br>
 
@@ -1004,15 +1137,10 @@ function mostrarResultado(dados) {
                 border-radius: 6px;
             ">
 
-                <h3 style="
-                    margin-top: 0;
-                ">
-
-                    Empresa
-                    ${String(
-                        loja.loja
-                    ).padStart(2, "0")}
-
+                <h3 style="margin-top: 0;">
+                    ${escapeHtml(
+                        loja.nome || `Empresa ${String(loja.loja).padStart(2, "0")}`
+                    )}
                 </h3>
 
                 <div style="

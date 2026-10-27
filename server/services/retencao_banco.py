@@ -67,6 +67,8 @@ def calcular_data_corte(valor, unidade, agora=None):
 
 def compactar_banco():
     """Compacta o arquivo SQLite e recupera espaço em disco."""
+    if engine.dialect.name != "sqlite":
+        raise RuntimeError("A compactação de arquivo só é compatível com SQLite.")
     with engine.connect() as conexao:
         conexao.execution_options(
             isolation_level="AUTOCOMMIT"

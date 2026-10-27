@@ -4,5 +4,11 @@ jinja2
 python-multipart
 requests
 sqlalchemy
+psycopg[binary]
+pymysql
+pymssql
+oracledb
 aiosqlite
 bcrypt
+pystray
+Pillow

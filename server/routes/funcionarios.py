@@ -162,30 +162,20 @@ def sincronizar_funcionario_relogio(
         # ----------------------------------------------------
 
         if layout in ("671", "portaria671"):
-
             mode = 671
-
-            if not funcionario.cpf:
-
-                raise Exception(
-                    "Funcionário não possui CPF "
-                    "para o modo Portaria 671."
-                )
-
             identificador_chave = "cpf"
-
+            identificador = funcionario.cpf
         else:
-
             mode = 0
-
-            if not funcionario.pis:
-
-                raise Exception(
-                    "Funcionário não possui PIS "
-                    "para o modo Legado."
-                )
-
             identificador_chave = "pis"
+            identificador = funcionario.pis
+
+        if operacao != "excluir" and not identificador:
+            descricao = "CPF" if mode == 671 else "PIS"
+            raise Exception(
+                f"Funcionário não possui {descricao} "
+                f"para o modo {'Portaria 671' if mode == 671 else 'Legado'}."
+            )
 
         # ----------------------------------------------------
         # CONECTAR
@@ -232,47 +222,60 @@ def sincronizar_funcionario_relogio(
                 ):
                     setattr(funcionario, atributo, valor)
 
-        _garantir_identificadores(funcionario)
+        if operacao != "excluir":
+            _garantir_identificadores(funcionario)
 
         # ----------------------------------------------------
         # OPERAÇÃO
         # ----------------------------------------------------
 
-        if operacao == "adicionar":
-
-            resposta = equipamento.cadastrar_usuario(
-                nome=funcionario.nome,
-                matricula=funcionario.matricula,
-                cpf=funcionario.cpf,
-                pis=funcionario.pis,
-                codigo=funcionario.codigo,
-                rfid=funcionario.rfid,
-                bars=funcionario.bars,
-                admin=funcionario.administrador,
-                templates=biometrias,
-                mode=mode
-            )
-
-            mensagem = "Funcionário cadastrado no relógio."
-
-        elif operacao == "atualizar":
-
-            resposta = equipamento.atualizar_usuario(
-                nome=funcionario.nome,
-                matricula=funcionario.matricula,
-                cpf=funcionario.cpf,
-                pis=funcionario.pis,
-                codigo=funcionario.codigo,
-                rfid=funcionario.rfid,
-                bars=funcionario.bars,
-                admin=funcionario.administrador,
-                templates=biometrias,
-                mode=mode
-            )
-
-            mensagem = "Funcionário atualizado no relógio."
+        if operacao in ("adicionar", "atualizar"):
+            if usuario_existente:
+                resposta = equipamento.atualizar_usuario(
+                    nome=funcionario.nome,
+                    matricula=funcionario.matricula,
+                    cpf=funcionario.cpf,
+                    pis=funcionario.pis,
+                    codigo=funcionario.codigo,
+                    rfid=funcionario.rfid,
+                    bars=funcionario.bars,
+                    admin=funcionario.administrador,
+                    templates=biometrias,
+                    mode=mode
+                )
+                mensagem = (
+                    "Funcionário já existia e foi atualizado no relógio."
+                    if operacao == "adicionar"
+                    else "Funcionário atualizado no relógio."
+                )
+            else:
+                resposta = equipamento.cadastrar_usuario(
+                    nome=funcionario.nome,
+                    matricula=funcionario.matricula,
+                    cpf=funcionario.cpf,
+                    pis=funcionario.pis,
+                    codigo=funcionario.codigo,
+                    rfid=funcionario.rfid,
+                    bars=funcionario.bars,
+                    admin=funcionario.administrador,
+                    templates=biometrias,
+                    mode=mode
+                )
+                mensagem = "Funcionário cadastrado no relógio."
 
         elif operacao == "excluir":
+
+            if not usuario_existente:
+                return {
+                    "success": True,
+                    "loja_id": loja.id,
+                    "loja": loja.numero,
+                    "nome": loja.nome,
+                    "layout": layout,
+                    "mode": mode,
+                    "operacao": operacao,
+                    "mensagem": "Funcionário já não estava cadastrado no relógio."
+                }
 
             resposta = equipamento.excluir_usuario(
                 matricula=funcionario.matricula,
@@ -348,6 +351,7 @@ async def funcionarios_page(
 
     try:
 
+        todas_empresas = loja_id == "todas"
         loja_id = int(loja_id) if loja_id and loja_id.isdigit() else None
 
         lojas = (
@@ -362,7 +366,7 @@ async def funcionarios_page(
         if busca:
             loja_id = None
 
-        if loja_id is not None or busca:
+        if loja_id is not None or busca or todas_empresas:
 
             query = db.query(Funcionario)
 
@@ -415,6 +419,9 @@ async def funcionarios_page(
                     )
                 )
 
+            if todas_empresas:
+                query = query.distinct()
+
             funcionarios = (
                 query
                 .order_by(Funcionario.nome)
@@ -461,8 +468,18 @@ async def funcionarios_page(
                 "funcionarios": funcionarios,
                 "lojas": lojas,
                 "loja_id": loja_id,
+                "todas_empresas": todas_empresas,
                 "busca": busca or "",
-                "funcionarios_lojas": funcionarios_lojas
+                "funcionarios_lojas": funcionarios_lojas,
+                "total_funcionarios": len(funcionarios),
+                "total_funcionarios_ativos": sum(
+                    1 for funcionario in funcionarios
+                    if funcionario.ativo
+                ),
+                "total_funcionarios_inativos": sum(
+                    1 for funcionario in funcionarios
+                    if not funcionario.ativo
+                )
             }
         )
 
@@ -941,43 +958,11 @@ async def salvar_funcionario(
 
             resultados.append(resultado)
 
-        # ====================================================
-        # VERIFICAR FALHAS ANTES DE ALTERAR O BANCO
-        # ====================================================
-
         falhas = [
             resultado
             for resultado in resultados
             if not resultado["success"]
         ]
-
-        # ====================================================
-        # SE HOUVE FALHA
-        # ====================================================
-
-        if falhas:
-
-            detalhes = " | ".join(
-                f"Loja {resultado['loja']:02d}: "
-                f"{resultado['mensagem']}"
-                for resultado in falhas
-            )
-
-            db.rollback()
-
-            return RedirectResponse(
-                url=(
-                    "/funcionarios"
-                    "?erro=Sincronização+parcial."
-                    "+O+banco+não+foi+alterado."
-                    f"+{detalhes}"
-                ),
-                status_code=303
-            )
-
-        # ====================================================
-        # TODOS OS RELÓGIOS OK
-        # ====================================================
 
         funcionario.matricula = matricula.strip()
         funcionario.nome = nome.strip()
@@ -1024,6 +1009,22 @@ async def salvar_funcionario(
         # ====================================================
 
         db.commit()
+
+        if falhas:
+            detalhes = " | ".join(
+                f"Empresa {resultado['loja']:02d} ({resultado['nome']}): "
+                f"{resultado['mensagem']}"
+                for resultado in falhas
+            )
+            mensagem = (
+                "Alterações salvas; falha ao sincronizar alguns relógios. "
+                "Confira a conexão e tente atualizar esses relógios novamente. "
+                + detalhes
+            )
+            return RedirectResponse(
+                url=f"/funcionarios?erro={quote_plus(mensagem)}",
+                status_code=303
+            )
 
         return RedirectResponse(
             url=(
@@ -1644,7 +1645,8 @@ async def excluir_funcionario(
     "/funcionarios/{funcionario_id}/cadastrar-relogios"
 )
 async def cadastrar_funcionario_relogios(
-    funcionario_id: int
+    funcionario_id: int,
+    loja_id: int | None = None
 ):
 
     db: Session = SessionLocal()

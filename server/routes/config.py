@@ -5,7 +5,13 @@ from fastapi import APIRouter, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from database import SessionLocal
+from database import (
+    DATABASE_CONFIG,
+    SessionLocal,
+    carregar_configuracao_banco,
+    normalizar_configuracao,
+    salvar_configuracao_banco,
+)
 from models_usuarios import UsuarioSistema, ConfiguracaoSistema, LogAuditoria
 from routes.auth import obter_usuario_da_sessao
 from services.autenticacao import hash_password, verify_password, config_auth
@@ -16,8 +22,20 @@ from services.retencao_banco import (
     UNIDADES, obter_retencao_banco, salvar_retencao_banco,
     aplicar_retencao_banco, compactar_banco
 )
+from services.banco_dados import (
+    conexoes_sugeridas,
+    configuracao_publica,
+    criar_tabelas,
+    detectar_postgresql_local,
+    informacoes_servidor,
+    migrar_sqlite,
+    nome_provedor,
+    provedores_disponiveis,
+    provisionar_banco,
+    testar_conexao,
+)
 from services.marcacoes import diagnosticar_marcacoes, reparar_duplicidades
-from database import engine, BANCO_DIR
+from database import BANCO_DIR, PROVEDORES, SQLITE_DATABASE_FILE, engine
 
 router = APIRouter(
     prefix="/config",
@@ -528,24 +546,279 @@ async def banco_page(request: Request):
     db = SessionLocal()
     try:
         tabelas = inspect(engine).get_table_names()
-        arquivo = BANCO_DIR / "afd.db"
+        banco_atual = configuracao_publica()
+        arquivo = SQLITE_DATABASE_FILE
         lojas = db.query(Loja).order_by(Loja.numero).all()
         retencao = obter_retencao_banco(db)
         return templates.TemplateResponse(
             request=request,
             name="banco.html",
             context={
-                "banco_caminho": str(arquivo),
-                "banco_tamanho": arquivo.stat().st_size if arquivo.exists() else 0,
+                "banco_atual": banco_atual,
+                "banco_sqlite": DATABASE_CONFIG["backend"] == "sqlite",
+                "banco_caminho": banco_atual["local"],
+                "banco_tamanho": (
+                    arquivo.stat().st_size
+                    if DATABASE_CONFIG["backend"] == "sqlite" and arquivo.exists()
+                    else None
+                ),
                 "tabelas": tabelas,
                 "marcacoes_total": db.query(MarcacaoAFD).count(),
                 "lojas": lojas,
                 "retencao_valor": retencao[0],
-                "retencao_unidade": retencao[1]
+                "retencao_unidade": retencao[1],
+                "provedores": provedores_disponiveis(),
+                "conexoes": conexoes_sugeridas(),
+                "banco_destino_backend": carregar_configuracao_banco()["backend"],
+                "arquivo_sqlite_existe": arquivo.is_file(),
+                "servidor": informacoes_servidor(),
+                "postgresql_local": detectar_postgresql_local(),
             }
         )
     finally:
         db.close()
+
+
+def _mesmo_servidor(host_a, host_b):
+    locais = {"localhost", "127.0.0.1", "::1"}
+    a, b = str(host_a).strip().lower(), str(host_b).strip().lower()
+    return a == b or (a in locais and b in locais)
+
+
+def _configuracao_recebida(dados):
+    backend = dados.get("backend", "postgresql")
+    configuracao = {
+        "backend": backend,
+        "host": dados.get("host", ""),
+        "port": dados.get("port", 0),
+        "database": dados.get("database", ""),
+        "username": dados.get("username", ""),
+        "password": dados.get("password", ""),
+    }
+    atual = carregar_configuracao_banco()
+    if (
+        not configuracao["password"]
+        and atual["backend"] == backend
+        and _mesmo_servidor(configuracao["host"], atual["host"])
+        and all(
+            configuracao[chave] == atual[chave]
+            for chave in ("port", "database", "username")
+        )
+    ):
+        configuracao["password"] = atual["password"]
+    return configuracao
+
+
+def _validar_provedor_recebido(configuracao):
+    if configuracao["backend"] == "sqlite":
+        raise HTTPException(status_code=400, detail="Provedor inválido.")
+    try:
+        nome_provedor(configuracao["backend"])
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail="Provedor inválido.") from exc
+
+
+@router.post("/banco/conexao/testar")
+def testar_conexao_banco(request: Request, dados: dict):
+    exigir_administrador(request)
+    configuracao = _configuracao_recebida(dados)
+    _validar_provedor_recebido(configuracao)
+    try:
+        testar_conexao(configuracao)
+    except (ValueError, ConnectionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "mensagem": (
+            f"Conexão com {nome_provedor(configuracao['backend'])} "
+            "estabelecida com sucesso."
+        )
+    }
+
+
+@router.post("/banco/conexao/configurar")
+def configurar_conexao_banco(request: Request, dados: dict):
+    usuario = exigir_administrador(request)
+    configuracao = _configuracao_recebida(dados)
+    _validar_provedor_recebido(configuracao)
+    nome = nome_provedor(configuracao["backend"])
+    try:
+        testar_conexao(configuracao)
+        criar_tabelas(configuracao)
+        configuracao = salvar_configuracao_banco(configuracao)
+    except (ValueError, ConnectionError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _auditar_banco(
+        usuario,
+        "configurar_banco",
+        {
+            "tipo": nome,
+            "host": configuracao["host"],
+            "database": configuracao["database"],
+        },
+    )
+    return {
+        "mensagem": (
+            f"{nome} configurado e tabelas criadas. Reinicie o servidor "
+            "pelo Manager para aplicar a alteração. Os dados atuais não "
+            "foram copiados."
+        )
+    }
+
+
+def _auditar_banco(usuario, acao, detalhes):
+    db = SessionLocal()
+    try:
+        registrar_auditoria(
+            acao=acao,
+            recurso="banco",
+            usuario=usuario,
+            detalhes=detalhes,
+            db=db,
+        )
+    finally:
+        db.close()
+
+
+@router.post("/banco/sqlite/configurar")
+async def configurar_sqlite(request: Request):
+    usuario = exigir_administrador(request)
+    try:
+        salvar_configuracao_banco({"backend": "sqlite"})
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    db = SessionLocal()
+    try:
+        registrar_auditoria(
+            acao="configurar_banco_sqlite",
+            recurso="banco",
+            usuario=usuario,
+            detalhes={},
+            db=db,
+        )
+    finally:
+        db.close()
+    return {
+        "mensagem": (
+            "SQLite selecionado. Reinicie o servidor pelo Manager "
+            "para aplicar a alteração."
+        )
+    }
+
+
+def _migrar_e_salvar(usuario, configuracao):
+    nome = nome_provedor(configuracao["backend"])
+    try:
+        testar_conexao(configuracao)
+        migrar_sqlite(configuracao)
+    except (ValueError, ConnectionError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    try:
+        configuracao = salvar_configuracao_banco(configuracao)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Os dados foram copiados para o {nome}, mas não foi "
+                "possível salvar a configuração. Use “Aplicar” sem a opção "
+                "de copiar os dados."
+            ),
+        ) from exc
+    _auditar_banco(
+        usuario,
+        "migrar_sqlite_banco",
+        {
+            "tipo": nome,
+            "host": configuracao["host"],
+            "database": configuracao["database"],
+        },
+    )
+    return configuracao
+
+
+def _mensagem_migracao(backend):
+    return (
+        "Migração concluída. O SQLite original foi preservado. "
+        f"Reinicie o servidor pelo Manager para passar a usar o {nome_provedor(backend)}."
+    )
+
+
+@router.post("/banco/conexao/migrar")
+def migrar_para_banco(request: Request, dados: dict):
+    usuario = exigir_administrador(request)
+    configuracao = _configuracao_recebida(dados)
+    _validar_provedor_recebido(configuracao)
+    _migrar_e_salvar(usuario, configuracao)
+    return {"mensagem": _mensagem_migracao(configuracao["backend"])}
+
+
+@router.post("/banco/conexao/criar")
+def criar_banco_conexao(request: Request, dados: dict):
+    usuario = exigir_administrador(request)
+    configuracao = _configuracao_recebida(dados)
+    _validar_provedor_recebido(configuracao)
+    backend = configuracao["backend"]
+    nome = nome_provedor(backend)
+    administrador = dados.get("administrador")
+    if not isinstance(administrador, dict) or not administrador.get("username"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Informe o usuário administrador do {nome}.",
+        )
+    if not configuracao["password"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Defina a senha do novo usuário do banco.",
+        )
+    try:
+        configuracao = normalizar_configuracao(configuracao)
+        provisionar_banco(
+            {
+                "host": configuracao["host"],
+                "port": configuracao["port"],
+                "username": str(administrador.get("username", "")).strip(),
+                "password": str(administrador.get("password", "")),
+            },
+            configuracao,
+        )
+    except (ValueError, ConnectionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _auditar_banco(
+        usuario,
+        "criar_banco",
+        {
+            "tipo": nome,
+            "host": configuracao["host"],
+            "database": configuracao["database"],
+            "usuario": configuracao["username"],
+        },
+    )
+
+    if dados.get("migrar") and PROVEDORES[backend].get("migracao"):
+        try:
+            _migrar_e_salvar(usuario, configuracao)
+        except HTTPException as exc:
+            exc.detail = (
+                "Usuário e banco foram criados, mas a migração não foi "
+                f"concluída. {exc.detail} Corrija o problema e use "
+                "“Usar um banco que já existe”."
+            )
+            raise
+        return {"mensagem": _mensagem_migracao(backend)}
+
+    try:
+        criar_tabelas(configuracao)
+        salvar_configuracao_banco(configuracao)
+    except (ValueError, ConnectionError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "mensagem": (
+            "Usuário, banco e tabelas criados. Reinicie o servidor pelo "
+            "Manager para aplicar a alteração. Os dados atuais não foram "
+            "copiados."
+        )
+    }
 
 
 @router.post("/banco/retencao")
@@ -583,6 +856,11 @@ async def salvar_retencao(request: Request, dados: dict):
 @router.post("/banco/compactar")
 def compactar_banco_endpoint(request: Request):
     usuario = exigir_administrador(request)
+    if engine.dialect.name != "sqlite":
+        raise HTTPException(
+            status_code=409,
+            detail="A compactação de arquivo está disponível somente no SQLite.",
+        )
     arquivo = BANCO_DIR / "afd.db"
     tamanho_antes = arquivo.stat().st_size if arquivo.exists() else 0
     compactar_banco()

@@ -41,41 +41,27 @@ BASE_DIR = Path(__file__).resolve().parent
 
 @asynccontextmanager
 async def lifespan(app):
-
     _carregar_automacoes()
-
-    tarefa_monitor = asyncio.create_task(
-        monitorar_lojas()
-    )
-    tarefa_automacoes = asyncio.create_task(
-        executar_agendador_automacoes()
-    )
-
-    tarefa_retencao = asyncio.create_task(
-        executar_retencao_banco()
-    )
+    tarefas = [
+        asyncio.create_task(monitorar_lojas()),
+        asyncio.create_task(executar_agendador_automacoes()),
+        asyncio.create_task(executar_retencao_banco()),
+    ]
 
     try:
         yield
     finally:
-        tarefa_monitor.cancel()
-        tarefa_automacoes.cancel()
-        tarefa_retencao.cancel()
-        try:
-            await tarefa_retencao
-        except asyncio.CancelledError:
-            pass
-        try:
-            await tarefa_monitor
-        except asyncio.CancelledError:
-            pass
-        try:
-            await tarefa_automacoes
-        except asyncio.CancelledError:
-            pass
+        for tarefa in tarefas:
+            tarefa.cancel()
+        for tarefa in tarefas:
+            try:
+                await tarefa
+            except asyncio.CancelledError:
+                pass
 
 app = FastAPI(
     title="ChronoSnap",
+    version="1.0.2",
     lifespan=lifespan
 )
 
@@ -226,11 +212,15 @@ if "administrador" not in {
     coluna["name"]
     for coluna in inspect(engine).get_columns("funcionarios")
 }:
+    valor_booleano_falso = (
+        "FALSE" if engine.dialect.name == "postgresql" else "0"
+    )
     with engine.begin() as conexao:
         conexao.execute(
             text(
                 "ALTER TABLE funcionarios "
-                "ADD COLUMN administrador BOOLEAN NOT NULL DEFAULT 0"
+                "ADD COLUMN administrador BOOLEAN NOT NULL DEFAULT "
+                f"{valor_booleano_falso}"
             )
         )
 

@@ -31,6 +31,8 @@ from models import (
 )
 
 
+from app_paths import LOGS_DIR, DOWNLOADS_DIR
+
 BASE_DIR = Path(
     __file__
 ).resolve().parent.parent
@@ -48,7 +50,7 @@ router = APIRouter(
     tags=["AFD"]
 )
 
-AUTOMACOES_FILE = BASE_DIR / "logs" / "automacoes.json"
+AUTOMACOES_FILE = LOGS_DIR / "automacoes.json"
 
 
 def _criar_pasta_automacoes():
@@ -126,7 +128,7 @@ def _normalizar_automacao(payload, existente=None):
         "capturar_dia_anterior": bool(payload.get("capturar_dia_anterior", base.get("capturar_dia_anterior", True))),
         "capturar_marcacoes": bool(payload.get("capturar_marcacoes", base.get("capturar_marcacoes", False))),
         "intervalo_marcacoes_minutos": max(1, min(1440, intervalo_marcacoes)),
-        "diretorio": str(payload.get("diretorio") or base.get("diretorio") or (BASE_DIR / "downloads")),
+        "diretorio": str(payload.get("diretorio") or base.get("diretorio") or DOWNLOADS_DIR),
         "ultima_execucao": base.get("ultima_execucao"),
         "ultima_carga_marcacoes": base.get("ultima_carga_marcacoes"),
         "ultimo_status": base.get("ultimo_status")
@@ -194,7 +196,7 @@ def _registrar_captura(status, lojas, diretorio, data_alvo):
 
 def _executar_automacao_sync(automacao):
     lojas = automacao.get("lojas", [])
-    diretorio = automacao.get("diretorio") or str(BASE_DIR / "downloads")
+    diretorio = automacao.get("diretorio") or str(DOWNLOADS_DIR)
     data_alvo = datetime.now() - timedelta(days=1) if automacao.get("capturar_dia_anterior", True) else datetime.now()
     data_inicial = data_alvo.strftime("%Y-%m-%d")
     if automacao.get("capturar_marcacoes"):
@@ -224,7 +226,11 @@ def carregar_marcacoes_sync(numeros_lojas, data_inicial, data_final):
         for numero in numeros_lojas:
             loja = db.query(Loja).filter(Loja.numero == int(numero)).first()
             if not loja:
-                resultados.append({"loja": numero, "erro": "Loja não encontrada."})
+                resultados.append({
+                    "loja": numero,
+                    "nome": f"Empresa {int(numero):02d}",
+                    "erro": "Loja não encontrada."
+                })
                 continue
             try:
                 equipamento = IDClass(
@@ -243,11 +249,21 @@ def carregar_marcacoes_sync(numeros_lojas, data_inicial, data_final):
                     if not afd:
                         raise ValueError("O relógio não retornou AFD.")
                     resultado = importar_marcacoes(db, loja.id, afd, layout)
-                    resultados.append({"loja": numero, "success": True, **resultado})
+                    resultados.append({
+                        "loja": numero,
+                        "nome": loja.nome,
+                        "success": True,
+                        **resultado
+                    })
                 finally:
                     equipamento.logout()
             except Exception as erro:
-                resultados.append({"loja": numero, "success": False, "erro": str(erro)})
+                resultados.append({
+                    "loja": numero,
+                    "nome": loja.nome,
+                    "success": False,
+                    "erro": str(erro)
+                })
         return resultados
     finally:
         db.close()
@@ -477,7 +493,7 @@ async def pagina_automacoes(
             context={
                 "lojas": lojas,
                 "automacoes": _carregar_automacoes().get("automacoes", []),
-                "config_downloads": str(BASE_DIR / "downloads")
+                "config_downloads": str(DOWNLOADS_DIR)
             }
         )
     finally:
@@ -566,7 +582,7 @@ async def executar_automacao(request: Request):
     payload = await request.json()
 
     lojas = [int(loja) for loja in (payload.get("lojas") or []) if str(loja).strip()]
-    diretorio = str(payload.get("diretorio") or str(BASE_DIR / "downloads"))
+    diretorio = str(payload.get("diretorio") or str(DOWNLOADS_DIR))
     data_hora = payload.get("data")
 
     if not lojas:
@@ -876,8 +892,7 @@ def preview_afd(
 
             try:
 
-                mode, layout = obter_mode_layout(loja)
-                equipamento = None
+                _, layout = obter_mode_layout(loja)
                 marcacoes_banco = (
                     db.query(MarcacaoAFD)
                     .filter(
@@ -889,42 +904,22 @@ def preview_afd(
                     .all()
                 )
 
-                # =================================================
-                # EQUIPAMENTO
-                # =================================================
-
-                equipamento = IDClass(
-
-                    ip=loja.ip,
-
-                    username=(
-                        loja.usuario
-                        or "admin"
-                    ),
-
-                    password=(
-                        loja.senha
-                        or "7070"
+                if not marcacoes_banco:
+                    raise ValueError(
+                        "Não há marcações carregadas no banco para esta empresa "
+                        "e período. Faça uma carga de marcações antes de consultar."
                     )
 
-                )
-
-                if not marcacoes_banco:
-                    equipamento.login_device()
-
-                # =================================================
-                # LAYOUT
-                # =================================================
-
-                # =================================================
-                # CADASTRO DE USUÁRIOS DO RELÓGIO
-                #
-                # O nome do funcionário será recuperado
-                # diretamente do relógio quando o AFD não
-                # trouxer o nome.
-                # =================================================
-
-                usuarios_por_documento = {}
+                linhas_afd = [
+                    marcacao.raw
+                    for marcacao in marcacoes_banco
+                    if marcacao.raw
+                ]
+                if not linhas_afd:
+                    raise ValueError(
+                        "As marcações deste período não têm os registros AFD "
+                        "necessários para a pré-visualização."
+                    )
 
                 funcionarios_por_documento = {}
                 funcionarios_por_identificador = {}
@@ -1002,108 +997,14 @@ def preview_afd(
                                 chave
                             ] = funcionario_cadastrado
 
-                try:
-
-                    usuarios_relogio = (
-                        equipamento.load_all_users(mode=mode)
-                        if marcacoes_banco else []
-                    )
-
-                except Exception:
-
-                    usuarios_relogio = []
-
-                for usuario in usuarios_relogio:
-
-                    if not isinstance(
-                        usuario,
-                        dict
-                    ):
-                        continue
-
-                    nome_usuario = (
-                        usuario.get("nome")
-                        or usuario.get("name")
-                        or ""
-                    )
-
-                    nome_usuario = (
-                        str(
-                            nome_usuario
-                        )
-                        .strip()
-                    )
-
-                    if not nome_usuario:
-                        continue
-
-                    identificadores = [
-
-                        usuario.get(
-                            "pis"
-                        ),
-
-                        usuario.get(
-                            "cpf"
-                        ),
-
-                        usuario.get(
-                            "identificador"
-                        ),
-
-                        usuario.get(
-                            "matricula"
-                        ),
-
-                        usuario.get(
-                            "registration"
-                        ),
-
-                        usuario.get(
-                            "documento"
-                        ),
-
-                    ]
-
-                    for identificador in (
-                        identificadores
-                    ):
-
-                        if identificador is None:
-                            continue
-
-                        for chave in chaves_identificador(
-                            identificador
-                        ):
-
-                            usuarios_por_documento[
-                                chave
-                            ] = nome_usuario
-
                 # =================================================
-                # DOWNLOAD DO AFD
+                # RECONSTRÓI O AFD A PARTIR DAS MARCAÇÕES DO BANCO
                 # =================================================
 
-                if marcacoes_banco:
-                    afd = "\r\n".join(
-                        marcacao.raw
-                        for marcacao in marcacoes_banco
-                        if marcacao.raw
-                    ).encode("iso-8859-1", errors="replace")
-                else:
-                    afd = equipamento.get_afd(
-                        data_inicial=data_ini,
-                        data_final=data_fim,
-                        mode=mode
-                    )
-                    if not afd:
-                        raise Exception("O relógio não retornou dados de AFD.")
-                    importar_marcacoes(
-                        db=db,
-                        loja_id=loja.id,
-                        afd=afd,
-                        layout=layout
-                    )
+                afd = "\r\n".join(linhas_afd).encode(
+                    "iso-8859-1",
+                    errors="replace"
+                )
 
                 # =================================================
                 # PROCESSA ESPELHO
@@ -1234,9 +1135,6 @@ def preview_afd(
                         nome = buscar_por_identificador(
                             funcionarios_por_documento,
                             documento
-                        ) or buscar_por_identificador(
-                            usuarios_por_documento,
-                            documento
                         )
 
                     if busca:
@@ -1326,9 +1224,6 @@ def preview_afd(
 
                             nome_encontrado = buscar_por_identificador(
                                 funcionarios_por_documento,
-                                identificador_marcacao
-                            ) or buscar_por_identificador(
-                                usuarios_por_documento,
                                 identificador_marcacao
                             )
 
@@ -1504,14 +1399,6 @@ def preview_afd(
                         str(erro)
 
                 })
-
-            finally:
-
-                if equipamento:
-                    try:
-                        equipamento.logout()
-                    except Exception:
-                        pass
 
         # ========================================================
         # TOTAIS GERAIS

@@ -9,6 +9,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+database.json
 
 # Local database and SQLite sidecar files
 banco/
@@ -32,3 +33,10 @@ logs/
 
 # Local editor settings
 .vscode/
+
+# Local license material and generated build artifacts
+licenciamento/
+build/work/
+build/work_linux/
+build/out/
+*.lic

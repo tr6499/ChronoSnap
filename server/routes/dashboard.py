@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import Loja
+from services.banco_dados import configuracao_publica
 from services.monitor import intervalo_ping, obter_historico_latencia
 
 
@@ -26,8 +27,34 @@ router = APIRouter()
 def informacoes_servidor():
     memoria_total = None
     memoria_disponivel = None
+    sistema = platform.system()
+    identificador_cpu = platform.processor()
+    cpu = identificador_cpu or platform.machine()
+    cpu_normalizada = identificador_cpu.casefold()
 
-    if platform.system() == "Windows":
+    if any(marca in cpu_normalizada for marca in ("genuineintel", "intel")):
+        cpu_fabricante = "Intel"
+    elif any(
+        marca in cpu_normalizada
+        for marca in ("authenticamd", "amd64 family", "ryzen", "epyc", "amd ")
+    ):
+        cpu_fabricante = "AMD"
+    elif "apple" in cpu_normalizada:
+        cpu_fabricante = "Apple"
+    elif "arm" in cpu_normalizada or platform.machine().casefold().startswith(
+        ("arm", "aarch")
+    ):
+        cpu_fabricante = "ARM"
+    else:
+        cpu_fabricante = "Outro"
+
+    sistema_icones = {
+        "windows": "windows",
+        "linux": "linux",
+        "darwin": "apple",
+    }
+
+    if sistema == "Windows":
         class MEMORYSTATUSEX(ctypes.Structure):
             _fields_ = [
                 ("dwLength", ctypes.c_ulong),
@@ -49,10 +76,12 @@ def informacoes_servidor():
 
     return {
         "nome": socket.gethostname(),
-        "sistema": f"{platform.system()} {platform.release()}",
+        "sistema": f"{sistema} {platform.release()}",
+        "sistema_icone": sistema_icones.get(sistema.casefold()),
         "versao": platform.version(),
         "arquitetura": platform.machine(),
-        "cpu": platform.processor() or platform.machine(),
+        "cpu": cpu,
+        "cpu_fabricante": cpu_fabricante,
         "nucleos": os.cpu_count() or 0,
         "memoria_total_gb": round(memoria_total / (1024 ** 3), 1) if memoria_total else None,
         "memoria_disponivel_gb": round(memoria_disponivel / (1024 ** 3), 1) if memoria_disponivel else None,
@@ -97,7 +126,8 @@ async def dashboard(request: Request):
                 "lojas_online": online,
                 "lojas_offline": offline,
                 "ping_interval": intervalo_ping(),
-                "servidor": informacoes_servidor()
+                "servidor": informacoes_servidor(),
+                "banco": configuracao_publica(),
             }
         )
 

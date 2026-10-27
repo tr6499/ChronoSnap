@@ -401,6 +401,19 @@ Dashboard
         text-transform: uppercase;
     }
 
+    .server-info-label-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .server-info-label-icon {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 auto;
+        color: #526b7f;
+    }
+
     .server-info-value {
         display: block;
         overflow: hidden;
@@ -409,6 +422,45 @@ Dashboard
         font-weight: 600;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .server-info-database {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .server-info-database-icon {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 auto;
+        object-fit: contain;
+    }
+
+    .server-info-platform {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .server-info-platform-icon {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 auto;
+        object-fit: contain;
+    }
+
+    .server-info-cpu {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .server-info-cpu-icon {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        color: #526b7f;
     }
 
     @media (max-width: 700px) {
@@ -475,12 +527,51 @@ Dashboard
     <section class="card dashboard-visual">
         <h2>Servidor</h2>
         <div class="server-info">
-            <div class="server-info-item"><span class="server-info-label">Sistema operacional</span><strong class="server-info-value">{{ servidor.sistema }}</strong></div>
+            <div class="server-info-item">
+                <span class="server-info-label">Sistema operacional</span>
+                <strong class="server-info-value server-info-platform">
+                    {% if servidor.sistema_icone %}
+                    <img class="server-info-platform-icon" src="/static/devicons/{{ servidor.sistema_icone }}.svg" alt="" aria-hidden="true">
+                    {% else %}
+                    <svg class="server-info-platform-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="13" rx="2"></rect>
+                        <path d="M8 21h8m-4-4v4"></path>
+                    </svg>
+                    {% endif %}
+                    <span>{{ servidor.sistema }}</span>
+                </strong>
+            </div>
             <div class="server-info-item"><span class="server-info-label">Versão</span><strong class="server-info-value">{{ servidor.versao }}</strong></div>
-            <div class="server-info-item"><span class="server-info-label">Arquitetura</span><strong class="server-info-value">{{ servidor.arquitetura }}</strong></div>
-            <div class="server-info-item"><span class="server-info-label">Processador</span><strong class="server-info-value" title="{{ servidor.cpu }}">{{ servidor.cpu }}</strong></div>
+            <div class="server-info-item">
+                <span class="server-info-label">Arquitetura</span>
+                <strong class="server-info-value server-info-cpu" title="{{ servidor.cpu_fabricante }} · {{ servidor.arquitetura }}">
+                    <svg class="server-info-cpu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                        <path d="M9 9h6v6H9zM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"></path>
+                    </svg>
+                    <span>{{ servidor.cpu_fabricante }} · {{ servidor.arquitetura }}</span>
+                </strong>
+            </div>
+            <div class="server-info-item">
+                <span class="server-info-label server-info-label-with-icon">
+                    <svg class="server-info-label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                        <path d="M9 9h6v6H9zM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"></path>
+                    </svg>
+                    Processador
+                </span>
+                <strong class="server-info-value" title="{{ servidor.cpu }}">{{ servidor.cpu }}</strong>
+            </div>
             <div class="server-info-item"><span class="server-info-label">Núcleos disponíveis</span><strong class="server-info-value">{{ servidor.nucleos }}</strong></div>
             <div class="server-info-item"><span class="server-info-label">Memória RAM</span><strong class="server-info-value">{{ servidor.memoria_total_gb or "Não disponível" }} GB total{% if servidor.memoria_disponivel_gb %} · {{ servidor.memoria_disponivel_gb }} GB livre{% endif %}</strong></div>
+            <div class="server-info-item">
+                <span class="server-info-label">Banco de dados</span>
+                <strong class="server-info-value server-info-database">
+                    <img class="server-info-database-icon" src="/static/devicons/{% if banco.backend == 'mssql' %}mssql{% else %}{{ banco.backend }}{% endif %}.svg" alt="" aria-hidden="true">
+                    <span>{{ banco.tipo }}</span>
+                </strong>
+            </div>
+            <div class="server-info-item"><span class="server-info-label">Localização do banco</span><strong class="server-info-value" title="{{ banco.local }}">{{ banco.local }}</strong></div>
         </div>
         <span class="health-note">Servidor: {{ servidor.nome }}</span>
     </section>

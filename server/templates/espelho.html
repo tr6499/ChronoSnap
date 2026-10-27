@@ -82,7 +82,7 @@ Espelho de Ponto
 {% block content %}
 
 <h1 class="page-title">Espelho de Ponto</h1>
-<p class="page-description">Consulte as marcações dos funcionários por período e empresa.</p>
+<p class="page-description">Consulte as marcações carregadas no banco de dados por período e empresa. Esta consulta não acessa o relógio; carregue as marcações previamente.</p>
 
 <form id="espelhoForm" class="card">
     <div class="espelho-form">
@@ -90,6 +90,7 @@ Espelho de Ponto
             <label for="loja">Empresa</label>
             <select id="loja" name="loja">
                 <option value="">Selecione uma empresa</option>
+                <option value="todas">Todas as empresas</option>
                 {% for loja in lojas %}
                 <option value="{{ loja.numero }}">
                     {{ "%02d"|format(loja.numero) }} - {{ loja.nome }}
@@ -167,7 +168,6 @@ Espelho de Ponto
     }
 
     function mostrarResultado(dados) {
-        const loja = dados.lojas[0];
         let html = `
             <div class="espelho-summary">
                 <div><strong>Funcionários</strong><br>${dados.total_funcionarios}</div>
@@ -175,51 +175,58 @@ Espelho de Ponto
                 <div><strong>Período</strong><br>${escapeHtml(dados.data_inicial)} até ${escapeHtml(dados.data_final)}</div>
             </div>
         `;
+        let temSucesso = false;
 
-        if (!loja || !loja.success) {
-            conteudo.innerHTML = html + `<div class="espelho-error"><strong>Erro:</strong> ${escapeHtml(loja?.erro || "Nenhum resultado encontrado.")}</div>`;
-            resultado.style.display = "block";
-            botaoExportarPdf.disabled = true;
-            return;
-        }
+        dados.lojas.forEach(loja => {
+            if (!loja.success) {
+                html += `<div class="espelho-error"><strong>${escapeHtml(loja.nome || `Empresa ${String(loja.loja).padStart(2, "0")}`)} - Erro:</strong> ${escapeHtml(loja.erro || "Nenhum resultado encontrado.")}</div>`;
+                return;
+            }
 
-        html += `<h3>${escapeHtml(loja.nome || "Empresa")} (${String(loja.loja).padStart(2, "0")})</h3>`;
-        html += `<p><strong>Layout:</strong> ${escapeHtml(formatarLayout(loja.layout))} &nbsp; <strong>Funcionários:</strong> ${loja.total_funcionarios} &nbsp; <strong>Marcações:</strong> ${loja.total_marcacoes}</p>`;
+            temSucesso = true;
+            html += `<h3>${escapeHtml(loja.nome || "Empresa")} (${String(loja.loja).padStart(2, "0")})</h3>`;
+            html += `<p><strong>Layout:</strong> ${escapeHtml(formatarLayout(loja.layout))} &nbsp; <strong>Funcionários:</strong> ${loja.total_funcionarios} &nbsp; <strong>Marcações:</strong> ${loja.total_marcacoes}</p>`;
 
-        if (!loja.funcionarios || loja.funcionarios.length === 0) {
-            html += `<div class="espelho-employee">Nenhum funcionário encontrado.</div>`;
-        } else {
-            const funcionarios = [...loja.funcionarios].sort((primeiro, segundo) =>
-                String(primeiro.nome || "").localeCompare(String(segundo.nome || ""), "pt-BR", { sensitivity: "base" })
-            );
+            if (!loja.funcionarios || loja.funcionarios.length === 0) {
+                html += `<div class="espelho-employee">Nenhum funcionário encontrado.</div>`;
+            } else {
+                const funcionarios = [...loja.funcionarios].sort((primeiro, segundo) =>
+                    String(primeiro.nome || "").localeCompare(String(segundo.nome || ""), "pt-BR", { sensitivity: "base" })
+                );
 
-            funcionarios.forEach(funcionario => {
-                const documento = funcionario.documento || funcionario.pis || funcionario.cpf || "";
-                const marcacoes = funcionario.marcacoes || [];
-                html += `
-                    <div class="espelho-employee">
-                        <strong>${escapeHtml(funcionario.nome || "Funcionário sem nome")}</strong><br>
-                        <small>${escapeHtml(funcionario.tipo_documento || "PIS")}: ${escapeHtml(documento)}</small><br>
-                        <small>Marcações: ${marcacoes.length}</small>
-                `;
+                funcionarios.forEach(funcionario => {
+                    const documento = funcionario.documento || funcionario.pis || funcionario.cpf || "";
+                    const marcacoes = funcionario.marcacoes || [];
+                    html += `
+                        <div class="espelho-employee">
+                            <strong>${escapeHtml(funcionario.nome || "Funcionário sem nome")}</strong><br>
+                            <small>${escapeHtml(funcionario.tipo_documento || "PIS")}: ${escapeHtml(documento)}</small><br>
+                            <small>Marcações: ${marcacoes.length}</small>
+                    `;
 
-                if (marcacoes.length) {
-                    html += `<div class="espelho-table-wrap"><table class="espelho-table"><thead><tr><th>NSR</th><th>Data</th><th>Hora</th><th>${escapeHtml(funcionario.tipo_documento || "PIS")}</th></tr></thead><tbody>`;
-                    marcacoes.forEach(marcacao => {
-                        html += `<tr><td>${escapeHtml(marcacao.nsr)}</td><td>${escapeHtml(marcacao.data)}</td><td>${escapeHtml(marcacao.hora)}</td><td>${escapeHtml(marcacao.documento || marcacao.identificador)}</td></tr>`;
-                    });
-                    html += `</tbody></table></div>`;
-                } else {
-                    html += `<div class="espelho-employee">Nenhuma marcação encontrada para este funcionário.</div>`;
-                }
+                    if (marcacoes.length) {
+                        html += `<div class="espelho-table-wrap"><table class="espelho-table"><thead><tr><th>NSR</th><th>Data</th><th>Hora</th><th>${escapeHtml(funcionario.tipo_documento || "PIS")}</th></tr></thead><tbody>`;
+                        marcacoes.forEach(marcacao => {
+                            html += `<tr><td>${escapeHtml(marcacao.nsr)}</td><td>${escapeHtml(marcacao.data)}</td><td>${escapeHtml(marcacao.hora)}</td><td>${escapeHtml(marcacao.documento || marcacao.identificador)}</td></tr>`;
+                        });
+                        html += `</tbody></table></div>`;
+                    } else {
+                        html += `<div class="espelho-employee">Nenhuma marcação encontrada para este funcionário.</div>`;
+                    }
 
-                html += `</div>`;
-            });
+                    html += `</div>`;
+                });
+            }
+
+        });
+
+        if (!dados.lojas.length) {
+            html += `<div class="espelho-error"><strong>Erro:</strong> Nenhum resultado encontrado.</div>`;
         }
 
         conteudo.innerHTML = html;
         resultado.style.display = "block";
-        botaoExportarPdf.disabled = false;
+        botaoExportarPdf.disabled = !temSucesso;
     }
 
     botaoExportarPdf.addEventListener("click", () => {
@@ -276,7 +283,11 @@ Espelho de Ponto
         }
 
         const dados = new FormData();
-        if (loja) {
+        if (loja === "todas") {
+            document.querySelectorAll("#loja option:not([value='']):not([value='todas'])").forEach(opcao => {
+                dados.append("lojas", opcao.value);
+            });
+        } else if (loja) {
             dados.append("lojas", loja);
         }
         dados.append("data_inicial", dataInicial);
@@ -285,7 +296,7 @@ Espelho de Ponto
         dados.append("formato", "original");
 
         botao.disabled = true;
-        botao.textContent = "Consultando...";
+        botao.textContent = "Consultando banco...";
         botaoExportarPdf.disabled = true;
 
         try {

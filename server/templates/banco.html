@@ -13,22 +13,123 @@
     .banco-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
     .banco-resultado { margin-top: 14px; color: #526b7f; font-size: 13px; white-space: pre-wrap; }
     .banco-tabelas { columns: 3; margin: 0; padding-left: 18px; color: #526b7f; font-size: 13px; }
-    @media (max-width: 700px) { .banco-grid { grid-template-columns: 1fr; } .banco-tabelas { columns: 1; } }
+    .banco-rotulo { margin: 18px 0 8px; color: #102a43; font-size: 13px; font-weight: 700; }
+    .banco-ajuda { margin: 8px 0 12px; color: #526b7f; font-size: 13px; line-height: 1.5; }
+    .banco-aviso { padding: 10px 12px; border-left: 4px solid #d69e2e; background: #fffbea; color: #744210; font-size: 13px; }
+    .banco-opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .banco-opcao { position: relative; display: block; padding: 12px 14px; border: 2px solid #dfe7f1; border-radius: 6px; background: #fff; cursor: pointer; }
+    .banco-opcao:hover { border-color: #90b4de; }
+    .banco-opcao:has(input:checked) { border-color: #2b6cb0; background: #e8f2ff; box-shadow: 0 0 0 1px #2b6cb0; }
+    .banco-opcao:has(input:focus-visible) { outline: 2px solid #1a4f8b; outline-offset: 2px; }
+    .banco-opcao input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+    .banco-opcao:has(input:checked) strong::after { content: " \2713"; color: #2b6cb0; }
+    .banco-opcao strong { display: flex; align-items: center; gap: 8px; color: #102a43; font-size: 14px; }
+    .banco-opcao-icon { width: 26px; height: 26px; flex: 0 0 auto; object-fit: contain; }
+    .banco-opcao span { display: block; margin-top: 4px; color: #718096; font-size: 12px; line-height: 1.4; }
+    .banco-kpi-provedor { display: flex; align-items: center; gap: 9px; }
+    .banco-kpi-icon { width: 30px; height: 30px; flex: 0 0 auto; object-fit: contain; }
+    .banco-modos { display: grid; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+    .banco-modos label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .banco-modos input[type="radio"] { width: auto; flex: 0 0 auto; margin: 0; padding: 0; }
+    .banco-acoes-secundarias { margin-bottom: 8px; }
+    .banco-migrar { margin: 14px 0; padding: 12px; border: 1px solid #dfe7f1; border-radius: 6px; background: #f8fbff; }
+    .banco-migrar .banco-ajuda { margin: 6px 0 0 22px; }
+    @media (max-width: 700px) { .banco-grid, .banco-opcoes { grid-template-columns: 1fr; } .banco-tabelas { columns: 1; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1 class="page-title">Banco de dados</h1>
-<p class="page-description">Informações e ferramentas de manutenção do banco local.</p>
+<p class="page-description">Configuração, migração e ferramentas do banco de dados.</p>
 
 <section class="card">
-    <h2>Informações</h2>
+    <h2>Banco de Dados:</h2>
     <div class="banco-grid">
+        <div class="banco-kpi">
+            <span>Banco</span>
+            <strong class="banco-kpi-provedor">
+                <img class="banco-kpi-icon" src="/static/devicons/{% if banco_atual.backend == 'mssql' %}mssql{% else %}{{ banco_atual.backend }}{% endif %}.svg" alt="" aria-hidden="true">
+                <span>{{ banco_atual.tipo }}{% if servidor.versao %} <small>{{ servidor.versao }}</small>{% endif %}</span>
+            </strong>
+        </div>
         <div class="banco-kpi"><span>Marcações armazenadas</span><strong>{{ marcacoes_total }}</strong></div>
-        <div class="banco-kpi"><span>Tamanho do arquivo</span><strong>{{ "%.1f KB"|format(banco_tamanho / 1024) }}</strong></div>
-        <div class="banco-kpi"><span>Tabelas</span><strong>{{ tabelas|length }}</strong></div>
+        <div class="banco-kpi"><span>{% if banco_sqlite %}Tamanho do arquivo{% else %}Tamanho no servidor{% endif %}</span><strong>{% if banco_sqlite %}{{ "%.1f KB"|format(banco_tamanho / 1024) }}{% elif servidor.tamanho is not none %}{{ "%.1f MB"|format(servidor.tamanho / 1048576) }}{% else %}Servidor {{ banco_atual.tipo }}{% endif %}</strong></div>
     </div>
+    <p class="banco-rotulo">{% if banco_sqlite %}Arquivo do banco{% else %}Servidor / banco{% endif %}</p>
     <p class="banco-caminho">{{ banco_caminho }}</p>
+    {% if banco_sqlite and arquivo_sqlite_existe %}
+    <p class="banco-ajuda">O SQLite é um arquivo local; não há serviço de banco instalado. Para usar um servidor de banco de dados, escolha uma opção abaixo.</p>
+    {% endif %}
+    {% if postgresql_local %}
+    <p class="banco-rotulo">PostgreSQL instalado neste computador</p>
+    {% for instalacao in postgresql_local %}
+    <p class="banco-caminho">Versão {{ instalacao.versao }}<br>Programa: {{ instalacao.programa }}<br>Dados: {{ instalacao.dados }}</p>
+    {% endfor %}
+    {% elif banco_sqlite %}
+    <p class="banco-ajuda">Nenhuma instalação local do PostgreSQL foi encontrada neste computador. Você pode conectar a um servidor existente ou instalar o PostgreSQL pelo instalador do ChronoSnap.</p>
+    {% endif %}
+    {% if banco_destino_backend != banco_atual.backend %}
+    <p role="status" class="banco-aviso">Há uma alteração de banco pendente. Reinicie o servidor pelo Manager para aplicá-la.</p>
+    {% endif %}
+</section>
+
+<section class="card" id="config-banco">
+    <h2>Trocar ou configurar o banco de dados</h2>
+    <p class="page-description">A troca só vale depois de reiniciar o servidor pelo ChronoSnap Manager. O arquivo SQLite nunca é apagado, então é possível voltar a ele.</p>
+
+    <p class="banco-rotulo">1. Escolha o banco de dados</p>
+    <div class="banco-opcoes" id="banco-opcoes">
+        <label class="banco-opcao"><input type="radio" name="banco-destino" value="sqlite" {% if banco_destino_backend == 'sqlite' %}checked{% endif %}><strong><img class="banco-opcao-icon" src="/static/devicons/sqlite.svg" alt="" aria-hidden="true">SQLite</strong><span>Arquivo local. Padrão, sem configuração.</span></label>
+        {% for provedor in provedores %}
+        <label class="banco-opcao"><input type="radio" name="banco-destino" value="{{ provedor.backend }}" {% if banco_destino_backend == provedor.backend %}checked{% endif %}><strong><img class="banco-opcao-icon" src="/static/devicons/{% if provedor.backend == 'mssql' %}mssql{% else %}{{ provedor.backend }}{% endif %}.svg" alt="" aria-hidden="true">{{ provedor.nome }}</strong><span>{% if provedor.migracao %}Migra os dados do SQLite.{% else %}Conexão e criação das tabelas.{% endif %}</span></label>
+        {% endfor %}
+    </div>
+
+    <div id="painel-sqlite" hidden>
+        <p class="banco-ajuda">O ChronoSnap voltará a usar o arquivo SQLite local no próximo início do servidor.</p>
+        <div class="banco-acoes"><button type="button" id="salvar-sqlite">Usar SQLite</button></div>
+    </div>
+
+    <div id="painel-conexao" hidden>
+        <p class="banco-rotulo">2. <span id="titulo-conexao"></span></p>
+        <div id="modo-conexao" class="banco-modos">
+            <label><input type="radio" name="cx-modo" value="criar"> Criar usuário <span id="texto-criar-banco">e banco </span>automaticamente <em>(recomendado)</em></label>
+            <label><input type="radio" name="cx-modo" value="existente"> Usar um banco e usuário que já existem</label>
+        </div>
+        <p class="banco-ajuda" id="ajuda-conexao"></p>
+
+        <div class="banco-grid">
+            <div class="form-group"><label for="cx-host">Servidor</label><input id="cx-host" autocomplete="off"></div>
+            <div class="form-group"><label for="cx-port">Porta</label><input id="cx-port" type="number" min="1" max="65535"></div>
+            <div class="form-group"><label for="cx-database" id="rotulo-database">Banco de dados</label><input id="cx-database" autocomplete="off"></div>
+            <div class="form-group"><label for="cx-username">Usuário do ChronoSnap</label><input id="cx-username" autocomplete="off"></div>
+            <div class="form-group"><label for="cx-password">Senha do usuário</label><input id="cx-password" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="banco-acoes banco-acoes-secundarias">
+            <button type="button" id="sugerir-credenciais" class="button-secondary">Sugerir banco, usuário e senha</button>
+            <button type="button" id="mostrar-senha" class="button-secondary">Mostrar senha</button>
+        </div>
+
+        <div id="admin-conexao" hidden>
+            <p class="banco-rotulo">Conta administradora do <span id="nome-admin"></span></p>
+            <p class="banco-ajuda" id="ajuda-admin"></p>
+            <div class="banco-grid">
+                <div class="form-group"><label for="adm-username">Usuário administrador</label><input id="adm-username" autocomplete="off"></div>
+                <div class="form-group"><label for="adm-password">Senha do administrador</label><input id="adm-password" type="password" autocomplete="off"></div>
+            </div>
+        </div>
+
+        <div id="opcao-migrar" class="banco-migrar" hidden>
+            <label><input type="checkbox" id="migrar-dados" checked> <strong>Copiar os dados do SQLite para este banco</strong></label>
+            <p class="banco-ajuda">Copia marcações, funcionários, lojas e usuários, e confere as contagens. O arquivo SQLite é preservado. Se o banco de destino só tiver os dados padrão da primeira inicialização, eles são substituídos.</p>
+        </div>
+
+        <div class="banco-acoes">
+            <button type="button" id="testar-conexao" class="button-secondary">Testar conexão</button>
+            <button type="button" id="aplicar-banco">Aplicar</button>
+        </div>
+    </div>
+    <div class="banco-resultado" id="banco-config-resultado"></div>
 </section>
 
 <section class="card">
@@ -44,8 +145,8 @@
 
 <section class="card">
     <h2>Compactação do banco</h2>
-    <p class="page-description">A compactação recupera espaço em disco após exclusões, mas pode levar algum tempo e requer espaço livre temporário. Execute quando houver pouca atividade no sistema.</p>
-    <div class="banco-acoes"><button type="button" id="compactar-banco">Compactar banco agora</button></div>
+    <p class="page-description">{% if banco_sqlite %}A compactação recupera espaço em disco após exclusões, mas pode levar algum tempo e requer espaço livre temporário. Execute quando houver pouca atividade no sistema.{% else %}Esta ferramenta é exclusiva do SQLite e fica indisponível enquanto PostgreSQL estiver em uso.{% endif %}</p>
+    <div class="banco-acoes"><button type="button" id="compactar-banco" {% if not banco_sqlite %}disabled{% endif %}>Compactar banco agora</button></div>
     <div class="banco-resultado" id="compactar-resultado"></div>
 </section>
 
@@ -71,12 +172,195 @@
 
 <script>
     const resultado = document.querySelector('#resultado');
+    const saidaBanco = document.querySelector('#banco-config-resultado');
     async function bancoJson(url, options) {
         const resposta = await fetch(url, options);
         const dados = await resposta.json();
         if (!resposta.ok) throw new Error(dados.detail || 'Operação não concluída.');
         return dados;
     }
+    const PROVEDORES = {{ provedores|tojson }};
+    const CONEXOES = {{ conexoes|tojson }};
+    const BACKEND_SALVO = {{ banco_destino_backend|tojson }};
+    const TEM_SQLITE = {{ 'true' if arquivo_sqlite_existe else 'false' }};
+    const campo = id => document.querySelector('#' + id);
+    const JSON_HEADERS = {'Content-Type': 'application/json'};
+
+    function backendSelecionado() {
+        return document.querySelector('input[name="banco-destino"]:checked').value;
+    }
+    function modoCriar() {
+        const marcado = document.querySelector('input[name="cx-modo"]:checked');
+        return Boolean(marcado) && marcado.value === 'criar';
+    }
+    function provedorAtual() {
+        return PROVEDORES.find(item => item.backend === backendSelecionado());
+    }
+    function gerarSenha() {
+        const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        const bytes = new Uint32Array(24);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, valor => alfabeto[valor % alfabeto.length]).join('');
+    }
+    function sugerirCredenciais() {
+        if (provedorAtual().cria_banco) campo('cx-database').value = 'chronosnap';
+        campo('cx-username').value = 'chronosnap_app';
+        campo('cx-password').value = gerarSenha();
+        campo('cx-password').type = 'text';
+        campo('mostrar-senha').textContent = 'Ocultar senha';
+        saidaBanco.textContent = 'Credenciais sugeridas. Anote a senha: ela fica gravada de forma protegida no servidor e não é exibida novamente.';
+    }
+    function preencherConexao(backend) {
+        const valores = CONEXOES[backend];
+        campo('cx-host').value = valores.host;
+        campo('cx-port').value = valores.port;
+        campo('cx-database').value = (backend === 'oracle' && !valores.salva) ? 'XEPDB1' : valores.database;
+        campo('cx-username').value = valores.username;
+        campo('cx-password').value = '';
+        campo('cx-password').type = 'password';
+        campo('mostrar-senha').textContent = 'Mostrar senha';
+        campo('cx-password').placeholder = valores.salva ? 'Deixe em branco para manter a senha salva' : '';
+        campo('adm-username').value = PROVEDORES.find(item => item.backend === backend).administrador;
+        campo('adm-password').value = '';
+    }
+    const AJUDA_ADMIN = {
+        postgresql: 'Use o usuário <strong>postgres</strong> e a senha escolhida ao instalar o PostgreSQL. Se o PostgreSQL foi instalado pelo setup do ChronoSnap, o usuário e o banco já foram criados e configurados automaticamente (a senha do <strong>postgres</strong> é aleatória e não é guardada), então não é preciso criar nada aqui.',
+        mysql: 'Use o usuário <strong>root</strong> (ou outro com permissão para criar bancos e usuários).',
+        mariadb: 'Use o usuário <strong>root</strong> (ou outro com permissão para criar bancos e usuários).',
+        mssql: 'Use o login <strong>sa</strong> (ou outro com permissão para criar bancos e logins). O servidor precisa aceitar autenticação do SQL Server.',
+        oracle: 'Use <strong>system</strong> (ou outro com permissão para criar usuários). O Oracle não cria bancos por aqui: informe em “Service name” um serviço existente, de preferência um PDB (ex.: XEPDB1). O usuário criado terá o nome em maiúsculas.'
+    };
+    function atualizarPainel() {
+        const backend = backendSelecionado();
+        const sqlite = backend === 'sqlite';
+        const provedor = provedorAtual();
+        campo('painel-sqlite').hidden = !sqlite;
+        campo('painel-conexao').hidden = sqlite;
+        if (sqlite) return;
+        const criar = modoCriar();
+        campo('titulo-conexao').textContent = 'Dados da conexão com ' + provedor.nome;
+        campo('rotulo-database').textContent = provedor.rotulo_banco;
+        campo('texto-criar-banco').textContent = provedor.cria_banco ? 'e banco ' : '';
+        campo('sugerir-credenciais').textContent = provedor.cria_banco ? 'Sugerir banco, usuário e senha' : 'Sugerir usuário e senha';
+        campo('nome-admin').textContent = provedor.nome;
+        campo('ajuda-admin').innerHTML = 'Usada somente agora para criar o usuário' + (provedor.cria_banco ? ' e o banco' : '') + ' acima. Não é gravada. ' + AJUDA_ADMIN[backend];
+        campo('admin-conexao').hidden = !criar;
+        campo('testar-conexao').hidden = criar;
+        campo('opcao-migrar').hidden = !(provedor.migracao && TEM_SQLITE);
+        campo('ajuda-conexao').textContent = criar
+            ? 'O ChronoSnap cria o usuário' + (provedor.cria_banco ? ' e o banco' : '') + ' no ' + provedor.nome + ' usando a conta administradora. Use “Sugerir” para preencher os nomes e uma senha forte.'
+            : 'Informe os dados de um banco e usuário que já existam. O usuário precisa poder criar tabelas.';
+        atualizarBotaoAplicar();
+    }
+    function migrando() {
+        const provedor = provedorAtual();
+        return Boolean(provedor && provedor.migracao) && TEM_SQLITE && campo('migrar-dados').checked;
+    }
+    function atualizarBotaoAplicar() {
+        if (backendSelecionado() === 'sqlite') return;
+        const provedor = provedorAtual();
+        const botao = campo('aplicar-banco');
+        const alvo = provedor.cria_banco ? 'banco e usuário' : 'usuário';
+        botao.classList.toggle('button-danger', migrando());
+        if (modoCriar()) botao.textContent = migrando() ? 'Criar ' + alvo + ' e migrar dados' : 'Criar ' + alvo;
+        else if (migrando()) botao.textContent = 'Migrar dados para o ' + provedor.nome;
+        else botao.textContent = 'Salvar e criar tabelas';
+    }
+    function configuracaoConexao() {
+        return {
+            backend: backendSelecionado(),
+            host: campo('cx-host').value.trim(),
+            port: Number(campo('cx-port').value),
+            database: campo('cx-database').value.trim(),
+            username: campo('cx-username').value.trim(),
+            password: campo('cx-password').value
+        };
+    }
+    async function enviar(url, corpo, mensagemAguarde) {
+        saidaBanco.textContent = mensagemAguarde;
+        try {
+            const dados = await bancoJson(url, {method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(corpo)});
+            saidaBanco.textContent = dados.mensagem;
+            return true;
+        } catch (erro) {
+            saidaBanco.textContent = erro.message;
+            return false;
+        }
+    }
+    async function executarBotao(botao, tarefa) {
+        botao.disabled = true;
+        try { await tarefa(); } finally { botao.disabled = false; }
+    }
+    document.querySelectorAll('input[name="banco-destino"]').forEach(opcao => {
+        opcao.addEventListener('change', () => {
+            const backend = backendSelecionado();
+            if (backend !== 'sqlite') {
+                definirModo(backend);
+                preencherConexao(backend);
+                if (modoCriar()) sugerirCredenciais();
+            }
+            saidaBanco.textContent = '';
+            atualizarPainel();
+        });
+    });
+    document.querySelectorAll('input[name="cx-modo"]').forEach(opcao => {
+        opcao.addEventListener('change', () => {
+            preencherConexao(backendSelecionado());
+            if (modoCriar()) sugerirCredenciais();
+            atualizarPainel();
+        });
+    });
+    campo('sugerir-credenciais').addEventListener('click', sugerirCredenciais);
+    campo('mostrar-senha').addEventListener('click', () => {
+        const visivel = campo('cx-password').type === 'text';
+        campo('cx-password').type = visivel ? 'password' : 'text';
+        campo('mostrar-senha').textContent = visivel ? 'Mostrar senha' : 'Ocultar senha';
+    });
+    campo('testar-conexao').addEventListener('click', event => executarBotao(event.currentTarget, () =>
+        enviar('/config/banco/conexao/testar', configuracaoConexao(), 'Testando conexão...')));
+    campo('migrar-dados').addEventListener('change', atualizarBotaoAplicar);
+    function corpoCriacao(migrar) {
+        return {
+            ...configuracaoConexao(),
+            administrador: {username: campo('adm-username').value.trim(), password: campo('adm-password').value},
+            migrar
+        };
+    }
+    campo('aplicar-banco').addEventListener('click', event => executarBotao(event.currentTarget, async () => {
+        const provedor = provedorAtual();
+        const nome = provedor.nome;
+        const migrar = migrando();
+        const aviso = migrar ? ' As gravações no SQLite ficam bloqueadas durante a cópia e o arquivo SQLite é preservado.' : ' Os dados atuais não serão copiados.';
+        if (modoCriar()) {
+            if (!campo('cx-password').value) { saidaBanco.textContent = 'Defina a senha do novo usuário ou use “Sugerir”.'; return; }
+            if (!campo('adm-password').value) { saidaBanco.textContent = 'Informe a senha da conta administradora.'; return; }
+            if (!confirm('Criar o usuário' + (provedor.cria_banco ? ' e o banco' : '') + ' no ' + nome + (migrar ? ', copiar os dados do SQLite' : '') + ' e salvar a configuração?' + aviso + ' O banco só passa a ser usado após reiniciar o servidor.')) return;
+            await enviar('/config/banco/conexao/criar', corpoCriacao(migrar), migrar ? 'Criando usuário e migrando dados. Não feche esta página...' : 'Criando usuário e tabelas...');
+        } else if (migrar) {
+            if (!confirm('Migrar os dados do SQLite para o ' + nome + ' e salvar a configuração?' + aviso + ' O banco só passa a ser usado após reiniciar o servidor.')) return;
+            await enviar('/config/banco/conexao/migrar', configuracaoConexao(), 'Migrando dados. Não feche esta página...');
+        } else {
+            if (!confirm('Salvar ' + nome + ' e criar as tabelas?' + aviso + ' O banco só passa a ser usado após reiniciar o servidor.')) return;
+            await enviar('/config/banco/conexao/configurar', configuracaoConexao(), 'Conectando e criando tabelas...');
+        }
+    }));
+    campo('salvar-sqlite').addEventListener('click', async () => {
+        if (!confirm('Usar SQLite após reiniciar o servidor?')) return;
+        try {
+            const dados = await bancoJson('/config/banco/sqlite/configurar', {method: 'POST'});
+            saidaBanco.textContent = dados.mensagem;
+        } catch (erro) { saidaBanco.textContent = erro.message; }
+    });
+
+    function definirModo(backend) {
+        const existente = backend === BACKEND_SALVO && backend !== 'sqlite';
+        document.querySelector('input[name="cx-modo"][value="' + (existente ? 'existente' : 'criar') + '"]').checked = true;
+    }
+    (function iniciarConfiguracao() {
+        if (BACKEND_SALVO !== 'sqlite') preencherConexao(BACKEND_SALVO);
+        definirModo(BACKEND_SALVO);
+        atualizarPainel();
+    })();
     document.querySelector('#salvar-retencao').addEventListener('click', async () => {
         const saida = document.querySelector('#retencao-resultado');
         const valor = Number(document.querySelector('#retencao-valor').value || 0);

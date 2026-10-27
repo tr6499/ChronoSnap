@@ -134,33 +134,6 @@ async def fazer_login(request: LoginRequest, response: Response):
         db.close()
 
 
-@router.post("/admin-mode")
-async def ativar_modo_admin(data: dict):
-    """Ativa ou desativa o modo admin (sem login)"""
-    
-    enable = data.get("enable", False)
-    
-    if enable:
-        config_auth.ativar_modo_admin_livre()
-        
-        # Criar sessão admin automática
-        token = sessao_manager.criar_sessao(
-            usuario_id=1,
-            username="admin",
-            nome="Administrador",
-            perfil="Completo",
-            duracao_minutos=999999  # Sessão longa
-        )
-        
-        return {
-            "token": token,
-            "modo": "admin_livre"
-        }
-    else:
-        config_auth.desativar_modo_admin_livre()
-        return {"modo": "login_ativado"}
-
-
 @router.get("/logout")
 async def fazer_logout(request: Request):
     """Faz logout do usuário"""

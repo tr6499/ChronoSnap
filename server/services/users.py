@@ -469,17 +469,18 @@ class UsersMixin:
         # ========================================================
 
         usuario = self.get_user_by_registration(
-            matricula
+            matricula,
+            mode=mode
         )
 
         if not usuario:
 
             return {
-                "success": False,
+                "success": True,
                 "encontrado": False,
                 "mensagem": (
-                    f"Usuário {matricula} "
-                    "não encontrado no relógio."
+                    f"Usuário {matricula} já não está "
+                    "cadastrado no relógio."
                 )
             }
 

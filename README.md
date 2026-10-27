@@ -27,14 +27,25 @@ Contribuições enviadas por pull request também exigem a assinatura do
 ## Requisitos
 
 - Windows;
-- Python 3.11 ou superior;
 - acesso à rede dos relógios para as operações com equipamentos.
 
-As dependências Python estão listadas em `server\requirements.txt`.
+Na instalação distribuída pelo instalador, não é necessário baixar o Python nem
+executar comandos no PowerShell. O instalador inclui o Manager e o servidor; use
+o atalho **ChronoSnap Manager** para iniciar o sistema. O Manager controla a
+inicialização e a parada do servidor.
 
-## Instalação
+## Instalação pelo instalador
 
-No PowerShell, a partir da pasta do projeto:
+Execute `ChronoSnap-Setup-<versão>.exe` e siga as etapas do assistente. Ao
+terminar, abra o **ChronoSnap Manager** pelo atalho criado no menu Iniciar ou na
+área de trabalho. No Manager, inicie o servidor e abra o endereço local
+informado por ele no navegador.
+
+## Execução manual a partir do código-fonte
+
+As instruções abaixo são para desenvolvimento ou execução sem o instalador.
+Elas exigem Python 3.11 ou superior e a instalação das dependências listadas em
+`server\requirements.txt`.
 
 ```powershell
 cd C:\ChronoSnap
@@ -47,21 +58,18 @@ Se o PowerShell bloquear a ativação do ambiente virtual, execute o Python e o
 Uvicorn diretamente:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r .\server\requirements.txt
 .\.venv\Scripts\python.exe -m uvicorn app:app --app-dir .\server --host 127.0.0.1 --port 8000
 ```
 
-## Iniciar o sistema
-
-Com o ambiente virtual ativado:
+Para iniciar o servidor manualmente com o ambiente virtual ativado:
 
 ```powershell
 cd C:\ChronoSnap\server
 python -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
-Abra <http://127.0.0.1:8000/auth/login>. Para encerrar o servidor, pressione
-`Ctrl+C` no terminal em que ele está sendo executado.
+Abra <http://127.0.0.1:8000/auth/login>. Para encerrar o servidor iniciado
+manualmente, pressione `Ctrl+C` no terminal em que ele está sendo executado.
 
 No ChronoSnap Manager, escolha **Somente neste computador** para acesso local
 ou **Rede local** para permitir conexões de outros computadores. Na opção de

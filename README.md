@@ -10,7 +10,6 @@ O ChronoSnap é distribuído sob a **GNU General Public License, versão 3
 (GPL-3.0-only)**. Consulte [LICENSE](./LICENSE) e o texto integral em
 [COPYING](./COPYING). As contribuições de terceiros continuam sujeitas aos
 avisos e licenças indicados junto aos respectivos componentes.
-Esta versão não exige chave de ativação.
 
 Contribuições enviadas por pull request também exigem a assinatura do
 [Contributor License Agreement](./CLA.md) por meio do CLA Assistant.

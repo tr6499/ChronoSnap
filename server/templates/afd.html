@@ -111,15 +111,6 @@ Download AFD
         gap: 6px;
     }
 
-    .afd-loja-info strong {
-        width: fit-content;
-        padding: 3px 7px;
-        border-radius: 4px;
-        background: #e4eef8;
-        color: #183b5b;
-        font-size: 13px;
-    }
-
     .afd-loja-info span {
         overflow-wrap: anywhere;
         color: #183b5b;
@@ -459,9 +450,7 @@ Download AFD
                     name="lojas"
                     value="{{ loja.numero }}"
                 >
-
                 <span class="afd-loja-info">
-                    <strong>{{ "%02d"|format(loja.numero) }}</strong>
                     <span>{{ loja.nome }}</span>
                     <small>
                         {% if loja.afd_layout == "671" %}

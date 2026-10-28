@@ -21,8 +21,25 @@ Gerenciamento de Empresas
     .lojas-header h1 { margin-bottom: 4px; }
 
     .lojas-add-btn {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 14px;
+        border: 1px solid #d2dee7;
+        border-radius: 7px;
+        background: #f3f7fa;
+        box-shadow: none;
+        color: #35566d;
+        font-size: 13px;
+        font-weight: 600;
         flex: 0 0 auto;
         white-space: nowrap;
+    }
+
+    .lojas-add-btn:hover {
+        border-color: #b8cbd9;
+        background: #eaf1f6;
+        box-shadow: none;
     }
 
     .lojas-summary {
@@ -67,9 +84,12 @@ Gerenciamento de Empresas
     .lojas-table td, .lojas-table th { vertical-align: middle; }
     .lojas-table .empresa-nome { min-width: 180px; font-weight: 600; color: #102a43; }
     .lojas-table .endereco { color: #526b7f; font-family: Consolas, monospace; font-size: 12px; }
+    .lojas-header form { margin: 0; }
+    .lojas-table th:last-child { text-align: right; }
     .lojas-acoes {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         flex-wrap: wrap;
         gap: 8px;
         min-width: 330px;
@@ -82,31 +102,66 @@ Gerenciamento de Empresas
         justify-content: center;
         min-height: 34px;
         padding: 7px 11px;
+        border: 1px solid #d7e0e7;
+        border-radius: 6px;
+        box-shadow: none;
         font-size: 12px;
+        font-weight: 600;
         white-space: nowrap;
     }
 
     .lojas-acoes .button-edit {
-        background: #198754;
-        border-color: #198754;
-        color: #fff;
+        background: #f1f5f8;
+        border-color: #d7e0e7;
+        color: #3e5a70;
     }
 
     .lojas-acoes .button-edit:hover {
-        background: #146c43;
-        border-color: #146c43;
+        background: #e7eef3;
+        border-color: #c5d3dd;
+        box-shadow: none;
     }
 
     .lojas-acoes .button-sync {
-        background: #0d6efd;
-        border-color: #0d6efd;
-        color: #fff;
+        background: #f7f9fa;
+        border-color: #dce4e9;
+        color: #536879;
+    }
+
+    .lojas-acoes .button-sync:hover {
+        background: #edf2f5;
+        border-color: #cbd7df;
+        box-shadow: none;
     }
 
     .lojas-acoes .button-delete {
-        background: #dc3545;
-        border-color: #dc3545;
-        color: #fff;
+        background: #fbf6f6;
+        border-color: #eadede;
+        color: #9a5a5a;
+    }
+
+    .lojas-acoes .button-delete:hover {
+        background: #f5eaea;
+        border-color: #dfcaca;
+        box-shadow: none;
+    }
+
+    .lojas-sync-all {
+        min-height: 36px;
+        padding: 8px 13px;
+        border: 1px solid #d6e0e7;
+        border-radius: 6px;
+        background: #f4f7f9;
+        box-shadow: none;
+        color: #405b70;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .lojas-sync-all:hover {
+        border-color: #c4d2dc;
+        background: #eaf0f4;
+        box-shadow: none;
     }
 
     @media (max-width: 900px) {
@@ -129,7 +184,7 @@ Gerenciamento de Empresas
         <h1 class="page-title">Empresas</h1>
         <p class="page-description">Cadastre, monitore e sincronize os equipamentos Control iD.</p>
     </div>
-    <a class="button button-success lojas-add-btn" href="/company/novo">+ Adicionar empresa</a>
+    <a class="button lojas-add-btn" href="/company/novo">+ Adicionar empresa</a>
 </div>
 
 {% if request.query_params.get("sucesso") %}
@@ -179,7 +234,7 @@ Gerenciamento de Empresas
 
             <button
                 type="submit"
-                class="button-success"
+                class="lojas-sync-all"
             >
                 Sincronizar todas
             </button>

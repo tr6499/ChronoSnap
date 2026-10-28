@@ -20,6 +20,7 @@ Contribuições enviadas por pull request também exigem a assinatura do
 - cadastro de empresas, lojas e funcionários;
 - consulta e sincronização de usuários com relógios iDClass;
 - download e processamento de arquivos AFD;
+- importação manual de marcações por arquivo AFD (Legado/595 e Portaria 671);
 - consulta de espelhos de ponto e geração de arquivos RM/TOTVS;
 - dashboard, auditoria e configurações de retenção do banco;
 - agendamento de capturas automáticas de AFD e marcações.
@@ -105,7 +106,21 @@ ou configure a captura automática para manter esses dados atualizados. O botão
 de gerar/baixar o AFD original continua lendo diretamente do relógio.
 Na página AFD, **Importar marcações** carrega do relógio as marcações das
 empresas selecionadas no período informado e grava os registros no banco para
-consulta posterior.
+consulta posterior. Para importar um arquivo exportado, acesse **Marcações →
+Importação**, selecione a empresa e envie um arquivo `.txt` ou `.afd` de até
+25 MB. São importadas as marcações reconhecidas nos leiautes Legado/595 e
+Portaria 671; a importação não armazena o arquivo AFD original. A compatibilidade
+com outros leiautes de fabricante depende de validação com arquivos de exemplo.
+Selecione manualmente a empresa de destino antes de cada importação. Marcações
+já existentes para essa empresa são ignoradas para evitar duplicações.
+
+O status dos relógios é confirmado pela resposta da API Control iD com as
+credenciais cadastradas. Falha de autenticação ou resposta de erro da API é
+indicada separadamente de uma falha de conexão; timeout não é tratado como
+prova de que o relógio está offline. Se o monitor não fizer uma verificação
+recente, o status aparece como **Sem verificação recente** em vez de apresentar
+o último estado como atual. O horário da última verificação também fica visível
+no gerenciamento de empresas.
 Em todos os bancos também é possível **Criar automaticamente** o usuário (e o
 banco) informando uma conta administradora (`postgres`, `root`, `sa` ou
 `system`), que não é gravada. No Oracle só o usuário é criado: o service name

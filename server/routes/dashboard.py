@@ -12,7 +12,11 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Loja
 from services.banco_dados import configuracao_publica
-from services.monitor import intervalo_ping, obter_historico_latencia
+from services.monitor import (
+    estado_atual_loja,
+    intervalo_ping,
+    obter_historico_latencia
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,6 +103,18 @@ def status_dashboard(db):
     return lojas
 
 
+def resumir_status(statuses):
+    estados = list(statuses.values())
+    return {
+        "online": estados.count("online"),
+        "offline": estados.count("offline"),
+        "error": estados.count("error"),
+        "timeout": estados.count("timeout"),
+        "unknown": estados.count("unknown"),
+        "stale": estados.count("stale")
+    }
+
+
 @router.get("/")
 async def dashboard(request: Request):
 
@@ -107,15 +123,12 @@ async def dashboard(request: Request):
     try:
 
         lojas = status_dashboard(db)
-
+        status_por_loja = {
+            loja.id: estado_atual_loja(loja)
+            for loja in lojas
+        }
         total = len(lojas)
-
-        online = sum(
-            1 for loja in lojas
-            if loja.online
-        )
-
-        offline = total - online
+        resumo = resumir_status(status_por_loja)
 
         return templates.TemplateResponse(
             request=request,
@@ -123,8 +136,18 @@ async def dashboard(request: Request):
             context={
                 "lojas": lojas,
                 "total_lojas": total,
-                "lojas_online": online,
-                "lojas_offline": offline,
+                "status_lojas": status_por_loja,
+                "lojas_online": resumo["online"],
+                "lojas_offline": resumo["offline"],
+                "lojas_sem_dados": resumo["stale"],
+                "lojas_com_erro": (
+                    resumo["error"]
+                    + resumo["timeout"]
+                    + resumo["unknown"]
+                ),
+                "lojas_com_timeout": resumo["timeout"],
+                "lojas_com_erro_api": resumo["error"],
+                "lojas_com_estado_desconhecido": resumo["unknown"],
                 "ping_interval": intervalo_ping(),
                 "servidor": informacoes_servidor(),
                 "banco": configuracao_publica(),
@@ -144,18 +167,22 @@ async def dashboard_status():
     try:
 
         lojas = status_dashboard(db)
-
+        status_por_loja = {
+            loja.id: estado_atual_loja(loja)
+            for loja in lojas
+        }
+        resumo = resumir_status(status_por_loja)
         return JSONResponse({
             "total": len(lojas),
-            "online": sum(1 for loja in lojas if loja.online),
-            "offline": sum(1 for loja in lojas if not loja.online),
+            **resumo,
             "lojas": [
                 {
                     "numero": loja.numero,
                     "nome": loja.nome,
                     "ip": loja.ip,
                     "porta": loja.porta or 443,
-                    "online": bool(loja.online),
+                    "status": status_por_loja[loja.id],
+                    "online": status_por_loja[loja.id] == "online",
                     "tempo_resposta": loja.tempo_resposta,
                     "ultimo_teste": loja.ultimo_teste,
                     "mensagem": loja.mensagem_status or "",

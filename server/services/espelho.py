@@ -508,6 +508,33 @@ class EspelhoAFD:
 
         return self.LAYOUT_LEGADO
 
+    def detectar_layout(self, afd):
+
+        if not afd:
+            raise ValueError(
+                "O AFD recebido está vazio."
+            )
+
+        if isinstance(afd, str):
+            afd = afd.encode(
+                "iso-8859-1",
+                errors="replace"
+            )
+
+        if not isinstance(afd, bytes):
+            raise TypeError(
+                "O AFD deve ser bytes ou string."
+            )
+
+        linhas = afd.splitlines()
+
+        if not linhas:
+            raise ValueError(
+                "O AFD não possui registros."
+            )
+
+        return self._detectar_layout(linhas)
+
     # ============================================================
     # TIPO DO REGISTRO
     # ============================================================

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre o ChronoSnap{% endblock %}
+{% block topbar_title %}Sobre o ChronoSnap{% endblock %}
+
+{% block head %}
+<style>
+    .licenca-card { max-width: 1000px; }
+    .licenca-identidade { padding: 20px; border: 1px solid #d9e6f2; border-radius: 10px; background: linear-gradient(135deg, #f7fbff, #edf6fd); }
+    .licenca-identidade h1 { margin: 0 0 8px; color: #0d4f82; font-size: 24px; }
+    .licenca-identidade p { margin: 5px 0; color: #526b7f; }
+    .licenca-autor { color: #102a43 !important; font-size: 16px; font-weight: 700; }
+    .licenca-titulo { margin: 22px 0 10px; color: #0d4f82; font-size: 17px; }
+    .licenca-texto { max-height: 560px; overflow: auto; margin: 0; padding: 18px; border: 1px solid #d9e6f2; border-radius: 8px; background: #fff; color: #334155; font: 12px/1.6 Consolas, "Courier New", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .licenca-link { display: inline-flex; margin-top: 16px; color: #0756a6; font-weight: 600; text-decoration: none; }
+    .licenca-link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="card licenca-card">
+    <div class="licenca-identidade">
+        <h1>ChronoSnap</h1>
+        <p class="licenca-autor">Autor: {{ author }}</p>
+        <p>Versão {{ app_version }} · Software livre sob a GNU General Public License v3 (GPL-3.0-only).</p>
+    </div>
+
+    <h2 class="licenca-titulo">Texto da licença</h2>
+    <pre class="licenca-texto">{{ license_text }}</pre>
+
+    <a class="licenca-link" href="{{ gnu_license_url }}" target="_blank" rel="noopener noreferrer">
+        Consultar a página oficial da GNU sobre a GPL v3
+    </a>
+</section>
+{% endblock %}

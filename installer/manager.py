@@ -50,6 +50,8 @@ from app_paths import DATA_DIR  # noqa: E402
 CONFIG_FILE = DATA_DIR / "manager.json"
 LOG_FILE = DATA_DIR / "logs" / "server.log"
 BLUE, BLUE_DEEP, INK, SOFT, BG = "#0d6efd", "#0756a6", "#102a43", "#607486", "#f4f8fc"
+APP_VERSION = "1.0.2"
+GNU_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 
 
 def load_config():
@@ -116,6 +118,19 @@ class Manager(tk.Tk):
         s.map("Accent.TButton", background=[("active", BLUE_DEEP), ("disabled", "#9ec5fe")])
 
     def _build(self):
+        menu = tk.Menu(self)
+        license_menu = tk.Menu(menu, tearoff=False)
+        license_menu.add_command(
+            label="Sobre o ChronoSnap e licença...",
+            command=self.show_license,
+        )
+        license_menu.add_command(
+            label="Abrir página da GNU...",
+            command=lambda: webbrowser.open(GNU_LICENSE_URL),
+        )
+        menu.add_cascade(label="Sobre", menu=license_menu)
+        self.configure(menu=menu)
+
         f = ttk.Frame(self, padding=20)
         f.pack(fill="both", expand=True)
         ttk.Label(f, text="ChronoSnap", style="Title.TLabel").pack(anchor="w")
@@ -181,6 +196,70 @@ class Manager(tk.Tk):
         self.log.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
         self.log.pack(side="left", fill="both", expand=True)
+
+    def show_license(self):
+        license_window = tk.Toplevel(self)
+        license_window.title("Sobre o ChronoSnap")
+        license_window.geometry("760x680")
+        license_window.minsize(600, 480)
+        license_window.transient(self)
+        license_window.configure(bg=BG)
+
+        content = ttk.Frame(license_window, padding=20)
+        content.pack(fill="both", expand=True)
+        ttk.Label(content, text="ChronoSnap", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(
+            content,
+            text=f"Versão {APP_VERSION}  ·  Licença GNU General Public License v3",
+            style="Sub.TLabel",
+        ).pack(anchor="w", pady=(2, 4))
+        ttk.Label(
+            content,
+            text="Autor: Tetsuo Rodolfo Okubo",
+            font=("Segoe UI", 10, "bold"),
+        ).pack(anchor="w", pady=(0, 12))
+
+        license_frame = ttk.Frame(content)
+        license_frame.pack(fill="both", expand=True)
+        license_text = tk.Text(
+            license_frame,
+            wrap="word",
+            font=("Segoe UI", 9),
+            state="normal",
+            bg="white",
+            fg=INK,
+            relief="solid",
+            bd=1,
+            padx=12,
+            pady=10,
+        )
+        scrollbar = ttk.Scrollbar(license_frame, command=license_text.yview)
+        license_text.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        license_text.pack(side="left", fill="both", expand=True)
+
+        license_path = ROOT / ("LICENSE.txt" if FROZEN else "COPYING")
+        try:
+            terms = license_path.read_text(encoding="utf-8-sig")
+        except OSError as exc:
+            license_window.destroy()
+            messagebox.showerror(
+                "ChronoSnap",
+                f"Não foi possível carregar o texto da GNU GPL v3:\n{exc}",
+            )
+            return
+
+        license_text.insert("1.0", terms)
+        license_text.configure(state="disabled")
+
+        actions = ttk.Frame(content)
+        actions.pack(fill="x", pady=(12, 0))
+        ttk.Button(
+            actions,
+            text="Texto oficial da GNU GPL v3",
+            command=lambda: webbrowser.open(GNU_LICENSE_URL),
+        ).pack(side="left")
+        ttk.Button(actions, text="Fechar", command=license_window.destroy).pack(side="right")
 
     def save_access_mode(self):
         self.cfg["mode"] = self.access_var.get()

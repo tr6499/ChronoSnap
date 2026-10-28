@@ -50,7 +50,7 @@ from app_paths import DATA_DIR  # noqa: E402
 CONFIG_FILE = DATA_DIR / "manager.json"
 LOG_FILE = DATA_DIR / "logs" / "server.log"
 BLUE, BLUE_DEEP, INK, SOFT, BG = "#0d6efd", "#0756a6", "#102a43", "#607486", "#f4f8fc"
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 GNU_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 
 

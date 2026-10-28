@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import Loja
+from services.monitor import estado_atual_loja
 from services.users_sync import sincronizar_usuarios
 
 
@@ -36,12 +37,34 @@ async def lojas_page(request: Request):
             .order_by(Loja.numero)
             .all()
         )
+        status_por_loja = {
+            loja.id: estado_atual_loja(loja)
+            for loja in lojas
+        }
 
         return templates.TemplateResponse(
             request=request,
             name="lojas.html",
             context={
-                "lojas": lojas
+                "lojas": lojas,
+                "status_por_loja": status_por_loja,
+                "status_online": sum(
+                    estado == "online"
+                    for estado in status_por_loja.values()
+                ),
+                "status_offline": sum(
+                    estado == "offline"
+                    for estado in status_por_loja.values()
+                ),
+                "status_atencao": sum(
+                    estado in (
+                        "error",
+                        "timeout",
+                        "unknown",
+                        "stale"
+                    )
+                    for estado in status_por_loja.values()
+                )
             }
         )
 

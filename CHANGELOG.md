@@ -1,5 +1,24 @@
 # Histórico de versões
 
+## 1.0.4 — 28/10/2026
+
+### Adicionado
+
+- Importação manual de marcações AFD com seleção explícita da empresa e
+  detecção automática dos leiautes Legado/595 e Portaria 671.
+- Deduplicação das marcações importadas por empresa.
+
+### Corrigido
+
+- Layout da página de configuração de banco de dados no instalador Windows,
+  com posicionamento dos campos ajustado para evitar cortes em diferentes
+  escalas de tela.
+- Status dos relógios verificado pela API Control iD, em vez de uma resposta
+  genérica a ping/HTTPS. Falhas de autenticação ou da API não são confundidas
+  com relógios offline; timeout ou estado antigo aparecem como
+  “Sem verificação recente”. O horário da última verificação também fica
+  visível no gerenciamento de empresas.
+
 ## 1.0.3 — 28/10/2026
 
 ### Adicionado

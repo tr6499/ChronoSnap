@@ -1,6 +1,6 @@
 ; Instalador Windows do ChronoSnap (Inno Setup 6)
 #ifndef AppVersion
-  #define AppVersion "1.0.3"
+  #define AppVersion "1.0.4"
 #endif
 #ifndef StageDir
   #define StageDir "..\..\build\work\stage"
@@ -165,7 +165,7 @@ begin
   Result.Parent := Pagina.Surface;
   Result.Caption := Texto;
   Result.Left := 0;
-  Result.Top := Topo;
+  Result.Top := ScaleY(Topo);
 end;
 
 function NovoCampo(Pagina: TWizardPage; Topo, Largura: Integer): TNewEdit;
@@ -173,7 +173,7 @@ begin
   Result := TNewEdit.Create(Pagina);
   Result.Parent := Pagina.Surface;
   Result.Left := 0;
-  Result.Top := Topo;
+  Result.Top := ScaleY(Topo);
   Result.Width := Largura;
 end;
 
@@ -190,7 +190,7 @@ begin
   TipoServidorLocal.Parent := PaginaBancoLocal.Surface;
   TipoServidorLocal.Style := csDropDownList;
   TipoServidorLocal.Left := 0;
-  TipoServidorLocal.Top := 20;
+  TipoServidorLocal.Top := ScaleY(20);
   TipoServidorLocal.Width := Larg;
   TipoServidorLocal.Items.Add('SQLite (padrao; nao instala servidor)');
   TipoServidorLocal.Items.Add('Instalar PostgreSQL local (download de cerca de 380 MB)');
@@ -203,7 +203,7 @@ begin
   Nota.AutoSize := False;
   Nota.WordWrap := True;
   Nota.Width := Larg;
-  Nota.Height := 44;
+  Nota.Height := ScaleY(44);
 
   PaginaBanco := CreateCustomPage(PaginaBancoLocal.ID, 'Conectar a outro banco existente',
     'Conecte o ChronoSnap a um servidor de banco de dados existente (opcional).');
@@ -213,7 +213,7 @@ begin
   UsarOutroBanco.Parent := PaginaBanco.Surface;
   UsarOutroBanco.Caption := 'Usar um banco de dados alternativo em vez do SQLite';
   UsarOutroBanco.Left := 0;
-  UsarOutroBanco.Top := 0;
+  UsarOutroBanco.Top := ScaleY(0);
   UsarOutroBanco.Width := Larg;
   UsarOutroBanco.OnClick := @UsarOutroBancoClick;
 
@@ -222,7 +222,7 @@ begin
   TipoBanco.Parent := PaginaBanco.Surface;
   TipoBanco.Style := csDropDownList;
   TipoBanco.Left := 0;
-  TipoBanco.Top := 44;
+  TipoBanco.Top := ScaleY(42);
   TipoBanco.Width := Larg;
   TipoBanco.Items.Add('MySQL');
   TipoBanco.Items.Add('MariaDB');
@@ -232,32 +232,34 @@ begin
   TipoBanco.ItemIndex := 0;
   TipoBanco.OnChange := @TipoBancoChange;
 
-  NovoRotulo(PaginaBanco, 'Servidor:', 76);
-  EditServidor := NovoCampo(PaginaBanco, 92, Larg - 90);
+  NovoRotulo(PaginaBanco, 'Servidor:', 72);
+  EditServidor := NovoCampo(PaginaBanco, 88, Larg - ScaleX(90));
   EditServidor.Text := 'localhost';
-  Nota := NovoRotulo(PaginaBanco, 'Porta:', 76);
-  Nota.Left := Larg - 80;
-  EditPorta := NovoCampo(PaginaBanco, 92, 80);
-  EditPorta.Left := Larg - 80;
+  Nota := NovoRotulo(PaginaBanco, 'Porta:', 72);
+  Nota.Left := Larg - ScaleX(80);
+  EditPorta := NovoCampo(PaginaBanco, 88, ScaleX(80));
+  EditPorta.Left := Larg - ScaleX(80);
   EditPorta.Text := '3306';
 
-  RotuloBanco := NovoRotulo(PaginaBanco, 'Nome do banco de dados:', 124);
-  EditBanco := NovoCampo(PaginaBanco, 140, Larg);
+  RotuloBanco := NovoRotulo(PaginaBanco, 'Nome do banco de dados:', 116);
+  EditBanco := NovoCampo(PaginaBanco, 132, Larg);
   EditBanco.Text := 'chronosnap';
 
-  NovoRotulo(PaginaBanco, 'Usuario:', 172);
-  EditUsuario := NovoCampo(PaginaBanco, 188, Larg);
+  NovoRotulo(PaginaBanco, 'Usuario:', 160);
+  EditUsuario := NovoCampo(PaginaBanco, 176, (Larg - ScaleX(12)) div 2);
   EditUsuario.Text := 'chronosnap_app';
 
-  NovoRotulo(PaginaBanco, 'Senha:', 220);
-  EditSenha := NovoCampo(PaginaBanco, 236, Larg);
+  Nota := NovoRotulo(PaginaBanco, 'Senha:', 160);
+  Nota.Left := (Larg + ScaleX(12)) div 2;
+  EditSenha := NovoCampo(PaginaBanco, 176, (Larg - ScaleX(12)) div 2);
+  EditSenha.Left := (Larg + ScaleX(12)) div 2;
   EditSenha.PasswordChar := '*';
 
-  Nota := NovoRotulo(PaginaBanco, 'O banco e o usuario precisam existir. As tabelas sao criadas automaticamente na primeira inicializacao do servidor.', 268);
+  Nota := NovoRotulo(PaginaBanco, 'O banco e o usuario precisam existir. As tabelas sao criadas automaticamente na primeira inicializacao do servidor.', 212);
   Nota.AutoSize := False;
   Nota.WordWrap := True;
   Nota.Width := Larg;
-  Nota.Height := 32;
+  Nota.Height := ScaleY(36);
 
   AtualizarCamposBanco();
 end;

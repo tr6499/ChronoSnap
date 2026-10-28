@@ -34,10 +34,19 @@ def extrair_marcacoes(afd, layout):
     return registros
 
 
-def importar_marcacoes(db, loja_id, afd, layout):
+def importar_marcacoes(
+    db,
+    loja_id,
+    afd,
+    layout,
+    registros=None,
+    confirmar=True
+):
     inseridas = 0
     ignoradas = 0
-    for registro in extrair_marcacoes(afd, layout):
+    if registros is None:
+        registros = extrair_marcacoes(afd, layout)
+    for registro in registros:
         assinatura = assinatura_marcacao(loja_id, registro)
         existente = db.query(MarcacaoAFD.id).filter(
             MarcacaoAFD.loja_id == loja_id,
@@ -61,7 +70,8 @@ def importar_marcacoes(db, loja_id, afd, layout):
             importado_em=datetime.utcnow()
         ))
         inseridas += 1
-    db.commit()
+    if confirmar:
+        db.commit()
     return {"inseridas": inseridas, "ignoradas": ignoradas}
 
 

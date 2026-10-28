@@ -62,7 +62,7 @@ async def lifespan(app):
 
 app = FastAPI(
     title="ChronoSnap",
-    version="1.0.3",
+    version="1.0.4",
     lifespan=lifespan
 )
 
@@ -254,7 +254,17 @@ for nome_coluna, definicao in (
                 )
             )
 
-
+colunas_lojas = {
+    coluna["name"]
+    for coluna in inspect(engine).get_columns("lojas")
+}
+if "status_conexao" not in colunas_lojas:
+    with engine.begin() as conexao:
+        conexao.execute(
+            text(
+                "ALTER TABLE lojas ADD COLUMN status_conexao VARCHAR(20)"
+            )
+        )
 
 # ============================================================
 # REGISTRO DAS ROTAS

@@ -60,6 +60,11 @@ class Loja(Base):
         default=False
     )
 
+    status_conexao = Column(
+        String(20),
+        nullable=True
+    )
+
     ultimo_teste = Column(
         String(50),
         nullable=True

@@ -134,6 +134,7 @@ Dashboard
 
     .status-dot.online { background: #168052; }
     .status-dot.offline { background: #b93846; }
+    .status-dot.attention { background: #8a5a00; }
 
     .ping-overview {
         display: grid;
@@ -482,7 +483,7 @@ Dashboard
     <p>Visão geral dos equipamentos Control ID cadastrados no sistema.</p>
 </section>
 
-<div class="grid grid-3">
+<div class="grid grid-4">
     <div class="card dashboard-stat">
         <img class="dashboard-stat-icon" src="/static/ico1.svg" alt="">
         <h2 id="total-lojas">{{ total_lojas }}</h2>
@@ -491,12 +492,17 @@ Dashboard
     <div class="card dashboard-stat dashboard-stat-online">
         <img class="dashboard-stat-icon" src="/static/ico2.svg" alt="">
         <h2 id="lojas-online">{{ lojas_online }}</h2>
-        <p>Último status: <strong>Online</strong></p>
+        <p>API autenticada</p>
     </div>
     <div class="card dashboard-stat dashboard-stat-offline">
         <img class="dashboard-stat-icon" src="/static/ico3.svg" alt="">
         <h2 id="lojas-offline">{{ lojas_offline }}</h2>
-        <p>Último status: <strong>Offline</strong></p>
+        <p>API sem resposta</p>
+    </div>
+    <div class="card dashboard-stat">
+        <img class="dashboard-stat-icon" src="/static/ico3.svg" alt="">
+        <h2 id="lojas-verificar">{{ lojas_sem_dados + lojas_com_erro }}</h2>
+        <p>Verificar / sem dados recentes</p>
     </div>
 </div>
 
@@ -515,6 +521,10 @@ Dashboard
                 <div class="status-legend-item">
                     <span class="status-legend-label"><span class="status-dot offline"></span>Offline</span>
                     <strong id="chart-offline">{{ lojas_offline }}</strong>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-label"><span class="status-dot attention"></span>Verificar</span>
+                    <strong id="chart-verificar">{{ lojas_sem_dados + lojas_com_erro }}</strong>
                 </div>
                 <div class="status-legend-item">
                     <span>Total</span>
@@ -604,12 +614,16 @@ Dashboard
         total: {{ total_lojas }},
         online: {{ lojas_online }},
         offline: {{ lojas_offline }},
+        unknown: {{ lojas_com_estado_desconhecido }},
+        stale: {{ lojas_sem_dados }},
+        timeout: {{ lojas_com_timeout }},
+        error: {{ lojas_com_erro_api }},
         lojas: [
             {% for loja in lojas %}
             {
                 numero: {{ loja.numero|tojson }},
                 nome: {{ loja.nome|tojson }},
-                online: {{ "true" if loja.online else "false" }},
+                online: {{ "true" if status_lojas[loja.id] == "online" else "false" }},
                 tempo_resposta: {{ loja.tempo_resposta if loja.tempo_resposta is not none else "null" }}
             }{% if not loop.last %},{% endif %}
             {% endfor %}
@@ -634,6 +648,8 @@ Dashboard
             document.querySelector("#total-lojas").textContent = dados.total;
             document.querySelector("#lojas-online").textContent = dados.online;
             document.querySelector("#lojas-offline").textContent = dados.offline;
+            document.querySelector("#lojas-verificar").textContent =
+                dados.unknown + dados.error;
             atualizarGraficos(dados);
 
         } catch (erro) {
@@ -645,12 +661,21 @@ Dashboard
         const total = Number(dados.total) || 0;
         const online = Number(dados.online) || 0;
         const offline = Number(dados.offline) || 0;
+        const verificar = (Number(dados.unknown) || 0) +
+            (Number(dados.stale) || 0) +
+            (Number(dados.timeout) || 0) +
+            (Number(dados.error) || 0);
         document.querySelector("#chart-online").textContent = online;
         document.querySelector("#chart-offline").textContent = offline;
+        document.querySelector("#chart-verificar").textContent = verificar;
         document.querySelector("#chart-total").textContent = total;
         document.querySelector("#status-percent").textContent = `${online}/${total}`;
+        const onlinePercent = total ? (online / total) * 100 : 0;
+        const offlinePercent = total ? ((online + offline) / total) * 100 : 0;
         document.querySelector("#status-donut").style.background =
-            `conic-gradient(#168052 0 ${total ? (online / total) * 100 : 0}%, #b93846 ${total ? (online / total) * 100 : 0}% 100%)`;
+            `conic-gradient(#168052 0 ${onlinePercent}%, ` +
+            `#b93846 ${onlinePercent}% ${offlinePercent}%, ` +
+            `#8a5a00 ${offlinePercent}% 100%)`;
 
     }
 

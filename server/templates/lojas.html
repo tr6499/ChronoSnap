@@ -44,7 +44,7 @@ Gerenciamento de Empresas
 
     .lojas-summary {
         display: grid;
-        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
         gap: 12px;
         margin-bottom: 18px;
     }
@@ -212,8 +212,9 @@ Gerenciamento de Empresas
 
 <div class="lojas-summary">
     <div class="lojas-summary-item"><span>Total</span><strong>{{ lojas|length }}</strong></div>
-    <div class="lojas-summary-item"><span>Online</span><strong>{{ lojas|selectattr('online')|list|length }}</strong></div>
-    <div class="lojas-summary-item"><span>Offline</span><strong>{{ lojas|rejectattr('online')|list|length }}</strong></div>
+    <div class="lojas-summary-item"><span>Online</span><strong>{{ status_online }}</strong></div>
+    <div class="lojas-summary-item"><span>Offline</span><strong>{{ status_offline }}</strong></div>
+    <div class="lojas-summary-item"><span>Verificar</span><strong>{{ status_atencao }}</strong></div>
 </div>
 
 <!-- ===================================================== -->
@@ -311,19 +312,48 @@ Gerenciamento de Empresas
 
 
                 <td>
-
-                    {% if loja.online %}
+                    {% set estado = status_por_loja[loja.id] %}
+                    {% if estado == "online" %}
 
                         <span class="status status-online">
                             Online
                         </span>
 
-                    {% else %}
+                    {% elif estado == "offline" %}
 
                         <span class="status status-offline">
                             Offline
                         </span>
 
+                    {% elif estado == "error" %}
+
+                        <span class="status status-warning" title="{{ loja.mensagem_status or 'A API respondeu, mas a verificação falhou.' }}">
+                            Falha na API
+                        </span>
+
+                    {% elif estado == "timeout" %}
+
+                        <span class="status status-warning" title="{{ loja.mensagem_status or 'A API não respondeu dentro do prazo.' }}">
+                            Sem resposta no prazo
+                        </span>
+
+                    {% elif estado == "unknown" %}
+
+                        <span class="status status-warning" title="{{ loja.mensagem_status or 'Não foi possível concluir a verificação.' }}">
+                            Verificação inconclusiva
+                        </span>
+
+                    {% else %}
+
+                        <span class="status status-warning" title="{{ loja.mensagem_status or 'Ainda não há uma verificação recente.' }}">
+                            Sem verificação recente
+                        </span>
+
+                    {% endif %}
+                    {% if loja.ultimo_teste %}
+                    <small style="display:block; margin-top:4px; color:#718096;">
+                        Verificado: {{ loja.ultimo_teste }}
+                    </small>
                     {% endif %}
 
                 </td>

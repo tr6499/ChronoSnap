@@ -10,7 +10,9 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Form,
-    Request
+    Request,
+    UploadFile,
+    File
 )
 
 from fastapi.responses import FileResponse
@@ -20,7 +22,7 @@ from sqlalchemy import func, or_
 from services.idclass import IDClass
 from services.afd_rm import AFDRM
 from services.espelho import EspelhoAFD
-from services.marcacoes import importar_marcacoes
+from services.marcacoes import extrair_marcacoes, importar_marcacoes
 
 from database import SessionLocal
 from models import (
@@ -51,6 +53,7 @@ router = APIRouter(
 )
 
 AUTOMACOES_FILE = LOGS_DIR / "automacoes.json"
+MAX_ARQUIVO_AFD_BYTES = 25 * 1024 * 1024
 
 
 def _criar_pasta_automacoes():
@@ -291,6 +294,96 @@ async def carga_manual_marcacoes(request: Request):
     return {"success": True, "resultados": resultados}
 
 
+@router.post("/marcacoes/arquivo")
+def importar_arquivo_afd(
+    loja_numero: str = Form(...),
+    layout: str = Form("auto"),
+    arquivo: UploadFile = File(...)
+):
+    if layout not in ("auto", "legado", "671"):
+        raise HTTPException(
+            status_code=400,
+            detail="Selecione um formato AFD válido."
+        )
+
+    conteudo = arquivo.file.read(MAX_ARQUIVO_AFD_BYTES + 1)
+    if not conteudo:
+        raise HTTPException(
+            status_code=400,
+            detail="Selecione um arquivo AFD não vazio."
+        )
+    if len(conteudo) > MAX_ARQUIVO_AFD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="O arquivo AFD excede o limite de 25 MB."
+        )
+    if conteudo.startswith(b"\xef\xbb\xbf"):
+        conteudo = conteudo[3:]
+    if b"\x00" in conteudo:
+        raise HTTPException(
+            status_code=400,
+            detail="O arquivo selecionado não parece ser um AFD de texto."
+        )
+
+    try:
+        numero_empresa = int(loja_numero)
+    except (TypeError, ValueError) as erro:
+        raise HTTPException(
+            status_code=400,
+            detail="Selecione uma empresa válida."
+        ) from erro
+
+    db = SessionLocal()
+    try:
+        loja = db.query(Loja).filter(
+            Loja.numero == numero_empresa
+        ).first()
+        if not loja:
+            raise HTTPException(
+                status_code=404,
+                detail="Empresa não encontrada."
+            )
+
+        processador = EspelhoAFD(
+            layout=None if layout == "auto" else layout
+        )
+        try:
+            layout_detectado = processador.detectar_layout(conteudo)
+            registros = extrair_marcacoes(conteudo, layout_detectado)
+        except (TypeError, ValueError) as erro:
+            raise HTTPException(
+                status_code=400,
+                detail=str(erro)
+            ) from erro
+
+        if not registros:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhuma marcação válida foi encontrada no arquivo."
+            )
+
+        resultado = importar_marcacoes(
+            db,
+            loja.id,
+            conteudo,
+            layout_detectado,
+            registros=registros
+        )
+        return {
+            "success": True,
+            "empresa": loja.nome,
+            "layout": (
+                "Portaria 671"
+                if layout_detectado == EspelhoAFD.LAYOUT_671
+                else "Legado/595"
+            ),
+            "total": len(registros),
+            **resultado
+        }
+    finally:
+        db.close()
+
+
 async def executar_agendador_automacoes():
     dias_semana = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"]
     executadas_no_minuto = set()
@@ -495,6 +588,24 @@ async def pagina_automacoes(
                 "automacoes": _carregar_automacoes().get("automacoes", []),
                 "config_downloads": str(DOWNLOADS_DIR)
             }
+        )
+    finally:
+        db.close()
+
+
+@router.get("/importacao")
+async def pagina_importacao_afd(request: Request):
+    db = SessionLocal()
+    try:
+        lojas = (
+            db.query(Loja)
+            .order_by(Loja.numero)
+            .all()
+        )
+        return templates.TemplateResponse(
+            request=request,
+            name="importacao_afd.html",
+            context={"lojas": lojas}
         )
     finally:
         db.close()

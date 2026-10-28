@@ -10,7 +10,7 @@
     .banco-kpi span { display: block; color: #718096; font-size: 11px; text-transform: uppercase; }
     .banco-kpi strong { display: block; margin-top: 6px; color: #102a43; font-size: 20px; }
     .banco-caminho { padding: 10px; overflow-wrap: anywhere; border: 1px solid #dfe7f1; background: #f8fbff; color: #526b7f; font-family: Consolas, monospace; font-size: 12px; }
-    .banco-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .banco-acoes { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
     .banco-resultado { margin-top: 14px; color: #526b7f; font-size: 13px; white-space: pre-wrap; }
     .banco-tabelas { columns: 3; margin: 0; padding-left: 18px; color: #526b7f; font-size: 13px; }
     .banco-rotulo { margin: 18px 0 8px; color: #102a43; font-size: 13px; font-weight: 700; }
@@ -31,8 +31,10 @@
     .banco-modos { display: grid; gap: 10px; margin-bottom: 8px; font-size: 13px; }
     .banco-modos label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
     .banco-modos input[type="radio"] { width: auto; flex: 0 0 auto; margin: 0; padding: 0; }
-    .banco-acoes-secundarias { margin-bottom: 8px; }
+    .banco-acoes-secundarias { margin: 12px 0 8px; }
     .banco-migrar { margin: 14px 0; padding: 12px; border: 1px solid #dfe7f1; border-radius: 6px; background: #f8fbff; }
+    .banco-migrar label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+    .banco-migrar input[type="checkbox"] { width: auto; flex: 0 0 auto; margin: 3px 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
     .banco-migrar .banco-ajuda { margin: 6px 0 0 22px; }
     @media (max-width: 700px) { .banco-grid, .banco-opcoes { grid-template-columns: 1fr; } .banco-tabelas { columns: 1; } }
 </style>

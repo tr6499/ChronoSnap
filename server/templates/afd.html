@@ -73,7 +73,7 @@ Download AFD
 
     .afd-lojas-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
         gap: 10px;
         margin-top: 8px;
     }
@@ -81,11 +81,12 @@ Download AFD
     .afd-loja-opcao {
         display: flex;
         min-width: 0;
+        min-height: 104px;
         align-items: flex-start;
         gap: 10px;
-        padding: 12px;
+        padding: 14px;
         border: 1px solid #dbe3ec;
-        border-radius: 8px;
+        border-radius: 6px;
         background: #f8fafc;
         cursor: pointer;
         transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
@@ -104,25 +105,37 @@ Download AFD
 
     .afd-loja-info {
         display: grid;
+        align-content: start;
         min-width: 0;
-        gap: 4px;
+        flex: 1;
+        gap: 6px;
     }
 
     .afd-loja-info strong {
+        width: fit-content;
+        padding: 3px 7px;
+        border-radius: 4px;
+        background: #e4eef8;
         color: #183b5b;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .afd-loja-info span {
         overflow-wrap: anywhere;
-        color: #334155;
-        font-size: 13px;
-        line-height: 1.35;
+        color: #183b5b;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
     }
 
     .afd-loja-info small {
+        width: fit-content;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #e8eef5;
         color: #697887;
         font-size: 11px;
+        white-space: nowrap;
     }
 
     .afd-formato-opcao:hover {

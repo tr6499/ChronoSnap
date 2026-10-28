@@ -43,6 +43,8 @@
            ===================================================== */
 
         .sidebar {
+            display: flex;
+            flex-direction: column;
             width: 240px;
             min-width: 240px;
             background: #192535;
@@ -76,6 +78,23 @@
 
         .menu {
             padding: 15px 10px;
+        }
+
+        .sidebar-license {
+            margin-top: auto;
+            padding: 12px 18px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .sidebar-license a {
+            color: #a9bfd1;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar-license a:hover {
+            color: white;
+            text-decoration: underline;
         }
 
         .menu-title {
@@ -654,6 +673,12 @@
             {% endif %}
 
         </nav>
+
+        <div class="sidebar-license">
+            <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">
+                Licença GNU GPL v3
+            </a>
+        </div>
 
     </aside>
 

@@ -7,7 +7,7 @@ from app_paths import APP_DIR
 
 router = APIRouter(tags=["Licença"])
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.3"
 AUTHOR = "Tetsuo Rodolfo Okubo"
 GNU_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 

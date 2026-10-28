@@ -1,6 +1,6 @@
 # Gera o instalador Windows (código compilado com Nuitka + Inno Setup).
 # Requisitos: Python 3.11+ (com tkinter) e Inno Setup 6 (winget install JRSoftware.InnoSetup).
-param([string]$Version = "1.0.2")
+param([string]$Version = "1.0.3")
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $PSScriptRoot "work"

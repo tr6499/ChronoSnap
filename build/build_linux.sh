@@ -3,7 +3,7 @@
 # Requisitos: python3 (com tkinter e venv), gcc, patchelf, make.
 #   Debian/Ubuntu: sudo apt install python3-venv python3-tk python3-dev gcc patchelf
 set -e
-VERSION="${1:-1.0.2}"
+VERSION="${1:-1.0.3}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="$ROOT/build/work_linux"
 OUT="$ROOT/build/out"

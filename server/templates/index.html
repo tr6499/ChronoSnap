@@ -464,11 +464,14 @@ Dashboard
         color: #526b7f;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 1000px) {
         .dashboard-visuals {
             grid-template-columns: 1fr;
         }
 
+    }
+
+    @media (max-width: 700px) {
         .dashboard-stat {
             margin-bottom: 0;
         }
@@ -649,7 +652,7 @@ Dashboard
             document.querySelector("#lojas-online").textContent = dados.online;
             document.querySelector("#lojas-offline").textContent = dados.offline;
             document.querySelector("#lojas-verificar").textContent =
-                dados.unknown + dados.error;
+                dados.unknown + dados.stale + dados.timeout + dados.error;
             atualizarGraficos(dados);
 
         } catch (erro) {
@@ -672,10 +675,11 @@ Dashboard
         document.querySelector("#status-percent").textContent = `${online}/${total}`;
         const onlinePercent = total ? (online / total) * 100 : 0;
         const offlinePercent = total ? ((online + offline) / total) * 100 : 0;
-        document.querySelector("#status-donut").style.background =
-            `conic-gradient(#168052 0 ${onlinePercent}%, ` +
-            `#b93846 ${onlinePercent}% ${offlinePercent}%, ` +
-            `#8a5a00 ${offlinePercent}% 100%)`;
+        document.querySelector("#status-donut").style.background = total
+            ? `conic-gradient(#168052 0 ${onlinePercent}%, ` +
+                `#b93846 ${onlinePercent}% ${offlinePercent}%, ` +
+                `#8a5a00 ${offlinePercent}% 100%)`
+            : "#e4ebf1";
 
     }
 

@@ -1,5 +1,13 @@
 # Histórico de versões
 
+## 1.0.5 — 29/10/2026
+
+### Corrigido
+
+- Gráfico de status do dashboard: a contagem de empresas para verificar agora
+  inclui estados desatualizados e timeouts; o gráfico também se ajusta melhor a
+  telas intermediárias e exibe corretamente o estado sem empresas.
+
 ## 1.0.4 — 28/10/2026
 
 ### Adicionado

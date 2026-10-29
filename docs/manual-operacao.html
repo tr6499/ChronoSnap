@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Manual de operação - ChronoSnap</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 16mm 17mm;
+      @bottom-left {
+        color: #64748b;
+        content: "ChronoSnap · Manual de operação · versão 1.0.5";
+        font: 8pt Arial, sans-serif;
+      }
+      @bottom-right {
+        color: #64748b;
+        content: counter(page);
+        font: 8pt Arial, sans-serif;
+      }
+    }
+
+    :root {
+      color: #1b2b3c;
+      font: 10pt/1.48 Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 5mm; font-size: 25pt; line-height: 1.12; }
+    h2 { margin-bottom: 3mm; color: #123b5d; font-size: 17pt; }
+    h3 { margin: 0 0 2mm; color: #123b5d; font-size: 11pt; }
+    p { margin-bottom: 3mm; }
+    ul, ol { margin: 1.5mm 0 3mm; padding-left: 6mm; }
+    li { margin: 1mm 0; }
+    strong { color: #123b5d; }
+
+    .page { break-after: page; }
+    .page:last-child { break-after: auto; }
+    .eyebrow {
+      margin-bottom: 2mm;
+      color: #0876bd;
+      font-size: 9pt;
+      font-weight: bold;
+      letter-spacing: 1.2pt;
+      text-transform: uppercase;
+    }
+    .lead { color: #52677a; font-size: 12pt; }
+    .muted { color: #607387; }
+    .small { font-size: 8.5pt; }
+    .blue { color: #0876bd; }
+
+    .cover {
+      min-height: 255mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8mm 2mm 3mm;
+    }
+    .brand { display: flex; align-items: center; gap: 4mm; color: #123b5d; font-size: 16pt; font-weight: bold; }
+    .brand img { width: 15mm; height: 15mm; }
+    .cover h1 { max-width: 135mm; margin: 18mm 0 5mm; font-size: 37pt; }
+    .cover .lead { max-width: 130mm; font-size: 14pt; }
+    .cover-art { margin: 8mm 0; }
+    .cover-foot { color: #607387; font-size: 9pt; }
+
+    .callout {
+      margin: 3mm 0;
+      padding: 3mm 4mm;
+      border-left: 3px solid #0876bd;
+      border-radius: 2mm;
+      background: #edf6fc;
+    }
+    .callout.warn { border-color: #d29a21; background: #fff8e7; }
+    .callout.ok { border-color: #25835b; background: #edf8f2; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 3mm 0; }
+    .card {
+      padding: 3mm;
+      border: 1px solid #d8e2eb;
+      border-radius: 2mm;
+      background: #fff;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 8mm 1fr;
+      gap: 2.5mm;
+      align-items: start;
+      margin: 2mm 0;
+    }
+    .num {
+      display: grid;
+      width: 7mm;
+      height: 7mm;
+      place-items: center;
+      border-radius: 50%;
+      background: #0876bd;
+      color: #fff;
+      font-size: 9pt;
+      font-weight: bold;
+    }
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 2mm;
+      margin: 4mm 0;
+    }
+    .flow > div {
+      flex: 1;
+      display: grid;
+      align-content: center;
+      min-height: 18mm;
+      padding: 2mm;
+      border: 1px solid #cfe0ed;
+      border-radius: 2mm;
+      background: #f3f8fc;
+      text-align: center;
+      font-size: 8.5pt;
+      font-weight: bold;
+    }
+    .flow .arrow {
+      flex: 0;
+      align-self: center;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #0876bd;
+      font-size: 14pt;
+    }
+    .mock {
+      overflow: hidden;
+      margin: 3mm 0;
+      border: 1px solid #cad6e1;
+      border-radius: 2mm;
+      background: #fff;
+    }
+    .mock-top {
+      padding: 2mm 3mm;
+      background: #192535;
+      color: white;
+      font-size: 8pt;
+      font-weight: bold;
+    }
+    .mock-body { padding: 3mm; }
+    .mock-row { display: flex; justify-content: space-between; gap: 3mm; padding: 1.5mm 0; border-bottom: 1px solid #e8edf2; font-size: 8.5pt; }
+    .mock-row:last-child { border-bottom: 0; }
+    .pill { display: inline-block; padding: 0.6mm 2mm; border-radius: 4mm; background: #e8f6ee; color: #1c7046; font-size: 7.5pt; font-weight: bold; }
+    .pill.amber { background: #fff3d4; color: #855b00; }
+    .pill.red { background: #fdebed; color: #a22d37; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 2mm; margin-bottom: 2mm; }
+    .button { padding: 1.3mm 2.5mm; border-radius: 1.3mm; background: #0876bd; color: #fff; font-size: 8pt; font-weight: bold; }
+    .field { flex: 1; min-width: 25mm; padding: 1.4mm 2mm; border: 1px solid #cbd5df; border-radius: 1mm; color: #607387; font-size: 8pt; }
+    .split { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 5mm; align-items: start; }
+    .two-col { columns: 2; column-gap: 8mm; }
+    .two-col li { break-inside: avoid; }
+    .caption { margin-top: -1mm; color: #718295; text-align: center; font-size: 8pt; }
+    .end-card { padding: 5mm; border-radius: 3mm; background: #123b5d; color: white; }
+    .end-card h3, .end-card strong { color: white; }
+    .check { color: #25835b; font-weight: bold; }
+    .avoid-break { break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <section class="page cover">
+    <div>
+      <div class="brand">
+        <img src="../assets/chronosnap-program.ico" alt="">
+        <span>ChronoSnap</span>
+      </div>
+      <div class="eyebrow" style="margin-top: 18mm">Manual do usuário</div>
+      <h1>Manual de<br>operação</h1>
+      <p class="lead">Orientações para acompanhar empresas e equipamentos, consultar funcionários e trabalhar com arquivos e marcações de ponto.</p>
+      <div class="cover-art">
+        <svg viewBox="0 0 720 235" width="100%" role="img" aria-label="Fluxo de operação: acessar, acompanhar, importar e consultar">
+          <defs>
+            <linearGradient id="g" x1="0" x2="1"><stop stop-color="#0876bd"/><stop offset="1" stop-color="#26a3bb"/></linearGradient>
+          </defs>
+          <rect x="1" y="1" width="718" height="233" rx="20" fill="#f1f7fb" stroke="#d7e5ef"/>
+          <path d="M92 117H627" stroke="url(#g)" stroke-width="8" stroke-linecap="round"/>
+          <g font-family="Arial" text-anchor="middle">
+            <g transform="translate(95 117)"><circle r="38" fill="#123b5d"/><text y="7" fill="white" font-size="26">1</text><text y="68" fill="#123b5d" font-size="15" font-weight="bold">Acessar</text></g>
+            <g transform="translate(270 117)"><circle r="38" fill="#0876bd"/><text y="7" fill="white" font-size="26">2</text><text y="68" fill="#123b5d" font-size="15" font-weight="bold">Acompanhar</text></g>
+            <g transform="translate(450 117)"><circle r="38" fill="#16866b"/><text y="7" fill="white" font-size="26">3</text><text y="68" fill="#123b5d" font-size="15" font-weight="bold">Carregar dados</text></g>
+            <g transform="translate(625 117)"><circle r="38" fill="#d08a19"/><text y="7" fill="white" font-size="26">4</text><text y="68" fill="#123b5d" font-size="15" font-weight="bold">Consultar</text></g>
+          </g>
+        </svg>
+      </div>
+      <p class="callout"><strong>Este manual descreve o perfil Usuário.</strong> Os menus e ações disponíveis podem variar conforme o perfil e as permissões configuradas para sua conta.</p>
+    </div>
+    <div class="cover-foot">ChronoSnap · versão 1.0.5 · Outubro de 2026</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Comece por aqui</div>
+    <h2>1. Acesso e navegação</h2>
+    <p>O ChronoSnap é acessado pelo navegador. Use o endereço fornecido pela pessoa responsável pelo servidor e entre com seu usuário e senha.</p>
+    <div class="flow">
+      <div>Abra o endereço<br>do ChronoSnap</div><div class="arrow">›</div>
+      <div>Informe usuário<br>e senha</div><div class="arrow">›</div>
+      <div>Selecione<br>Entrar</div><div class="arrow">›</div>
+      <div>Use o menu<br>lateral</div>
+    </div>
+    <div class="split">
+      <div>
+        <h3>Tela de acesso (ilustração)</h3>
+        <div class="mock">
+          <div class="mock-top">ChronoSnap · Entrar</div>
+          <div class="mock-body" style="padding: 6mm 12mm">
+            <div class="field" style="margin-bottom: 2mm">Usuário</div>
+            <div class="field" style="margin-bottom: 3mm">Senha</div>
+            <div class="button" style="text-align: center">Entrar</div>
+          </div>
+        </div>
+        <p class="caption">A tela real pode variar conforme a configuração da instalação.</p>
+      </div>
+      <div>
+        <h3>Menu do perfil Usuário</h3>
+        <div class="mock">
+          <div class="mock-top">NAVEGAÇÃO</div>
+          <div class="mock-body">
+            <div class="mock-row"><span>Dashboard</span><span class="muted">Visão geral</span></div>
+            <div class="mock-row"><span>Empresas</span><span class="muted">Equipamentos</span></div>
+            <div class="mock-row"><span>Funcionários</span><span class="muted">Cadastro e busca</span></div>
+            <div class="mock-row"><span>Marcações</span><span class="muted">AFD e espelho</span></div>
+            <div class="mock-row"><span>Automações</span><span class="muted">Rotinas RM TOTVS</span></div>
+          </div>
+        </div>
+        <p class="small muted">O comando Sair fica no cabeçalho da aplicação.</p>
+      </div>
+    </div>
+    <div class="callout warn"><strong>Não aparece uma opção no menu?</strong> Ela pode não estar disponível para o seu perfil. Peça à pessoa administradora para verificar seu acesso; não compartilhe sua senha.</div>
+    <h3>Boas práticas</h3>
+    <ul>
+      <li>Confira se está usando o endereço correto da instalação e a conta fornecida pela organização.</li>
+      <li>Use <strong>Sair</strong> ao terminar, principalmente em computadores compartilhados.</li>
+      <li>Se a sessão expirar, entre novamente com suas credenciais.</li>
+    </ul>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Visão geral</div>
+    <h2>2. Dashboard</h2>
+    <p>O Dashboard resume as empresas cadastradas, os estados recentes dos equipamentos e algumas informações do computador que executa o servidor.</p>
+    <div class="mock">
+      <div class="mock-top">Dashboard · exemplo ilustrativo</div>
+      <div class="mock-body">
+        <div class="grid" style="margin-top:0">
+          <div class="card"><span class="muted small">EMPRESAS</span><br><strong style="font-size:20pt">12</strong></div>
+          <div class="card"><span class="muted small">ONLINE</span><br><strong style="font-size:20pt;color:#25835b">9</strong></div>
+          <div class="card"><span class="muted small">OFFLINE</span><br><strong style="font-size:20pt;color:#b43c47">1</strong></div>
+          <div class="card"><span class="muted small">ATENÇÃO</span><br><strong style="font-size:20pt;color:#a06b08">2</strong></div>
+        </div>
+        <div class="mock-row"><span>Empresa Central</span><span class="pill">Online</span></div>
+        <div class="mock-row"><span>Unidade Norte</span><span class="pill red">Offline</span></div>
+        <div class="mock-row"><span>Unidade Sul</span><span class="pill amber">Sem verificação recente</span></div>
+      </div>
+    </div>
+    <p class="caption">Números e nomes acima são fictícios; a tela apresenta os dados da instalação.</p>
+    <div class="grid">
+      <div class="card"><h3>Online</h3><p class="small">O equipamento respondeu à verificação mais recente.</p></div>
+      <div class="card"><h3>Offline</h3><p class="small">A conexão não foi confirmada. Verifique rede, energia e endereço com o responsável local.</p></div>
+      <div class="card"><h3>Erro ou timeout</h3><p class="small">A verificação não foi concluída normalmente; isso não significa necessariamente que o relógio esteja desligado.</p></div>
+      <div class="card"><h3>Sem verificação recente</h3><p class="small">O estado exibido pode estar desatualizado. Confira o horário da última verificação antes de concluir que o equipamento está indisponível.</p></div>
+    </div>
+    <div class="callout"><strong>Dica:</strong> use os atalhos do Dashboard para ir às páginas de Empresas, Funcionários ou AFD, quando disponíveis.</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Empresas e equipamentos</div>
+    <h2>3. Consultar empresas</h2>
+    <p>A página <strong>Empresas</strong> reúne as unidades e os relógios cadastrados. Nela, confira os dados de conexão e o estado de cada equipamento.</p>
+    <div class="mock">
+      <div class="mock-top">Empresas · exemplo ilustrativo</div>
+      <div class="mock-body">
+        <div class="toolbar"><div class="field">Pesquisar empresa</div><div class="button">Nova empresa</div></div>
+        <div class="mock-row"><strong>01 · Matriz</strong><span>192.168.1.20 : 443</span><span class="pill">Online</span></div>
+        <div class="mock-row"><strong>02 · Filial</strong><span>192.168.1.21 : 443</span><span class="pill amber">Sem verificação recente</span></div>
+        <div class="mock-row"><strong>03 · Unidade</strong><span>192.168.1.22 : 443</span><span class="pill red">Offline</span></div>
+      </div>
+    </div>
+    <p class="caption">Dados de conexão fictícios para ilustrar a lista; não use os endereços do exemplo.</p>
+    <div class="step"><span class="num">1</span><div><strong>Localize a empresa.</strong> Confira nome e número para selecionar a unidade correta.</div></div>
+    <div class="step"><span class="num">2</span><div><strong>Confira o equipamento.</strong> Veja endereço, porta, leiaute AFD e estado/horário da última verificação apresentados na lista.</div></div>
+    <div class="step"><span class="num">3</span><div><strong>Use a ação necessária.</strong> Conforme as permissões da conta, a página pode permitir cadastrar/editar/excluir empresas ou sincronizar usuários com o relógio.</div></div>
+    <div class="callout warn"><strong>Falha de comunicação?</strong> Confirme a empresa selecionada e encaminhe o estado, o horário e a mensagem exibida à pessoa responsável pela rede ou pelo equipamento. Não altere IP, porta ou credenciais sem autorização.</div>
+    <p>Alterações em dados de conexão ou sincronização podem afetar outros usuários. Faça essas operações somente quando estiver autorizado.</p>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Pessoas</div>
+    <h2>4. Localizar e manter funcionários</h2>
+    <p>Em <strong>Funcionários</strong>, filtre os registros por empresa e pesquise por matrícula, documento ou nome. A tela permite consultar e, conforme seu acesso, cadastrar, editar, excluir e exportar a listagem em PDF.</p>
+    <div class="mock">
+      <div class="mock-top">Funcionários · exemplo ilustrativo</div>
+      <div class="mock-body">
+        <div class="toolbar">
+          <div class="field">Empresa: selecione uma empresa</div>
+          <div class="field">Matrícula, documento ou nome</div>
+          <div class="button">Buscar</div>
+        </div>
+        <div class="mock-row"><strong>Matrícula</strong><strong>Nome</strong><strong>Empresa</strong></div>
+        <div class="mock-row"><span>000123</span><span>Exemplo da Silva</span><span>Matriz</span></div>
+        <div class="mock-row"><span>000456</span><span>Pessoa Exemplo</span><span>Matriz</span></div>
+      </div>
+    </div>
+    <div class="flow">
+      <div>Escolha<br>a empresa</div><div class="arrow">›</div>
+      <div>Digite nome,<br>matrícula ou documento</div><div class="arrow">›</div>
+      <div>Selecione<br>Buscar</div><div class="arrow">›</div>
+      <div>Revise o resultado<br>antes de alterar</div>
+    </div>
+    <ul>
+      <li>Confirme a empresa e a matrícula antes de editar um cadastro.</li>
+      <li>Use a exportação em PDF para obter uma cópia da listagem exibida, se essa ação estiver habilitada.</li>
+      <li>Sincronização de usuários com o relógio deve ser feita na empresa correta e com autorização.</li>
+    </ul>
+    <div class="callout"><strong>Proteja dados pessoais.</strong> Pesquise e exporte somente as informações necessárias ao seu trabalho e guarde os arquivos de forma adequada.</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Arquivos e marcações</div>
+    <h2>5. Consultar e gerar arquivos AFD</h2>
+    <p>Na página <strong>Arquivos AFD</strong>, selecione a empresa (ou empresas), informe o período e escolha o tipo de saída. A pré-visualização ajuda a conferir os dados antes de gerar o arquivo.</p>
+    <div class="flow">
+      <div>Selecione<br>empresa(s)</div><div class="arrow">›</div>
+      <div>Informe<br>o período</div><div class="arrow">›</div>
+      <div>Escolha o<br>formato</div><div class="arrow">›</div>
+      <div>Pré-visualize<br>e gere</div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>AFD Original</h3>
+        <p>Obtém o arquivo original diretamente do relógio. É necessário que o equipamento esteja acessível e que a comunicação esteja configurada.</p>
+      </div>
+      <div class="card">
+        <h3>RM TOTVS</h3>
+        <p>Gera a saída no formato RM TOTVS para o período e as empresas selecionados. Confira a pré-visualização e o intervalo antes de baixar.</p>
+      </div>
+    </div>
+    <div class="callout warn"><strong>Importante:</strong> pré-visualização do AFD e espelho consultam marcações já carregadas no banco. Para consultar dados recentes, importe as marcações ou carregue-as a partir dos relógios antes.</div>
+    <h3>Importar marcações do relógio</h3>
+    <p>Quando a opção estiver disponível, selecione a empresa e o período e use a ação de importar/carregar marcações. Aguarde a confirmação e verifique a mensagem apresentada. Essa carga grava os registros para consultas posteriores.</p>
+    <div class="callout"><strong>Diferença essencial:</strong> baixar o AFD original lê o arquivo do relógio; importar marcações carrega registros no banco para consulta e geração de relatórios.</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Importação de arquivos</div>
+    <h2>6. Importar marcações de um arquivo AFD</h2>
+    <p>Use <strong>Marcações → Importação</strong> para carregar no ChronoSnap marcações presentes em um arquivo exportado previamente.</p>
+    <div class="step"><span class="num">1</span><div>Selecione a <strong>empresa de destino</strong>. Confira o nome antes de continuar: a empresa é escolhida manualmente em cada importação.</div></div>
+    <div class="step"><span class="num">2</span><div>Selecione o arquivo <strong>.txt</strong> ou <strong>.afd</strong> (tamanho máximo: 25 MB).</div></div>
+    <div class="step"><span class="num">3</span><div>Use detecção automática do leiaute ou selecione Legado/595 ou Portaria 671, conforme o arquivo.</div></div>
+    <div class="step"><span class="num">4</span><div>Envie o arquivo, aguarde o processamento e confira o resumo da importação.</div></div>
+    <div class="mock">
+      <div class="mock-top">Importação de marcações · exemplo ilustrativo</div>
+      <div class="mock-body">
+        <div class="mock-row"><span>Empresa</span><strong>Selecione a empresa de destino</strong></div>
+        <div class="mock-row"><span>Leiaute</span><strong>Detecção automática</strong></div>
+        <div class="mock-row"><span>Arquivo</span><strong>marcacoes_exemplo.txt</strong></div>
+        <div style="margin-top:3mm"><span class="button">Importar marcações</span></div>
+      </div>
+    </div>
+    <div class="callout ok"><strong>Duplicidade:</strong> registros já existentes para a empresa selecionada são ignorados para evitar duplicações. O arquivo original não é guardado como arquivo AFD pelo ChronoSnap; as marcações reconhecidas são carregadas no banco.</div>
+    <div class="callout warn"><strong>O resultado não parece correto?</strong> Confirme a empresa, o leiaute e o período do arquivo. Não repita a importação em outra empresa para tentar corrigir; peça orientação ao administrador.</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Consulta e relatório</div>
+    <h2>7. Consultar o espelho de ponto</h2>
+    <p>Em <strong>Espelho de Ponto</strong>, consulte as marcações de uma empresa ou de todas, dentro de um período. Se necessário, filtre também por funcionário e exporte o resultado em PDF.</p>
+    <div class="flow">
+      <div>Escolha empresa<br>ou todas</div><div class="arrow">›</div>
+      <div>Informe<br>as datas</div><div class="arrow">›</div>
+      <div>Opcionalmente filtre<br>por funcionário</div><div class="arrow">›</div>
+      <div>Selecione<br>Consultar</div>
+    </div>
+    <div class="mock">
+      <div class="mock-top">Espelho de Ponto · exemplo ilustrativo</div>
+      <div class="mock-body">
+        <div class="toolbar">
+          <div class="field">Empresa</div><div class="field">Data inicial</div>
+          <div class="field">Data final</div><div class="button">Consultar</div>
+        </div>
+        <div class="mock-row"><strong>Funcionário</strong><strong>Data</strong><strong>Marcações</strong></div>
+        <div class="mock-row"><span>Exemplo da Silva</span><span>01/10</span><span>08:01 · 12:00 · 13:02 · 17:00</span></div>
+      </div>
+    </div>
+    <div class="callout warn"><strong>A consulta não acessa os relógios.</strong> Ela usa as marcações que já estão no banco de dados. Se não houver resultados, confirme os filtros e faça uma carga/importação autorizada antes de consultar novamente.</div>
+    <h3>Para conferir o resultado</h3>
+    <ul>
+      <li>Revise empresa, datas e funcionário selecionados.</li>
+      <li>Confira se as marcações do período foram carregadas para a empresa correta.</li>
+      <li>Quando disponível, use a exportação PDF para salvar ou compartilhar o espelho conforme as regras da organização.</li>
+    </ul>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Rotinas RM TOTVS</div>
+    <h2>8. Configurar uma automação</h2>
+    <p>A página <strong>Automações</strong> permite programar a geração de arquivos RM TOTVS. Use-a para repetir uma rotina em horários e dias definidos, sem confundir a automação com uma consulta manual.</p>
+    <div class="flow">
+      <div>Defina nome<br>e horário</div><div class="arrow">›</div>
+      <div>Escolha dias<br>e empresas</div><div class="arrow">›</div>
+      <div>Informe a pasta<br>de destino</div><div class="arrow">›</div>
+      <div>Salve e confira<br>a rotina</div>
+    </div>
+    <div class="step"><span class="num">1</span><div>Crie uma rotina e dê um <strong>nome claro</strong> que ajude a identificar a finalidade do arquivo.</div></div>
+    <div class="step"><span class="num">2</span><div>Informe o <strong>horário</strong>, os <strong>dias</strong> e as <strong>empresas</strong> que devem participar da geração.</div></div>
+    <div class="step"><span class="num">3</span><div>Informe a <strong>pasta de destino</strong> e salve. A pasta deve existir e estar acessível no computador onde o ChronoSnap está executando — não necessariamente no computador que abriu o navegador.</div></div>
+    <div class="step"><span class="num">4</span><div>Revise a rotina salva. Conforme sua necessidade, use as ações disponíveis para editar, excluir ou executar uma rotina manualmente.</div></div>
+    <div class="callout warn"><strong>Antes de salvar:</strong> confirme empresas, dias, horário e caminho da pasta. Uma configuração incorreta pode gerar arquivos em outro local ou deixar de incluir uma empresa esperada.</div>
+    <h3>Ao conferir os arquivos</h3>
+    <ul>
+      <li>Procure os arquivos na pasta configurada no computador servidor.</li>
+      <li>Confirme o período e as empresas incluídas antes de encaminhar o resultado.</li>
+      <li>Se não houver arquivo, verifique a configuração e solicite ao responsável pelo ChronoSnap que confira se o servidor estava disponível no horário programado.</li>
+    </ul>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Referência rápida</div>
+    <h2>9. Dúvidas comuns</h2>
+    <div class="card avoid-break">
+      <h3>Não consigo entrar</h3>
+      <p>Confira o endereço, o nome de usuário e a senha. Se a conta estiver inativa ou bloqueada, solicite ajuda a quem administra os usuários.</p>
+    </div>
+    <div class="card avoid-break">
+      <h3>O equipamento não aparece como online</h3>
+      <p>Observe a mensagem e o horário da última verificação. Timeout, erro de API ou ausência de verificação recente não confirmam, isoladamente, que o relógio esteja desligado. Encaminhe os detalhes ao suporte local.</p>
+    </div>
+    <div class="card avoid-break">
+      <h3>O espelho não mostra marcações</h3>
+      <p>Confira empresa e período. O espelho consulta dados já carregados no banco; solicite a carga das marcações se necessário.</p>
+    </div>
+    <div class="card avoid-break">
+      <h3>A importação trouxe poucos registros</h3>
+      <p>Confirme a empresa de destino, o leiaute e o arquivo. Registros repetidos para a mesma empresa são ignorados. Peça revisão se o arquivo não corresponder aos leiautes suportados.</p>
+    </div>
+    <div class="card avoid-break">
+      <h3>Preciso de uma opção que não aparece</h3>
+      <p>Os menus dependem do perfil. Peça à pessoa administradora para confirmar as permissões; este manual não cobre as telas exclusivas do perfil Completo/administrador.</p>
+    </div>
+    <div class="end-card" style="margin-top: 5mm">
+      <h3>Fluxo de trabalho recomendado</h3>
+      <p style="margin-bottom:0">Acesse com sua conta → confira empresas e equipamentos → carregue ou importe as marcações autorizadas → consulte o espelho ou gere o arquivo necessário → confira o resultado antes de exportar.</p>
+    </div>
+    <p class="small muted" style="margin-top:5mm">As ilustrações deste manual são exemplos e não exibem dados reais. As telas e ações podem variar conforme a instalação, o perfil e as permissões atribuídas. Em caso de dúvida, procure o responsável pelo ChronoSnap na sua organização.</p>
+  </section>
+</body>
+</html>

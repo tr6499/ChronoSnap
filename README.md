@@ -25,6 +25,9 @@ Contribuições enviadas por pull request também exigem a assinatura do
 - dashboard, auditoria e configurações de retenção do banco;
 - agendamento de capturas automáticas de AFD e marcações.
 
+Consulte o [Manual de operação do ChronoSnap](./docs/manual-operacao.pdf) para
+orientações de uso das funções disponíveis no aplicativo.
+
 ## Requisitos
 
 - Windows;
@@ -40,7 +43,8 @@ inicialização e a parada do servidor.
 Execute `ChronoSnap-Setup-<versão>.exe` e siga as etapas do assistente. Ao
 terminar, abra o **ChronoSnap Manager** pelo atalho criado no menu Iniciar ou na
 área de trabalho. No Manager, inicie o servidor e abra o endereço local
-informado por ele no navegador.
+informado por ele no navegador. O instalador inclui o manual de operação em
+`docs\manual-operacao.pdf`.
 
 ## Execução manual a partir do código-fonte
 

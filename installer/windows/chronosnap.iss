@@ -28,7 +28,7 @@ WizardStyle=modern
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallDisplayIcon={app}\chronosnap.ico
+UninstallDisplayIcon={app}\chronosnap-program.ico
 CloseApplications=yes
 UsePreviousTasks=no
 
@@ -46,7 +46,8 @@ Name: "{app}\data"; Permissions: users-modify
 Source: "{#StageDir}\server\*"; DestDir: "{app}\server"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "{#StageDir}\manager\*"; DestDir: "{app}\manager"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "{#StageDir}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourcePath}\..\..\assets\chronosnap.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\..\..\docs\manual-operacao.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "{#SourcePath}\..\..\assets\chronosnap-program.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\install_postgresql.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\install_mariadb_mysql.ps1"; DestDir: "{app}"; Flags: ignoreversion
 

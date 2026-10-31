@@ -1,5 +1,13 @@
 # Histórico de versões
 
+## 1.0.7 — 31/10/2026
+
+### Corrigido
+
+- Período da exportação RM TOTVS filtrado pela data/hora local do AFD original,
+  evitando incluir marcações do dia anterior ou omitir marcações no fim do dia
+  quando o banco de dados normaliza o fuso horário.
+
 ## 1.0.6 — 31/10/2026
 
 ### Corrigido

@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from services.idclass import IDClass
 from services.espelho import EspelhoAFD
@@ -37,26 +37,29 @@ class AFDRM:
     def adicionar_marcacoes_banco(self, marcacoes):
         quantidade = 0
         for marcacao in marcacoes:
-            data_hora = marcacao.data_hora
-            if marcacao.raw:
-                processador = EspelhoAFD(layout=marcacao.layout)
-                registro_original = processador._ler_marcacao(
-                    marcacao.raw,
-                    processador.layout
-                )
-                if registro_original:
-                    data_hora = registro_original["data_hora"]
-
             registro = self.formatar_marcacao({
                 "nsr": marcacao.nsr,
                 "tipo": marcacao.tipo,
-                "data_hora": data_hora,
+                "data_hora": self._data_hora_marcacao(marcacao),
                 "identificador": marcacao.identificador,
             }, marcacao.layout)
             if registro:
                 self.registros.append(registro)
                 quantidade += 1
         return quantidade
+
+    @staticmethod
+    def _data_hora_marcacao(marcacao):
+        if marcacao.raw:
+            processador = EspelhoAFD(layout=marcacao.layout)
+            registro_original = processador._ler_marcacao(
+                marcacao.raw,
+                processador.layout
+            )
+            if registro_original:
+                return registro_original["data_hora"]
+
+        return marcacao.data_hora
 
     @staticmethod
     def _cpf_valido(cpf):
@@ -628,18 +631,31 @@ class AFDRM:
                 )
 
                 try:
-                    data_ini = datetime.combine(data_inicial, datetime.min.time())
-                    data_fim = datetime.combine(data_final, datetime.max.time())
-                    marcacoes = (
+                    data_ini = datetime.combine(
+                        data_inicial - timedelta(days=1),
+                        datetime.min.time()
+                    )
+                    data_fim = datetime.combine(
+                        data_final + timedelta(days=2),
+                        datetime.min.time()
+                    )
+                    marcacoes_candidatas = (
                         db.query(MarcacaoAFD)
                         .filter(
                             MarcacaoAFD.loja_id == loja.id,
                             MarcacaoAFD.data_hora >= data_ini,
-                            MarcacaoAFD.data_hora <= data_fim
+                            MarcacaoAFD.data_hora < data_fim
                         )
                         .order_by(MarcacaoAFD.data_hora, MarcacaoAFD.id)
                         .all()
                     )
+                    marcacoes = [
+                        marcacao
+                        for marcacao in marcacoes_candidatas
+                        if data_inicial
+                        <= self._data_hora_marcacao(marcacao).date()
+                        <= data_final
+                    ]
 
                     if marcacoes:
                         quantidade = self.adicionar_marcacoes_banco(marcacoes)

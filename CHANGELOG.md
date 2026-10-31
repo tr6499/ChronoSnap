@@ -1,5 +1,12 @@
 # Histórico de versões
 
+## 1.0.8 — 31/10/2026
+
+### Corrigido
+
+- Exportação RM TOTVS com datas recebidas pela rota como `datetime`, evitando
+  falha silenciosa ao comparar a data local do AFD e gerar um arquivo vazio.
+
 ## 1.0.7 — 31/10/2026
 
 ### Corrigido

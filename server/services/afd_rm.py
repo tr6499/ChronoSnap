@@ -600,6 +600,17 @@ class AFDRM:
         data_final
     ):
 
+        data_inicial = (
+            data_inicial.date()
+            if isinstance(data_inicial, datetime)
+            else data_inicial
+        )
+        data_final = (
+            data_final.date()
+            if isinstance(data_final, datetime)
+            else data_final
+        )
+
         db = SessionLocal()
 
         try:

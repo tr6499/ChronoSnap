@@ -1,5 +1,15 @@
 # Histórico de versões
 
+## 1.0.6 — 31/10/2026
+
+### Corrigido
+
+- Exportação RM TOTVS: uso do horário local preservado no AFD original,
+  evitando acréscimos de fuso ao exportar marcações armazenadas no banco.
+- Exportação RM TOTVS baseada nas marcações carregadas no banco, sem consultar
+  o relógio quando não há dados para o período; a leitura direta do AFD também
+  respeita o leiaute configurado para a empresa.
+
 ## 1.0.5 — 29/10/2026
 
 ### Adicionado

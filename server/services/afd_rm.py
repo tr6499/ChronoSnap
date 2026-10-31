@@ -37,10 +37,20 @@ class AFDRM:
     def adicionar_marcacoes_banco(self, marcacoes):
         quantidade = 0
         for marcacao in marcacoes:
+            data_hora = marcacao.data_hora
+            if marcacao.raw:
+                processador = EspelhoAFD(layout=marcacao.layout)
+                registro_original = processador._ler_marcacao(
+                    marcacao.raw,
+                    processador.layout
+                )
+                if registro_original:
+                    data_hora = registro_original["data_hora"]
+
             registro = self.formatar_marcacao({
                 "nsr": marcacao.nsr,
                 "tipo": marcacao.tipo,
-                "data_hora": marcacao.data_hora,
+                "data_hora": data_hora,
                 "identificador": marcacao.identificador,
             }, marcacao.layout)
             if registro:
@@ -257,13 +267,14 @@ class AFDRM:
         equipamento.login_device()
 
         try:
-            # DEFINE O MODE DO AFD
-            # --------------------------------------------------------
-
-            # A exportação RM usa exclusivamente o AFD legado. O
-            # leiaute configurado da loja não altera este contrato.
-            mode = None
-            layout = "legado"
+            # Define a captura e a leitura pelo layout configurado da loja.
+            layout_configurado = str(afd_layout or "legado").strip().lower()
+            if layout_configurado in ("671", "portaria671"):
+                mode = 671
+                layout = EspelhoAFD.LAYOUT_671
+            else:
+                mode = None
+                layout = EspelhoAFD.LAYOUT_LEGADO
 
             # --------------------------------------------------------
             # BAIXA O AFD
@@ -613,7 +624,7 @@ class AFDRM:
                     f"Baixando Loja "
                     f"{loja.numero} - "
                     f"{loja.nome} - "
-                    "Layout: legado"
+                    f"Layout: {loja.afd_layout or 'legado'}"
                 )
 
                 try:
@@ -634,14 +645,9 @@ class AFDRM:
                         quantidade = self.adicionar_marcacoes_banco(marcacoes)
                         print(f"RM banco: {quantidade} registros adicionados.")
                     else:
-                        self.adicionar_loja(
-                            ip=loja.ip,
-                            usuario=loja.usuario,
-                            senha=loja.senha,
-                            data_inicial=data_inicial,
-                            data_final=data_final,
-                            afd_layout="legado",
-                            loja_id=loja.id
+                        print(
+                            f"RM banco: nenhuma marcação carregada para "
+                            f"a loja {loja.numero} no período."
                         )
 
                 except Exception as erro:

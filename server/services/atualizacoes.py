@@ -1,9 +1,12 @@
 import hashlib
 import json
 import re
+import ssl
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+
+import certifi
 
 from app_paths import DATA_DIR
 
@@ -17,6 +20,12 @@ ARQUIVO_CONFIG_ATUALIZACAO = DATA_DIR / "atualizacoes.json"
 
 class ErroAtualizacao(Exception):
     pass
+
+
+def _criar_contexto_ssl():
+    contexto = ssl.create_default_context()
+    contexto.load_verify_locations(cafile=certifi.where())
+    return contexto
 
 
 def ler_modo_atualizacao():
@@ -67,7 +76,11 @@ def obter_ultima_release(timeout=15):
         },
     )
     try:
-        with urlopen(requisicao, timeout=timeout) as resposta:
+        with urlopen(
+            requisicao,
+            timeout=timeout,
+            context=_criar_contexto_ssl(),
+        ) as resposta:
             release = json.loads(resposta.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ErroAtualizacao(f"Não foi possível consultar as atualizações do GitHub: {exc}") from exc
@@ -164,7 +177,11 @@ def baixar_instalador(release, destino):
     digest = hashlib.sha256()
     total = 0
     try:
-        with urlopen(requisicao, timeout=30) as resposta, temporario.open("wb") as arquivo:
+        with urlopen(
+            requisicao,
+            timeout=30,
+            context=_criar_contexto_ssl(),
+        ) as resposta, temporario.open("wb") as arquivo:
             comprimento = resposta.headers.get("Content-Length")
             if comprimento and int(comprimento) > MAX_INSTALLER_SIZE:
                 raise ErroAtualizacao("O instalador ultrapassa o tamanho máximo permitido.")

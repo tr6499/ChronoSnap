@@ -16,15 +16,20 @@ ROOT = EXE_DIR.parent
 
 
 def _report_crash(exc_type, exc, tb):
-    # Sem console (build compilado), erros de inicialização seriam invisíveis.
-    import tempfile
-    import traceback
-    text = "".join(traceback.format_exception(exc_type, exc, tb))
-    log = Path(tempfile.gettempdir()) / "chronosnap-manager-error.log"
+    temp_dir = os.environ.get("TEMP") or os.environ.get("TMP") or "."
+    log = Path(temp_dir) / "chronosnap-manager-error.log"
+    error = f"{getattr(exc_type, '__name__', str(exc_type))}: {exc}"
     try:
-        log.write_text(text, encoding="utf-8")
+        log.write_text(error + "\n", encoding="utf-8")
     except OSError:
         pass
+    try:
+        import traceback
+
+        text = "".join(traceback.format_exception(exc_type, exc, tb))
+        log.write_text(text, encoding="utf-8")
+    except Exception as format_error:
+        text = f"{error}\nCould not format traceback: {format_error}"
     if IS_WIN:
         try:
             import ctypes
@@ -66,6 +71,7 @@ def load_config():
         "mode": "local",
         "port": 8000,
         "minimize_to_tray": False,
+        "start_server_on_open": False,
         "restart_after_update": False,
     }
     try:
@@ -80,6 +86,7 @@ def load_config():
         elif saved.get("host") == "0.0.0.0":
             cfg["mode"] = "network"
         cfg["minimize_to_tray"] = bool(saved.get("minimize_to_tray", False))
+        cfg["start_server_on_open"] = bool(saved.get("start_server_on_open", False))
         cfg["restart_after_update"] = bool(saved.get("restart_after_update", False))
     return cfg
 
@@ -121,6 +128,9 @@ class Manager(tk.Tk):
         self.minimize_to_tray_var = tk.BooleanVar(
             value=self.cfg["minimize_to_tray"] and IS_WIN
         )
+        self.start_server_on_open_var = tk.BooleanVar(
+            value=self.cfg["start_server_on_open"]
+        )
         self.tray_icon = None
         self.update_window = None
         self.update_notes = None
@@ -134,10 +144,10 @@ class Manager(tk.Tk):
         self.bind("<Unmap>", self.on_minimize)
         if self.minimize_to_tray_var.get():
             self.after_idle(self._restore_tray_icon)
-        if self.restart_server_after_update:
+        if self.restart_server_after_update or self.start_server_on_open_var.get():
             self.after(1500, self.start)
         if IS_WIN and FROZEN:
-            self.after(3000, self._check_updates_automatically)
+            self.after(3000, self._check_for_updates_automatically)
         self.after(1000, self.refresh)
 
     def _style(self):
@@ -223,6 +233,12 @@ class Manager(tk.Tk):
             state="normal" if IS_WIN else "disabled",
         )
         tray_option.pack(anchor="w", pady=(0, 8))
+        ttk.Checkbutton(
+            f,
+            text="Iniciar o servidor automaticamente ao abrir o Manager",
+            variable=self.start_server_on_open_var,
+            command=self.toggle_start_server_on_open,
+        ).pack(anchor="w", pady=(0, 8))
         if not IS_WIN:
             ttk.Label(
                 f,
@@ -316,8 +332,8 @@ class Manager(tk.Tk):
 
         window = tk.Toplevel(self)
         window.title("Atualizações do ChronoSnap")
-        window.geometry("700x520")
-        window.minsize(540, 380)
+        window.geometry("700x600")
+        window.minsize(480, 440)
         window.transient(self)
         window.configure(bg=BG)
         self.update_window = window
@@ -327,9 +343,39 @@ class Manager(tk.Tk):
         content = ttk.Frame(window, padding=18)
         content.pack(fill="both", expand=True)
         ttk.Label(content, text="Atualizações do ChronoSnap", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(content, textvariable=self.update_status, wraplength=650).pack(
+        status_label = ttk.Label(content, textvariable=self.update_status, wraplength=640)
+        status_label.pack(
             anchor="w", pady=(8, 12)
         )
+        try:
+            modo_atualizacao = ler_modo_atualizacao()
+        except ErroAtualizacao as exc:
+            modo_atualizacao = "indisponível"
+            self.append(f"Falha ao carregar o modo de atualização: {exc}\n")
+        descricao_modo = (
+            "Automático: verifica periodicamente e baixa a atualização; "
+            "a instalação ainda exige confirmação local."
+            if modo_atualizacao == "automatico"
+            else "Manual: use Verificar atualizações e Baixar e instalar para escolher "
+            "quando atualizar."
+        )
+        ttk.Label(
+            content,
+            text=(
+                f"Modo {modo_atualizacao}. {descricao_modo}\n"
+                "A atualização substitui os arquivos na pasta atual e preserva os dados. "
+                "O Manager para o servidor antes de instalar; o Windows solicitará "
+                "permissão de administrador."
+            ),
+            wraplength=640,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        def ajustar_largura(event):
+            if event.widget is window:
+                status_label.configure(wraplength=max(240, event.width - 48))
+
+        window.bind("<Configure>", ajustar_largura)
         notes_frame = ttk.Frame(content)
         notes_frame.pack(fill="both", expand=True)
         self.update_notes = tk.Text(
@@ -355,7 +401,7 @@ class Manager(tk.Tk):
             actions,
             text="Verificar novamente",
             command=lambda: self._check_for_updates(show_result=True),
-        ).pack(side="left")
+        ).pack(fill="x", pady=(0, 6))
         self.update_install_button = ttk.Button(
             actions,
             text="Baixar e instalar",
@@ -363,12 +409,12 @@ class Manager(tk.Tk):
             command=self._download_latest_installer,
             state="disabled",
         )
-        self.update_install_button.pack(side="left", padx=8)
+        self.update_install_button.pack(fill="x", pady=6)
         ttk.Button(
             actions,
             text="Fechar",
             command=window.destroy,
-        ).pack(side="right")
+        ).pack(fill="x", pady=(6, 0))
         window.protocol("WM_DELETE_WINDOW", self._close_update_window)
         self._check_for_updates(show_result=True)
 
@@ -386,7 +432,7 @@ class Manager(tk.Tk):
                 self._check_for_updates(show_result=False, automatico=True)
         except ErroAtualizacao as exc:
             self.append(f"Falha ao carregar o modo de atualização: {exc}\n")
-        self.after(6 * 60 * 60 * 1000, self._check_updates_automatically)
+        self.after(6 * 60 * 60 * 1000, self._check_for_updates_automatically)
 
     def _check_for_updates(self, show_result=True, automatico=False):
         if self.update_check_running:
@@ -503,7 +549,14 @@ class Manager(tk.Tk):
             )
             return
 
-        reiniciar_servidor = self.running()
+        try:
+            reiniciar_servidor = self.servidor_em_execucao()
+        except OSError as exc:
+            messagebox.showerror(
+                "Atualizações",
+                f"Não foi possível verificar se o servidor está em execução:\n{exc}",
+            )
+            return
         self.cfg["restart_after_update"] = reiniciar_servidor
         try:
             CONFIG_FILE.write_text(
@@ -518,19 +571,38 @@ class Manager(tk.Tk):
             return
 
         if reiniciar_servidor:
-            self.stop()
+            if not self.stop():
+                self.cfg["restart_after_update"] = False
+                try:
+                    CONFIG_FILE.write_text(
+                        json.dumps(self.cfg, ensure_ascii=False, indent=2),
+                        encoding="utf-8",
+                    )
+                except OSError as exc:
+                    self.append(
+                        f"Não foi possível cancelar a reinicialização do servidor: {exc}\n"
+                    )
+                messagebox.showerror(
+                    "Atualizações",
+                    "O servidor não parou. A atualização foi cancelada; "
+                    "pare o servidor e tente novamente.",
+                )
+                return
 
         manager = Path(sys.argv[0]).resolve()
+        install_dir = manager.parent.parent
         script = DATA_DIR / "downloads" / "aplicar_atualizacao.ps1"
         quote_ps = lambda valor: "'" + str(valor).replace("'", "''") + "'"
         conteudo = (
             "$ErrorActionPreference = 'Stop'\n"
             f"$installer = {quote_ps(caminho_instalador)}\n"
             f"$manager = {quote_ps(manager)}\n"
+            f"$installDir = {quote_ps(install_dir)}\n"
             f"$parentPid = {os.getpid()}\n"
             "try {\n"
             "    while (Get-Process -Id $parentPid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }\n"
-            "    $process = Start-Process -FilePath $installer -Verb RunAs -Wait -PassThru\n"
+            "    $arguments = '/DIR=\"' + $installDir + '\" /CLOSEAPPLICATIONS'\n"
+            "    $process = Start-Process -FilePath $installer -ArgumentList $arguments -Verb RunAs -Wait -PassThru\n"
             "    if ($process.ExitCode -ne 0) { Start-Process -FilePath $manager }\n"
             "} catch {\n"
             "    Start-Process -FilePath $manager\n"
@@ -591,6 +663,30 @@ class Manager(tk.Tk):
     def running(self):
         return self.proc is not None and self.proc.poll() is None
 
+    def servidor_em_execucao(self):
+        if self.running():
+            return True
+        if not IS_WIN or not FROZEN:
+            return False
+        resultado = subprocess.run(
+            ["tasklist.exe", "/FI", "IMAGENAME eq ChronoSnapServer.exe", "/NH"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            check=False,
+        )
+        if resultado.returncode != 0:
+            raise OSError(
+                resultado.stderr.strip()
+                or f"tasklist.exe encerrou com código {resultado.returncode}."
+            )
+        return any(
+            linha.lstrip().lower().startswith("chronosnapserver.exe")
+            for linha in resultado.stdout.splitlines()
+        )
+
     def append(self, text):
         self.log.configure(state="normal")
         self.log.insert("end", text)
@@ -648,13 +744,34 @@ class Manager(tk.Tk):
 
     def stop(self):
         if not self.running():
-            return
+            return True
         self.proc.terminate()
         try:
             self.proc.wait(timeout=8)
         except subprocess.TimeoutExpired:
             self.proc.kill()
+            try:
+                self.proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                return False
         self.append("Servidor parado.\n")
+        return True
+
+    def toggle_start_server_on_open(self):
+        anterior = self.cfg.get("start_server_on_open", False)
+        self.cfg["start_server_on_open"] = self.start_server_on_open_var.get()
+        try:
+            CONFIG_FILE.write_text(
+                json.dumps(self.cfg, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            self.cfg["start_server_on_open"] = anterior
+            self.start_server_on_open_var.set(anterior)
+            messagebox.showerror(
+                "ChronoSnap",
+                f"Não foi possível salvar a inicialização automática:\n{exc}",
+            )
 
     def toggle_tray_option(self):
         habilitado = self.minimize_to_tray_var.get()
@@ -813,4 +930,5 @@ class Manager(tk.Tk):
 
 
 if __name__ == "__main__":
-    Manager().mainloop()
+    manager = Manager()
+    manager.mainloop()

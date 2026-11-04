@@ -18,6 +18,14 @@
   no período e os funcionários sem marcações no intervalo.
 - Auditoria com ações em linguagem clara e detalhes técnicos recolhidos; as
   consultas do espelho e os downloads de AFD registram empresas e período.
+- Inicialização do Manager compilado corrigida para manter ativa a verificação
+  automática de atualizações.
+- Consulta às atualizações do GitHub compatível com instalações sem certificados
+  raiz no ambiente do Python, usando também o pacote confiável `certifi`.
+- Janela de atualização do Manager reorganizada para que os botões se ajustem
+  à largura disponível; a instalação encerra o servidor e atualiza a pasta
+  existente, preservando os dados.
+- Opção para iniciar o servidor automaticamente ao abrir o Manager.
 - Versão do servidor, Manager e instaladores alinhada para 1.0.9.
 
 ## 1.0.8 — 31/10/2026

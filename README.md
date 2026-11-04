@@ -50,12 +50,14 @@ informado por ele no navegador. O instalador inclui o manual de operação em
 
 Administradores podem consultar versões e notas de lançamento no menu
 **Administração > Atualizações** do sistema web. No modo manual, o Manager do
-computador servidor permite verificar, baixar e instalar a versão escolhida.
-No modo automático, o Manager verifica novas releases periodicamente, baixa o
-instalador e solicita confirmação local antes de parar e atualizar o servidor.
-A instalação requer conexão com o GitHub e confirmação de elevação do Windows.
-O instalador preserva os dados em `data`; para que o modo automático funcione,
-o Manager precisa estar em execução no computador servidor.
+computador servidor verifica e baixa somente quando solicitado. No modo
+automático, o Manager verifica novas releases periodicamente e baixa o
+instalador, mas ainda solicita confirmação local antes de instalar. Nos dois
+modos, o instalador atualiza a pasta já usada, para o servidor durante a troca
+dos arquivos e preserva os dados em `data`; é necessário confirmar a elevação
+do Windows. Para que a verificação automática funcione, o Manager precisa estar
+em execução no computador servidor. Marque **Iniciar o servidor automaticamente
+ao abrir o Manager** para iniciar o servidor sempre que abrir o painel.
 
 ## Execução manual a partir do código-fonte
 

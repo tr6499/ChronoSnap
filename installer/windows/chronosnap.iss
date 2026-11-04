@@ -19,6 +19,7 @@ DefaultGroupName=ChronoSnap
 DisableProgramGroupPage=yes
 ; O usuário pode escolher o local de instalação
 DisableDirPage=no
+UsePreviousAppDir=yes
 LicenseFile={#StageDir}\LICENSE.txt
 OutputDir={#OutDir}
 OutputBaseFilename=ChronoSnap-Setup-{#AppVersion}
@@ -30,6 +31,8 @@ PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\chronosnap-program.ico
 CloseApplications=yes
+CloseApplicationsFilter=ChronoSnapServer.exe,ChronoSnapManager.exe
+RestartApplications=no
 UsePreviousTasks=no
 
 [Languages]
@@ -62,6 +65,26 @@ Filename: "{app}\manager\ChronoSnapManager.exe"; Description: "Abrir o ChronoSna
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ChronoSnapServer.exe"; Flags: runhidden; RunOnceId: "StopServer"
 
 [Code]
+function PararProcessoChronoSnap(NomeExecutavel: String): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+  if not Exec(ExpandConstant('{sys}\taskkill.exe'),
+    '/F /T /IM ' + NomeExecutavel, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Result := 'Nao foi possivel executar o comando para parar ' + NomeExecutavel + '.'
+  else if (ResultCode <> 0) and (ResultCode <> 128) then
+    Result := 'O Windows nao conseguiu parar ' + NomeExecutavel +
+      '. Feche o ChronoSnap e tente novamente.';
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := PararProcessoChronoSnap('ChronoSnapServer.exe');
+  if Result = '' then
+    Result := PararProcessoChronoSnap('ChronoSnapManager.exe');
+end;
+
 procedure InstalarPostgreSQL();
 var
   ResultCode: Integer;

@@ -2,6 +2,7 @@ import unittest
 import hashlib
 import io
 import json
+import ssl
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -105,9 +106,13 @@ class AtualizacaoTests(unittest.TestCase):
         with patch(
             "services.atualizacoes.urlopen",
             return_value=io.BytesIO(json.dumps(release).encode("utf-8")),
-        ):
+        ) as abrir_url:
             resultado = obter_ultima_release()
 
+        contexto = abrir_url.call_args.kwargs["context"]
+        self.assertIsInstance(contexto, ssl.SSLContext)
+        self.assertEqual(contexto.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(contexto.check_hostname)
         self.assertTrue(resultado["atualizacao_disponivel"])
         self.assertEqual(resultado["versao_disponivel"], "1.0.10")
         self.assertIsNotNone(resultado["instalador"])

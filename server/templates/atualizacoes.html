@@ -22,8 +22,10 @@
         </option>
     </select>
     <p class="page-description" style="margin: 8px 0 16px;">
-        A instalação é executada no computador que hospeda o servidor. O modo automático
-        baixa a atualização pelo Manager e pede confirmação local antes de parar e atualizar o serviço.
+        No modo manual, o Manager verifica e baixa somente quando solicitado. No modo automático,
+        ele verifica periodicamente e baixa a atualização, mas ainda pede confirmação local
+        antes de instalá-la. O instalador substitui os arquivos na pasta existente, para o
+        servidor durante a atualização e preserva os dados.
     </p>
     <button type="button" id="salvar-modo">Salvar modo</button>
     <span id="resultado-modo" role="status" style="margin-left: 10px;"></span>

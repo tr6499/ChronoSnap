@@ -1,5 +1,15 @@
 # Histórico de versões
 
+## 1.0.9 — 04/11/2026
+
+### Corrigido
+
+- Horário dos registros de auditoria exibido no fuso local do Brasil (UTC−3),
+  em vez de mostrar diretamente o horário UTC armazenado no banco.
+- Espelho de ponto: ao consultar todas as lojas, omitir as lojas sem marcações
+  no período e os funcionários sem marcações no intervalo.
+- Versão do servidor, Manager e instaladores alinhada para 1.0.9.
+
 ## 1.0.8 — 31/10/2026
 
 ### Corrigido

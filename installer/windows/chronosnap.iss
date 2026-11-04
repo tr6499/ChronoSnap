@@ -1,6 +1,6 @@
 ; Instalador Windows do ChronoSnap (Inno Setup 6)
 #ifndef AppVersion
-  #define AppVersion "1.0.5"
+  #define AppVersion "1.0.9"
 #endif
 #ifndef StageDir
   #define StageDir "..\..\build\work\stage"

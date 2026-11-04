@@ -15,7 +15,13 @@ from database import (
 from models_usuarios import UsuarioSistema, ConfiguracaoSistema, LogAuditoria
 from routes.auth import obter_usuario_da_sessao
 from services.autenticacao import hash_password, verify_password, config_auth
-from services.auditoria import obter_retencao_dias, limpar_logs_auditoria, registrar_auditoria, CHAVE_RETENCAO
+from services.auditoria import (
+    obter_retencao_dias,
+    limpar_logs_auditoria,
+    registrar_auditoria,
+    converter_para_horario_local,
+    CHAVE_RETENCAO,
+)
 from models import MarcacaoAFD
 from models import Loja
 from services.retencao_banco import (
@@ -528,6 +534,17 @@ async def auditoria_page(request: Request):
         logs = db.query(LogAuditoria).order_by(
             LogAuditoria.criado_em.desc()
         ).limit(500).all()
+        logs = [
+            {
+                "criado_em": converter_para_horario_local(log.criado_em),
+                "username": log.username,
+                "acao": log.acao,
+                "recurso": log.recurso,
+                "sucesso": log.sucesso,
+                "detalhes": log.detalhes,
+            }
+            for log in logs
+        ]
         return templates.TemplateResponse(
             request=request,
             name="auditoria.html",

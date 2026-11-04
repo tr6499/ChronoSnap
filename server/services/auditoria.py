@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 from models_usuarios import ConfiguracaoSistema, LogAuditoria
@@ -7,6 +7,15 @@ from database import SessionLocal
 
 CHAVE_RETENCAO = "auditoria_retencao_dias"
 RETENCAO_PADRAO = 30
+FUSO_LOCAL = timezone(timedelta(hours=-3))
+
+
+def converter_para_horario_local(data_hora):
+    if data_hora is None:
+        return None
+    if data_hora.tzinfo is None:
+        data_hora = data_hora.replace(tzinfo=timezone.utc)
+    return data_hora.astimezone(FUSO_LOCAL)
 
 
 def obter_retencao_dias(db=None):

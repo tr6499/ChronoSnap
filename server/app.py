@@ -62,7 +62,7 @@ async def lifespan(app):
 
 app = FastAPI(
     title="ChronoSnap",
-    version="1.0.5",
+    version="1.0.9",
     lifespan=lifespan
 )
 

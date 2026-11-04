@@ -862,6 +862,8 @@ def preview_afd(
 
     busca: str | None = Form(None),
 
+    todas_lojas: bool = Form(False),
+
     formato: str = Form(
         "rm_totvs"
     )
@@ -1016,6 +1018,8 @@ def preview_afd(
                 )
 
                 if not marcacoes_banco:
+                    if todas_lojas:
+                        continue
                     raise ValueError(
                         "Não há marcações carregadas no banco para esta empresa "
                         "e período. Faça uma carga de marcações antes de consultar."

@@ -284,6 +284,7 @@ Espelho de Ponto
 
         const dados = new FormData();
         if (loja === "todas") {
+            dados.append("todas_lojas", "true");
             document.querySelectorAll("#loja option:not([value='']):not([value='todas'])").forEach(opcao => {
                 dados.append("lojas", opcao.value);
             });

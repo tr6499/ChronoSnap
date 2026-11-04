@@ -1,5 +1,16 @@
 # Histórico de versões
 
+## 1.0.10 — 04/11/2026
+
+### Corrigido
+
+- Espelho de ponto: ao consultar todas as empresas ou buscar um funcionário,
+  omitir empresas sem marcações correspondentes no período, mesmo quando há
+  registros de outros funcionários.
+- Botões padronizados entre as páginas do sistema, seguindo o estilo de
+  Empresas, com exceção dos controles especiais.
+- Favicon disponibilizado nas rotas `/favicon.ico` e `/static/favicon.svg`.
+
 ## 1.0.9 — 04/11/2026
 
 ### Adicionado

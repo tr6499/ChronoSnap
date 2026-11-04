@@ -20,6 +20,7 @@ from services.atualizacoes import (
     salvar_modo_atualizacao,
 )
 from services.espelho import EspelhoAFD
+from routes.afd import _omitir_loja_sem_resultados
 
 
 class AuditoriaHorarioTests(unittest.TestCase):
@@ -82,21 +83,57 @@ class EspelhoFuncionariosComMarcacoesTests(unittest.TestCase):
             [funcionario_com_marcacao],
         )
 
+    def test_omite_loja_sem_resultados_ao_consultar_todas(self):
+        self.assertTrue(
+            _omitir_loja_sem_resultados(
+                funcionarios=[],
+                todas_lojas=True,
+                busca="",
+            )
+        )
+
+    def test_omite_loja_sem_funcionario_encontrado_na_busca(self):
+        self.assertTrue(
+            _omitir_loja_sem_resultados(
+                funcionarios=[],
+                todas_lojas=False,
+                busca="Tetsuo",
+            )
+        )
+
+    def test_preserva_loja_selecionada_sem_busca(self):
+        self.assertFalse(
+            _omitir_loja_sem_resultados(
+                funcionarios=[],
+                todas_lojas=False,
+                busca="",
+            )
+        )
+
+    def test_preserva_loja_com_funcionarios_com_marcacoes(self):
+        self.assertFalse(
+            _omitir_loja_sem_resultados(
+                funcionarios=[{"nome": "Funcionário", "marcacoes": [{}]}],
+                todas_lojas=True,
+                busca="Tetsuo",
+            )
+        )
+
 
 class AtualizacaoTests(unittest.TestCase):
     def test_detecta_release_e_asset_windows(self):
         release = {
-            "tag_name": "chronosnap-v1.0.10",
-            "name": "ChronoSnap 1.0.10",
+            "tag_name": "chronosnap-v1.0.11",
+            "name": "ChronoSnap 1.0.11",
             "body": "Correções e melhorias",
-            "html_url": "https://github.com/tr6499/ChronoSnap/releases/tag/1.0.10",
+            "html_url": "https://github.com/tr6499/ChronoSnap/releases/tag/1.0.11",
             "published_at": "2026-11-05T12:00:00Z",
             "assets": [
                 {
-                    "name": "ChronoSnap-Setup-1.0.10.exe",
+                    "name": "ChronoSnap-Setup-1.0.11.exe",
                     "browser_download_url": (
                         "https://github.com/tr6499/ChronoSnap/releases/download/"
-                        "1.0.10/ChronoSnap-Setup-1.0.10.exe"
+                        "1.0.11/ChronoSnap-Setup-1.0.11.exe"
                     ),
                     "digest": "sha256:" + ("a" * 64),
                     "size": 20,
@@ -114,7 +151,7 @@ class AtualizacaoTests(unittest.TestCase):
         self.assertEqual(contexto.verify_mode, ssl.CERT_REQUIRED)
         self.assertTrue(contexto.check_hostname)
         self.assertTrue(resultado["atualizacao_disponivel"])
-        self.assertEqual(resultado["versao_disponivel"], "1.0.10")
+        self.assertEqual(resultado["versao_disponivel"], "1.0.11")
         self.assertIsNotNone(resultado["instalador"])
 
     def test_baixa_instalador_e_valida_sha256(self):
@@ -123,7 +160,7 @@ class AtualizacaoTests(unittest.TestCase):
             "instalador": {
                 "url": (
                     "https://github.com/tr6499/ChronoSnap/releases/download/"
-                    "1.0.10/ChronoSnap-Setup-1.0.10.exe"
+                    "1.0.11/ChronoSnap-Setup-1.0.11.exe"
                 ),
                 "sha256": hashlib.sha256(conteudo).hexdigest(),
             }

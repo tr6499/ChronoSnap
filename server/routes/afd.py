@@ -486,6 +486,14 @@ def converter_data(
         )
 
 
+def _omitir_loja_sem_resultados(
+    funcionarios,
+    todas_lojas,
+    busca,
+):
+    return not funcionarios and (todas_lojas or bool(busca))
+
+
 def nome_layout(layout):
 
     if layout == 671:
@@ -1460,6 +1468,13 @@ def preview_afd(
                             marcacoes_json
 
                     })
+
+                if _omitir_loja_sem_resultados(
+                    funcionarios_json,
+                    todas_lojas,
+                    busca,
+                ):
+                    continue
 
                 # =================================================
                 # RESULTADO DA LOJA

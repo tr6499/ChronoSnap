@@ -5,7 +5,7 @@ from sqlalchemy import inspect, text
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import Base, engine, SessionLocal
@@ -82,6 +82,7 @@ class AutenticacaoMiddleware(BaseHTTPMiddleware):
     ROTAS_PUBLICAS = [
         "/auth/",
         "/static/",
+        "/favicon.ico",
         "/docs",
         "/openapi.json",
         "/redoc",
@@ -169,6 +170,14 @@ app.add_middleware(AutenticacaoMiddleware)
 # ============================================================
 # ARQUIVOS ESTÁTICOS
 # ============================================================
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(
+        BASE_DIR / "static" / "favicon.svg",
+        media_type="image/svg+xml",
+    )
+
 
 app.mount(
     "/static",

@@ -133,32 +133,77 @@ body {
     color: #0d4f82;
 }
 
-button,
-.button {
-    border-radius: 6px;
+.main button:not(.auto-dia):not(.tab-btn),
+.main a.button {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
     padding: 8px 13px;
-    background: linear-gradient(180deg, #0d6efd 0%, #0756a6 100%);
-    box-shadow: 0 4px 10px rgba(15, 43, 67, 0.1);
-    font-weight: 600;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid #d6e0e7;
+    border-radius: 6px;
+    background: #f4f7f9;
+    box-shadow: none;
+    color: #405b70;
+    font: 600 12px/1.35 "Segoe UI", Arial, sans-serif;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-button:hover,
-.button:hover {
-    background: linear-gradient(180deg, #1677ff 0%, #0756a6 100%);
-    box-shadow: 0 4px 10px rgba(15, 43, 67, 0.12);
+.main button:not(.auto-dia):not(.tab-btn):hover:not(:disabled),
+.main a.button:hover {
+    border-color: #c4d2dc;
+    background: #eaf0f4;
+    box-shadow: none;
+    color: #304b60;
 }
 
-.button-secondary {
-    background: linear-gradient(180deg, #7890a3 0%, #526b7f 100%);
+.main button:not(.auto-dia):not(.tab-btn):disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
 }
 
-.button-danger {
-    background: linear-gradient(180deg, #dc5360 0%, #a92e3b 100%);
+.main button:not(.auto-dia):not(.tab-btn):focus-visible,
+.main a.button:focus-visible {
+    outline: 3px solid rgba(13, 110, 253, 0.24);
+    outline-offset: 2px;
 }
 
-.button-success {
-    background: linear-gradient(180deg, #2ba56d 0%, #14734a 100%);
+.main button:not(.auto-dia):not(.tab-btn).button-danger,
+.main button:not(.auto-dia):not(.tab-btn).button-delete,
+.main a.button.button-danger,
+.main a.button.button-delete {
+    border-color: #eadede;
+    background: #fbf6f6;
+    color: #9a5a5a;
+}
+
+.main button:not(.auto-dia):not(.tab-btn).button-danger:hover:not(:disabled),
+.main button:not(.auto-dia):not(.tab-btn).button-delete:hover:not(:disabled),
+.main a.button.button-danger:hover,
+.main a.button.button-delete:hover {
+    border-color: #dfcaca;
+    background: #f5eaea;
+    color: #854747;
+}
+
+.main button:not(.auto-dia):not(.tab-btn).button-success,
+.main a.button.button-success {
+    border-color: #d7e7dc;
+    background: #f4f8f5;
+    color: #426b52;
+}
+
+.main button:not(.auto-dia):not(.tab-btn).button-success:hover:not(:disabled),
+.main a.button.button-success:hover {
+    border-color: #c4daca;
+    background: #eaf3ed;
+    color: #315a40;
 }
 
 table {

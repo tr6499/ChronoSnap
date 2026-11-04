@@ -95,6 +95,21 @@ def server_host(mode):
     return "0.0.0.0" if mode == "network" else "127.0.0.1"
 
 
+def definir_geometria_centralizada(window, width, height, min_width=None, min_height=None):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    width = min(width, max(320, screen_width - 80))
+    height = min(height, max(320, screen_height - 100))
+    if min_width is not None or min_height is not None:
+        window.minsize(
+            min(min_width or width, width),
+            min(min_height or height, height),
+        )
+    x = max(0, (screen_width - width) // 2)
+    y = max(0, (screen_height - height) // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
+
+
 class Manager(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -107,7 +122,7 @@ class Manager(tk.Tk):
             self.iconbitmap(str(self.icon_path))
         except tk.TclError:
             pass
-        self.geometry("680x500")
+        definir_geometria_centralizada(self, 680, 500)
         self.configure(bg=BG)
         self.proc = None
         self.cfg = load_config()
@@ -140,6 +155,8 @@ class Manager(tk.Tk):
         self.update_check_running = False
         self._style()
         self._build()
+        self.update_idletasks()
+        definir_geometria_centralizada(self, 680, 500)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.bind("<Unmap>", self.on_minimize)
         if self.minimize_to_tray_var.get():
@@ -258,8 +275,7 @@ class Manager(tk.Tk):
     def show_license(self):
         license_window = tk.Toplevel(self)
         license_window.title("Sobre o ChronoSnap")
-        license_window.geometry("760x680")
-        license_window.minsize(600, 480)
+        definir_geometria_centralizada(license_window, 760, 680, 600, 480)
         license_window.transient(self)
         license_window.configure(bg=BG)
 
@@ -318,6 +334,8 @@ class Manager(tk.Tk):
             command=lambda: webbrowser.open(GNU_LICENSE_URL),
         ).pack(side="left")
         ttk.Button(actions, text="Fechar", command=license_window.destroy).pack(side="right")
+        license_window.update_idletasks()
+        definir_geometria_centralizada(license_window, 760, 680, 600, 480)
 
     def open_update_window(self):
         if not IS_WIN:
@@ -332,8 +350,7 @@ class Manager(tk.Tk):
 
         window = tk.Toplevel(self)
         window.title("Atualizações do ChronoSnap")
-        window.geometry("700x600")
-        window.minsize(480, 440)
+        definir_geometria_centralizada(window, 900, 720, 680, 560)
         window.transient(self)
         window.configure(bg=BG)
         self.update_window = window
@@ -342,10 +359,14 @@ class Manager(tk.Tk):
         )
         content = ttk.Frame(window, padding=18)
         content.pack(fill="both", expand=True)
-        ttk.Label(content, text="Atualizações do ChronoSnap", style="Title.TLabel").pack(anchor="w")
+        content.columnconfigure(0, weight=1)
+        content.rowconfigure(3, weight=1)
+        ttk.Label(content, text="Atualizações do ChronoSnap", style="Title.TLabel").grid(
+            row=0, column=0, sticky="w"
+        )
         status_label = ttk.Label(content, textvariable=self.update_status, wraplength=640)
-        status_label.pack(
-            anchor="w", pady=(8, 12)
+        status_label.grid(
+            row=1, column=0, sticky="w", pady=(8, 12)
         )
         try:
             modo_atualizacao = ler_modo_atualizacao()
@@ -359,7 +380,7 @@ class Manager(tk.Tk):
             else "Manual: use Verificar atualizações e Baixar e instalar para escolher "
             "quando atualizar."
         )
-        ttk.Label(
+        mode_label = ttk.Label(
             content,
             text=(
                 f"Modo {modo_atualizacao}. {descricao_modo}\n"
@@ -369,15 +390,18 @@ class Manager(tk.Tk):
             ),
             wraplength=640,
             justify="left",
-        ).pack(anchor="w", pady=(0, 10))
+        )
+        mode_label.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
         def ajustar_largura(event):
             if event.widget is window:
-                status_label.configure(wraplength=max(240, event.width - 48))
+                wraplength = max(240, event.width - 56)
+                status_label.configure(wraplength=wraplength)
+                mode_label.configure(wraplength=wraplength)
 
         window.bind("<Configure>", ajustar_largura)
         notes_frame = ttk.Frame(content)
-        notes_frame.pack(fill="both", expand=True)
+        notes_frame.grid(row=3, column=0, sticky="nsew")
         self.update_notes = tk.Text(
             notes_frame,
             wrap="word",
@@ -396,12 +420,14 @@ class Manager(tk.Tk):
         self.update_notes.pack(side="left", fill="both", expand=True)
 
         actions = ttk.Frame(content)
-        actions.pack(fill="x", pady=(12, 0))
+        actions.grid(row=4, column=0, sticky="ew", pady=(12, 0))
+        for column in range(3):
+            actions.columnconfigure(column, weight=1, uniform="update-actions")
         ttk.Button(
             actions,
             text="Verificar novamente",
             command=lambda: self._check_for_updates(show_result=True),
-        ).pack(fill="x", pady=(0, 6))
+        ).grid(row=0, column=0, sticky="ew", padx=(0, 6))
         self.update_install_button = ttk.Button(
             actions,
             text="Baixar e instalar",
@@ -409,13 +435,15 @@ class Manager(tk.Tk):
             command=self._download_latest_installer,
             state="disabled",
         )
-        self.update_install_button.pack(fill="x", pady=6)
+        self.update_install_button.grid(row=0, column=1, sticky="ew", padx=6)
         ttk.Button(
             actions,
             text="Fechar",
             command=window.destroy,
-        ).pack(fill="x", pady=(6, 0))
+        ).grid(row=0, column=2, sticky="ew", padx=(6, 0))
         window.protocol("WM_DELETE_WINDOW", self._close_update_window)
+        window.update_idletasks()
+        definir_geometria_centralizada(window, 900, 720, 680, 560)
         self._check_for_updates(show_result=True)
 
     def _close_update_window(self):

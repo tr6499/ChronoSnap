@@ -4,8 +4,11 @@
 
 ### Adicionado
 
-- Consulta de atualizações e changelog das Releases do GitHub, com modo manual
-  ou verificação automática pelo Manager e confirmação antes de instalar.
+- Página de atualizações para administradores, com notas das Releases do GitHub
+  e seleção entre os modos manual e automático.
+- Manager verifica novas versões; no modo automático, baixa o instalador e
+  solicita confirmação local antes de instalar. O download é validado por
+  checksum SHA-256.
 
 ### Corrigido
 

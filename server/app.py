@@ -12,6 +12,7 @@ from database import Base, engine, SessionLocal
 import models
 from models_usuarios import UsuarioSistema, ConfiguracaoSistema
 from services.auditoria import garantir_configuracao_retencao, limpar_logs_auditoria
+from services.atualizacoes import VERSAO_ATUAL
 
 from routes.afd import router as afd_router, executar_agendador_automacoes, _carregar_automacoes
 from routes.users import router as users_router
@@ -62,7 +63,7 @@ async def lifespan(app):
 
 app = FastAPI(
     title="ChronoSnap",
-    version="1.0.9",
+    version=VERSAO_ATUAL,
     lifespan=lifespan
 )
 
@@ -99,20 +100,17 @@ class AutenticacaoMiddleware(BaseHTTPMiddleware):
         if request.method == "HEAD":
             return
 
-        eh_exportacao = caminho.startswith("/afd/download")
-        eh_consulta = request.method == "GET" or caminho == "/afd/preview"
-
-        if not eh_exportacao and not eh_consulta:
+        if request.method != "GET" or not caminho.startswith("/afd/download"):
             return
 
         registrar_auditoria_request(
             request=request,
-            acao="exportacao" if eh_exportacao else "consulta",
-            recurso=caminho,
+            acao="baixou_afd",
+            recurso="afd",
             detalhes={
                 "metodo": request.method,
                 "status_code": resposta.status_code,
-                "parametros": dict(request.query_params)
+                "empresa": caminho.rsplit("/", 1)[-1],
             },
             sucesso=resposta.status_code < 400,
             status_code=resposta.status_code

@@ -20,7 +20,18 @@ from services.auditoria import (
     limpar_logs_auditoria,
     registrar_auditoria,
     converter_para_horario_local,
+    descrever_acao_auditoria,
+    descrever_recurso_auditoria,
+    formatar_detalhes_auditoria,
     CHAVE_RETENCAO,
+)
+from services.atualizacoes import (
+    ErroAtualizacao,
+    RELEASES_URL,
+    VERSAO_ATUAL,
+    ler_modo_atualizacao,
+    obter_ultima_release,
+    salvar_modo_atualizacao as persistir_modo_atualizacao,
 )
 from models import MarcacaoAFD
 from models import Loja
@@ -538,10 +549,10 @@ async def auditoria_page(request: Request):
             {
                 "criado_em": converter_para_horario_local(log.criado_em),
                 "username": log.username,
-                "acao": log.acao,
-                "recurso": log.recurso,
+                "acao": descrever_acao_auditoria(log.acao, log.recurso),
+                "recurso": descrever_recurso_auditoria(log.recurso),
                 "sucesso": log.sucesso,
-                "detalhes": log.detalhes,
+                "detalhes": formatar_detalhes_auditoria(log.detalhes),
             }
             for log in logs
         ]
@@ -555,6 +566,63 @@ async def auditoria_page(request: Request):
         )
     finally:
         db.close()
+
+
+def _obter_modo_atualizacao():
+    try:
+        return ler_modo_atualizacao()
+    except ErroAtualizacao as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/atualizacoes")
+def atualizacoes_page(request: Request):
+    exigir_administrador(request)
+    erro = None
+    try:
+        release = obter_ultima_release()
+    except ErroAtualizacao as exc:
+        release = None
+        erro = str(exc)
+    return templates.TemplateResponse(
+        request=request,
+        name="atualizacoes.html",
+        context={
+            "versao_atual": VERSAO_ATUAL,
+            "modo_atualizacao": _obter_modo_atualizacao(),
+            "release": release,
+            "erro_atualizacao": erro,
+            "releases_url": RELEASES_URL,
+        },
+    )
+
+
+@router.post("/atualizacoes/configuracao")
+async def salvar_modo_atualizacao(request: Request):
+    usuario = exigir_administrador(request)
+    dados = await request.json()
+    modo = dados.get("modo")
+    if modo not in ("manual", "automatico"):
+        raise HTTPException(status_code=400, detail="Modo de atualização inválido.")
+
+    try:
+        persistir_modo_atualizacao(modo)
+    except ErroAtualizacao as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    registrar_auditoria(
+        acao="configurar_atualizacao",
+        recurso="atualizacoes",
+        usuario=usuario,
+        detalhes={"modo": "automático" if modo == "automatico" else "manual"},
+    )
+    return {
+        "mensagem": (
+            "Atualizações automáticas ativadas."
+            if modo == "automatico"
+            else "Atualizações manuais ativadas."
+        ),
+    }
 
 
 @router.get("/banco")

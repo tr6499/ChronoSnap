@@ -650,6 +650,13 @@
                 </a>
 
                 <a
+                    href="/config/atualizacoes"
+                    class="{% if request.url.path.startswith('/config/atualizacoes') %}active{% endif %}"
+                >
+                    Atualizações
+                </a>
+
+                <a
                     href="/config/banco"
                     class="{% if request.url.path.startswith('/config/banco') %}active{% endif %}"
                 >

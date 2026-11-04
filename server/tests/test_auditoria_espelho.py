@@ -1,7 +1,23 @@
 import unittest
+import hashlib
+import io
+import json
+import tempfile
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import patch
 
-from services.auditoria import converter_para_horario_local
+from services.auditoria import (
+    converter_para_horario_local,
+    descrever_acao_auditoria,
+    formatar_detalhes_auditoria,
+)
+from services.atualizacoes import (
+    baixar_instalador,
+    obter_ultima_release,
+    ler_modo_atualizacao,
+    salvar_modo_atualizacao,
+)
 from services.espelho import EspelhoAFD
 
 
@@ -14,6 +30,31 @@ class AuditoriaHorarioTests(unittest.TestCase):
         self.assertEqual(
             convertido.isoformat(),
             "2026-11-04T07:15:00-03:00",
+        )
+
+    def test_descreve_consulta_de_espelho_em_linguagem_clara(self):
+        self.assertEqual(
+            descrever_acao_auditoria("consultou_espelho", "espelho_ponto"),
+            "Consultou o espelho de ponto",
+        )
+
+    def test_formata_detalhes_sem_exibir_metodo_http(self):
+        detalhes = formatar_detalhes_auditoria(
+            json.dumps(
+                {
+                    "metodo": "POST",
+                    "data_inicial": "2026-11-01",
+                    "total_marcacoes": 12,
+                }
+            )
+        )
+
+        self.assertEqual(
+            detalhes,
+            [
+                ("Data inicial", "2026-11-01"),
+                ("Marcações encontradas", "12"),
+            ],
         )
 
 
@@ -39,3 +80,70 @@ class EspelhoFuncionariosComMarcacoesTests(unittest.TestCase):
             [funcionario["identificador"] for funcionario in resultado["funcionarios"]],
             [funcionario_com_marcacao],
         )
+
+
+class AtualizacaoTests(unittest.TestCase):
+    def test_detecta_release_e_asset_windows(self):
+        release = {
+            "tag_name": "chronosnap-v1.0.10",
+            "name": "ChronoSnap 1.0.10",
+            "body": "Correções e melhorias",
+            "html_url": "https://github.com/tr6499/ChronoSnap/releases/tag/1.0.10",
+            "published_at": "2026-11-05T12:00:00Z",
+            "assets": [
+                {
+                    "name": "ChronoSnap-Setup-1.0.10.exe",
+                    "browser_download_url": (
+                        "https://github.com/tr6499/ChronoSnap/releases/download/"
+                        "1.0.10/ChronoSnap-Setup-1.0.10.exe"
+                    ),
+                    "digest": "sha256:" + ("a" * 64),
+                    "size": 20,
+                }
+            ],
+        }
+        with patch(
+            "services.atualizacoes.urlopen",
+            return_value=io.BytesIO(json.dumps(release).encode("utf-8")),
+        ):
+            resultado = obter_ultima_release()
+
+        self.assertTrue(resultado["atualizacao_disponivel"])
+        self.assertEqual(resultado["versao_disponivel"], "1.0.10")
+        self.assertIsNotNone(resultado["instalador"])
+
+    def test_baixa_instalador_e_valida_sha256(self):
+        conteudo = b"ChronoSnap installer"
+        release = {
+            "instalador": {
+                "url": (
+                    "https://github.com/tr6499/ChronoSnap/releases/download/"
+                    "1.0.10/ChronoSnap-Setup-1.0.10.exe"
+                ),
+                "sha256": hashlib.sha256(conteudo).hexdigest(),
+            }
+        }
+
+        class FakeResponse(io.BytesIO):
+            headers = {"Content-Length": str(len(conteudo))}
+
+        with tempfile.TemporaryDirectory() as diretorio:
+            destino = Path(diretorio) / "installer.exe"
+            with patch(
+                "services.atualizacoes.urlopen",
+                return_value=FakeResponse(conteudo),
+            ):
+                resultado = baixar_instalador(release, destino)
+
+            self.assertEqual(resultado.read_bytes(), conteudo)
+
+    def test_modo_de_atualizacao_persiste_em_arquivo_separado(self):
+        with tempfile.TemporaryDirectory() as diretorio:
+            caminho_original = Path(diretorio) / "atualizacoes.json"
+            with patch(
+                "services.atualizacoes.ARQUIVO_CONFIG_ATUALIZACAO",
+                caminho_original,
+            ):
+                self.assertEqual(ler_modo_atualizacao(), "manual")
+                salvar_modo_atualizacao("automatico")
+                self.assertEqual(ler_modo_atualizacao(), "automatico")

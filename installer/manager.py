@@ -46,16 +46,28 @@ else:
 os.environ.setdefault("CHRONOSNAP_DATA", str(ROOT / "data"))
 
 from app_paths import DATA_DIR  # noqa: E402
+from services.atualizacoes import (  # noqa: E402
+    ErroAtualizacao,
+    VERSAO_ATUAL,
+    baixar_instalador,
+    ler_modo_atualizacao,
+    obter_ultima_release,
+)
 
 CONFIG_FILE = DATA_DIR / "manager.json"
 LOG_FILE = DATA_DIR / "logs" / "server.log"
 BLUE, BLUE_DEEP, INK, SOFT, BG = "#0d6efd", "#0756a6", "#102a43", "#607486", "#f4f8fc"
-APP_VERSION = "1.0.9"
+APP_VERSION = VERSAO_ATUAL
 GNU_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 
 
 def load_config():
-    cfg = {"mode": "local", "port": 8000, "minimize_to_tray": False}
+    cfg = {
+        "mode": "local",
+        "port": 8000,
+        "minimize_to_tray": False,
+        "restart_after_update": False,
+    }
     try:
         saved = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -68,6 +80,7 @@ def load_config():
         elif saved.get("host") == "0.0.0.0":
             cfg["mode"] = "network"
         cfg["minimize_to_tray"] = bool(saved.get("minimize_to_tray", False))
+        cfg["restart_after_update"] = bool(saved.get("restart_after_update", False))
     return cfg
 
 
@@ -91,17 +104,40 @@ class Manager(tk.Tk):
         self.configure(bg=BG)
         self.proc = None
         self.cfg = load_config()
+        self.restart_server_after_update = self.cfg.pop("restart_after_update", False)
+        if self.restart_server_after_update:
+            self.cfg["restart_after_update"] = False
+            try:
+                CONFIG_FILE.write_text(
+                    json.dumps(self.cfg, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+            except OSError as exc:
+                messagebox.showerror(
+                    "ChronoSnap",
+                    f"Não foi possível atualizar a configuração do Manager:\n{exc}",
+                )
         self.access_var = tk.StringVar(value=self.cfg["mode"])
         self.minimize_to_tray_var = tk.BooleanVar(
             value=self.cfg["minimize_to_tray"] and IS_WIN
         )
         self.tray_icon = None
+        self.update_window = None
+        self.update_notes = None
+        self.update_status = None
+        self.update_install_button = None
+        self.latest_release = None
+        self.update_check_running = False
         self._style()
         self._build()
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.bind("<Unmap>", self.on_minimize)
         if self.minimize_to_tray_var.get():
             self.after_idle(self._restore_tray_icon)
+        if self.restart_server_after_update:
+            self.after(1500, self.start)
+        if IS_WIN and FROZEN:
+            self.after(3000, self._check_updates_automatically)
         self.after(1000, self.refresh)
 
     def _style(self):
@@ -129,6 +165,12 @@ class Manager(tk.Tk):
             command=lambda: webbrowser.open(GNU_LICENSE_URL),
         )
         menu.add_cascade(label="Sobre", menu=license_menu)
+        update_menu = tk.Menu(menu, tearoff=False)
+        update_menu.add_command(
+            label="Verificar atualizações...",
+            command=self.open_update_window,
+        )
+        menu.add_cascade(label="Atualizações", menu=update_menu)
         self.configure(menu=menu)
 
         f = ttk.Frame(self, padding=20)
@@ -260,6 +302,281 @@ class Manager(tk.Tk):
             command=lambda: webbrowser.open(GNU_LICENSE_URL),
         ).pack(side="left")
         ttk.Button(actions, text="Fechar", command=license_window.destroy).pack(side="right")
+
+    def open_update_window(self):
+        if not IS_WIN:
+            messagebox.showinfo(
+                "Atualizações",
+                "A atualização automática está disponível somente para a instalação Windows.",
+            )
+            return
+        if self.update_window is not None and self.update_window.winfo_exists():
+            self.update_window.lift()
+            return
+
+        window = tk.Toplevel(self)
+        window.title("Atualizações do ChronoSnap")
+        window.geometry("700x520")
+        window.minsize(540, 380)
+        window.transient(self)
+        window.configure(bg=BG)
+        self.update_window = window
+        self.update_status = tk.StringVar(
+            value=f"Versão instalada: {APP_VERSION}. Verificando releases do GitHub..."
+        )
+        content = ttk.Frame(window, padding=18)
+        content.pack(fill="both", expand=True)
+        ttk.Label(content, text="Atualizações do ChronoSnap", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(content, textvariable=self.update_status, wraplength=650).pack(
+            anchor="w", pady=(8, 12)
+        )
+        notes_frame = ttk.Frame(content)
+        notes_frame.pack(fill="both", expand=True)
+        self.update_notes = tk.Text(
+            notes_frame,
+            wrap="word",
+            state="disabled",
+            font=("Segoe UI", 9),
+            bg="white",
+            fg=INK,
+            relief="solid",
+            bd=1,
+            padx=10,
+            pady=8,
+        )
+        scrollbar = ttk.Scrollbar(notes_frame, command=self.update_notes.yview)
+        self.update_notes.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        self.update_notes.pack(side="left", fill="both", expand=True)
+
+        actions = ttk.Frame(content)
+        actions.pack(fill="x", pady=(12, 0))
+        ttk.Button(
+            actions,
+            text="Verificar novamente",
+            command=lambda: self._check_for_updates(show_result=True),
+        ).pack(side="left")
+        self.update_install_button = ttk.Button(
+            actions,
+            text="Baixar e instalar",
+            style="Accent.TButton",
+            command=self._download_latest_installer,
+            state="disabled",
+        )
+        self.update_install_button.pack(side="left", padx=8)
+        ttk.Button(
+            actions,
+            text="Fechar",
+            command=window.destroy,
+        ).pack(side="right")
+        window.protocol("WM_DELETE_WINDOW", self._close_update_window)
+        self._check_for_updates(show_result=True)
+
+    def _close_update_window(self):
+        if self.update_window is not None:
+            self.update_window.destroy()
+        self.update_window = None
+        self.update_notes = None
+        self.update_status = None
+        self.update_install_button = None
+
+    def _check_for_updates_automatically(self):
+        try:
+            if ler_modo_atualizacao() == "automatico":
+                self._check_for_updates(show_result=False, automatico=True)
+        except ErroAtualizacao as exc:
+            self.append(f"Falha ao carregar o modo de atualização: {exc}\n")
+        self.after(6 * 60 * 60 * 1000, self._check_updates_automatically)
+
+    def _check_for_updates(self, show_result=True, automatico=False):
+        if self.update_check_running:
+            return
+        self.update_check_running = True
+
+        def consultar():
+            try:
+                release = obter_ultima_release()
+                erro = None
+            except ErroAtualizacao as exc:
+                release = None
+                erro = str(exc)
+            self.after(
+                0,
+                self._concluir_verificacao_atualizacao,
+                release,
+                erro,
+                show_result,
+                automatico,
+            )
+
+        threading.Thread(target=consultar, daemon=True).start()
+
+    def _concluir_verificacao_atualizacao(
+        self, release, erro, mostrar_resultado, automatico
+    ):
+        self.update_check_running = False
+        if erro:
+            self.append(f"Falha ao verificar atualizações: {erro}\n")
+            if self.update_status is not None:
+                self.update_status.set(erro)
+            if mostrar_resultado:
+                messagebox.showerror("Atualizações", erro)
+            return
+
+        self.latest_release = release
+        atualizacao_disponivel = release["atualizacao_disponivel"]
+        instalador_disponivel = release["instalador_verificado"]
+        if self.update_notes is not None:
+            self.update_notes.configure(state="normal")
+            self.update_notes.delete("1.0", "end")
+            self.update_notes.insert("1.0", release["notas"])
+            self.update_notes.configure(state="disabled")
+        if self.update_status is not None:
+            if atualizacao_disponivel:
+                texto = f"Nova versão disponível: {release['versao_disponivel']}."
+                if not instalador_disponivel:
+                    texto += " A release não contém um instalador Windows válido."
+            else:
+                texto = f"ChronoSnap {APP_VERSION} está atualizado."
+            self.update_status.set(texto)
+        if self.update_install_button is not None:
+            self.update_install_button.configure(
+                state="normal" if atualizacao_disponivel and instalador_disponivel else "disabled"
+            )
+
+        if atualizacao_disponivel and instalador_disponivel and automatico:
+            self._iniciar_download_instalador(release)
+        elif mostrar_resultado and not atualizacao_disponivel:
+            messagebox.showinfo(
+                "Atualizações",
+                f"Esta instalação já está atualizada (versão {APP_VERSION}).",
+            )
+
+    def _download_latest_installer(self):
+        if self.latest_release:
+            self._iniciar_download_instalador(self.latest_release)
+
+    def _iniciar_download_instalador(self, release):
+        if self.update_install_button is not None:
+            self.update_install_button.configure(state="disabled")
+        destino = DATA_DIR / "downloads" / release["instalador"]["nome"]
+        if self.update_status is not None:
+            self.update_status.set("Baixando e verificando o instalador...")
+
+        def baixar():
+            try:
+                caminho = baixar_instalador(release, destino)
+                erro = None
+            except ErroAtualizacao as exc:
+                caminho = None
+                erro = str(exc)
+            self.after(0, self._download_concluido, release, caminho, erro)
+
+        threading.Thread(target=baixar, daemon=True).start()
+
+    def _download_concluido(self, release, caminho, erro):
+        if erro:
+            if self.update_status is not None:
+                self.update_status.set(erro)
+            if self.update_install_button is not None:
+                self.update_install_button.configure(state="normal")
+            messagebox.showerror("Atualizações", erro)
+            return
+        if self.update_status is not None:
+            self.update_status.set(f"Instalador verificado: {caminho}")
+        if messagebox.askyesno(
+            "Instalar atualização",
+            f"O instalador da versão {release['versao_disponivel']} foi baixado "
+            "e verificado.\n\nO servidor será parado e o Manager fechado para "
+            "atualizar os arquivos. O instalador solicitará permissão de administrador. "
+            "Deseja continuar?",
+        ):
+            self._iniciar_instalacao(caminho)
+        elif self.update_install_button is not None:
+            self.update_install_button.configure(state="normal")
+
+    def _iniciar_instalacao(self, caminho_instalador):
+        if not FROZEN:
+            messagebox.showerror(
+                "Atualizações",
+                "A instalação automática só pode ser iniciada pelo Manager compilado.",
+            )
+            return
+
+        reiniciar_servidor = self.running()
+        self.cfg["restart_after_update"] = reiniciar_servidor
+        try:
+            CONFIG_FILE.write_text(
+                json.dumps(self.cfg, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            messagebox.showerror(
+                "Atualizações",
+                f"Não foi possível preparar a atualização: {exc}",
+            )
+            return
+
+        if reiniciar_servidor:
+            self.stop()
+
+        manager = Path(sys.argv[0]).resolve()
+        script = DATA_DIR / "downloads" / "aplicar_atualizacao.ps1"
+        quote_ps = lambda valor: "'" + str(valor).replace("'", "''") + "'"
+        conteudo = (
+            "$ErrorActionPreference = 'Stop'\n"
+            f"$installer = {quote_ps(caminho_instalador)}\n"
+            f"$manager = {quote_ps(manager)}\n"
+            f"$parentPid = {os.getpid()}\n"
+            "try {\n"
+            "    while (Get-Process -Id $parentPid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }\n"
+            "    $process = Start-Process -FilePath $installer -Verb RunAs -Wait -PassThru\n"
+            "    if ($process.ExitCode -ne 0) { Start-Process -FilePath $manager }\n"
+            "} catch {\n"
+            "    Start-Process -FilePath $manager\n"
+            "    exit 1\n"
+            "}\n"
+        )
+        powershell = Path(os.environ.get("WINDIR", r"C:\Windows")) / (
+            "System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+        )
+        try:
+            script.write_text(conteudo, encoding="utf-8")
+            subprocess.Popen(
+                [
+                    str(powershell),
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-File",
+                    str(script),
+                ],
+                cwd=DATA_DIR,
+                creationflags=subprocess.CREATE_NO_WINDOW if IS_WIN else 0,
+            )
+        except OSError as exc:
+            self.cfg["restart_after_update"] = False
+            try:
+                CONFIG_FILE.write_text(
+                    json.dumps(self.cfg, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+            except OSError as erro_config:
+                self.append(
+                    f"Não foi possível restaurar a configuração do Manager: {erro_config}\n"
+                )
+            if reiniciar_servidor:
+                self.start()
+            messagebox.showerror(
+                "Atualizações",
+                f"Não foi possível iniciar o instalador: {exc}",
+            )
+            return
+
+        self._stop_tray_icon()
+        self.destroy()
 
     def save_access_mode(self):
         self.cfg["mode"] = self.access_var.get()

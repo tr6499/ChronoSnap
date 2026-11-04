@@ -23,6 +23,7 @@ from services.idclass import IDClass
 from services.afd_rm import AFDRM
 from services.espelho import EspelhoAFD
 from services.marcacoes import extrair_marcacoes, importar_marcacoes
+from services.auditoria import registrar_auditoria_request
 
 from database import SessionLocal
 from models import (
@@ -854,6 +855,8 @@ def download_afd(
 )
 def preview_afd(
 
+    request: Request,
+
     lojas: list[int] | None = Form(None),
 
     data_inicial: str = Form(...),
@@ -1555,6 +1558,19 @@ def preview_afd(
         # RESPOSTA
         # ========================================================
 
+        registrar_auditoria_request(
+            request=request,
+            acao="consultou_espelho",
+            recurso="espelho_ponto",
+            detalhes={
+                "lojas": lojas,
+                "data_inicial": data_inicial,
+                "data_final": data_final,
+                "total_funcionarios": total_funcionarios,
+                "total_marcacoes": total_marcacoes,
+            },
+        )
+
         return {
 
             "success":
@@ -1593,6 +1609,8 @@ def preview_afd(
     "/download"
 )
 def gerar_download_afd(
+
+    request: Request,
 
     lojas: list[int] = Form(...),
 
@@ -1754,6 +1772,18 @@ def gerar_download_afd(
 
                 arquivo = arquivos[0]
 
+                registrar_auditoria_request(
+                    request=request,
+                    acao="baixou_afd",
+                    recurso="afd",
+                    detalhes={
+                        "lojas": lojas,
+                        "data_inicial": data_inicial,
+                        "data_final": data_final,
+                        "formato": "AFD original",
+                    },
+                )
+
                 return FileResponse(
 
                     arquivo,
@@ -1798,6 +1828,19 @@ def gerar_download_afd(
                         arcname=arquivo.name
 
                     )
+
+            registrar_auditoria_request(
+                request=request,
+                acao="baixou_afd",
+                recurso="afd",
+                detalhes={
+                    "lojas": lojas,
+                    "data_inicial": data_inicial,
+                    "data_final": data_final,
+                    "formato": "AFD original",
+                    "arquivos": len(arquivos),
+                },
+            )
 
             return FileResponse(
 
@@ -1859,6 +1902,18 @@ def gerar_download_afd(
                     "está vazio."
                 )
             )
+
+        registrar_auditoria_request(
+            request=request,
+            acao="baixou_afd",
+            recurso="afd",
+            detalhes={
+                "lojas": lojas,
+                "data_inicial": data_inicial,
+                "data_final": data_final,
+                "formato": "RM TOTVS",
+            },
+        )
 
         return FileResponse(
 

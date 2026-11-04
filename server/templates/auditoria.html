@@ -22,9 +22,12 @@
     .auditoria-retencao input { width: 110px; }
     .auditoria-table-wrap { overflow-x: auto; }
     .auditoria-table { min-width: 780px; }
-    .auditoria-detalhes { max-width: 280px; white-space: normal; word-break: break-word; }
+    .auditoria-detalhes { min-width: 200px; max-width: 360px; white-space: normal; word-break: break-word; }
     .auditoria-sucesso { color: #168052; font-weight: 600; }
     .auditoria-falha { color: #b93846; font-weight: 600; }
+    .auditoria-detalhes summary { cursor: pointer; color: #0756a6; }
+    .auditoria-detalhes ul { margin: 8px 0 0; padding-left: 18px; }
+    .auditoria-detalhes li { margin: 4px 0; }
 </style>
 {% endblock %}
 
@@ -73,7 +76,20 @@
                     <td class="{{ 'auditoria-sucesso' if log.sucesso else 'auditoria-falha' }}">
                         {{ "Sucesso" if log.sucesso else "Falha" }}
                     </td>
-                    <td class="auditoria-detalhes">{{ log.detalhes or "-" }}</td>
+                    <td class="auditoria-detalhes">
+                        {% if log.detalhes %}
+                        <details>
+                            <summary>Ver detalhes</summary>
+                            <ul>
+                                {% for nome, valor in log.detalhes %}
+                                <li><strong>{{ nome }}:</strong> {{ valor }}</li>
+                                {% endfor %}
+                            </ul>
+                        </details>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr><td colspan="6">Nenhum registro de auditoria.</td></tr>

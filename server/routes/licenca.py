@@ -4,10 +4,10 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 
 from app_paths import APP_DIR
+from services.atualizacoes import VERSAO_ATUAL
 
 router = APIRouter(tags=["Licença"])
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
-APP_VERSION = "1.0.9"
 AUTHOR = "Tetsuo Rodolfo Okubo"
 GNU_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 
@@ -43,7 +43,7 @@ async def pagina_licenca(request: Request):
         request=request,
         name="licenca.html",
         context={
-            "app_version": APP_VERSION,
+            "app_version": VERSAO_ATUAL,
             "author": AUTHOR,
             "gnu_license_url": GNU_LICENSE_URL,
             "license_text": license_text,

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Atualizações - ChronoSnap{% endblock %}
+{% block topbar_title %}Atualizações{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Atualizações</h1>
+<p class="page-description">
+    Consulte versões publicadas no GitHub, leia as alterações e escolha como receber atualizações.
+</p>
+
+<section class="card">
+    <h2>Versão instalada</h2>
+    <p>ChronoSnap <strong>{{ versao_atual }}</strong></p>
+    <label for="modo-atualizacao"><strong>Modo de atualização</strong></label>
+    <select id="modo-atualizacao" style="max-width: 360px; margin-top: 8px;">
+        <option value="manual" {% if modo_atualizacao != "automatico" %}selected{% endif %}>
+            Manual — avisar e aguardar ação do administrador
+        </option>
+        <option value="automatico" {% if modo_atualizacao == "automatico" %}selected{% endif %}>
+            Automático — baixar e pedir confirmação no Manager do servidor
+        </option>
+    </select>
+    <p class="page-description" style="margin: 8px 0 16px;">
+        A instalação é executada no computador que hospeda o servidor. O modo automático
+        baixa a atualização pelo Manager e pede confirmação local antes de parar e atualizar o serviço.
+    </p>
+    <button type="button" id="salvar-modo">Salvar modo</button>
+    <span id="resultado-modo" role="status" style="margin-left: 10px;"></span>
+</section>
+
+<section class="card">
+    <h2>Versão mais recente</h2>
+    {% if erro_atualizacao %}
+        <div class="alert alert-warning">
+            Não foi possível verificar agora: {{ erro_atualizacao }}
+        </div>
+        <p><a href="{{ releases_url }}" target="_blank" rel="noopener noreferrer">Abrir Releases no GitHub</a></p>
+    {% elif release %}
+        {% if release.atualizacao_disponivel %}
+            <div class="alert alert-warning">
+                A versão {{ release.versao_disponivel }} está disponível.
+            </div>
+        {% else %}
+            <div class="alert alert-success">
+                Esta instalação está atualizada. Última versão publicada: {{ release.versao_disponivel }}.
+            </div>
+        {% endif %}
+
+        <p><strong>{{ release.nome }}</strong></p>
+        {% if release.publicada_em %}
+            <p class="page-description">Publicada em {{ release.publicada_em }}</p>
+        {% endif %}
+
+        <h3>O que mudou</h3>
+        <pre style="white-space: pre-wrap; overflow-wrap: anywhere; font: inherit;">{{ release.notas }}</pre>
+
+        {% if release.atualizacao_disponivel and release.instalador %}
+            <p>
+                <a href="{{ release.instalador.url }}" target="_blank" rel="noopener noreferrer">
+                    Baixar ChronoSnap {{ release.versao_disponivel }}
+                </a>
+            </p>
+            <p class="page-description">
+                O download feito neste link vai para o computador que está usando o navegador.
+                Para atualizar o servidor, use Atualizações no Manager instalado no computador servidor.
+            </p>
+        {% elif release.atualizacao_disponivel %}
+            <div class="alert alert-warning">
+                A release não contém o instalador Windows esperado
+                (ChronoSnap-Setup-{{ release.versao_disponivel }}.exe).
+            </div>
+        {% endif %}
+        {% if release.atualizacao_disponivel and release.instalador and not release.instalador_verificado %}
+            <div class="alert alert-warning">
+                O instalador está publicado, mas não possui checksum SHA-256 válido;
+                o Manager não fará o download automático por segurança.
+            </div>
+        {% endif %}
+        <p><a href="{{ release.pagina_release }}" target="_blank" rel="noopener noreferrer">Ver release no GitHub</a></p>
+    {% endif %}
+</section>
+
+<script>
+    document.getElementById("salvar-modo").addEventListener("click", async () => {
+        const resultado = document.getElementById("resultado-modo");
+        resultado.textContent = "";
+        try {
+            const resposta = await fetch("/config/atualizacoes/configuracao", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    modo: document.getElementById("modo-atualizacao").value
+                })
+            });
+            const dados = await resposta.json();
+            if (!resposta.ok) {
+                throw new Error(dados.detail || "Não foi possível salvar o modo.");
+            }
+            resultado.textContent = dados.mensagem;
+        } catch (erro) {
+            resultado.textContent = erro.message;
+        }
+    });
+</script>
+{% endblock %}

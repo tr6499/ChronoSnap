@@ -2,12 +2,19 @@
 
 ## 1.0.9 — 04/11/2026
 
+### Adicionado
+
+- Consulta de atualizações e changelog das Releases do GitHub, com modo manual
+  ou verificação automática pelo Manager e confirmação antes de instalar.
+
 ### Corrigido
 
 - Horário dos registros de auditoria exibido no fuso local do Brasil (UTC−3),
   em vez de mostrar diretamente o horário UTC armazenado no banco.
 - Espelho de ponto: ao consultar todas as lojas, omitir as lojas sem marcações
   no período e os funcionários sem marcações no intervalo.
+- Auditoria com ações em linguagem clara e detalhes técnicos recolhidos; as
+  consultas do espelho e os downloads de AFD registram empresas e período.
 - Versão do servidor, Manager e instaladores alinhada para 1.0.9.
 
 ## 1.0.8 — 31/10/2026

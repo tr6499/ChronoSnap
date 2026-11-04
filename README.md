@@ -46,6 +46,17 @@ terminar, abra o **ChronoSnap Manager** pelo atalho criado no menu Iniciar ou na
 informado por ele no navegador. O instalador inclui o manual de operação em
 `docs\manual-operacao.pdf`.
 
+### Atualizações
+
+Administradores podem consultar versões e notas de lançamento no menu
+**Administração > Atualizações** do sistema web. No modo manual, o Manager do
+computador servidor permite verificar, baixar e instalar a versão escolhida.
+No modo automático, o Manager verifica novas releases periodicamente, baixa o
+instalador e solicita confirmação local antes de parar e atualizar o servidor.
+A instalação requer conexão com o GitHub e confirmação de elevação do Windows.
+O instalador preserva os dados em `data`; para que o modo automático funcione,
+o Manager precisa estar em execução no computador servidor.
+
 ## Execução manual a partir do código-fonte
 
 As instruções abaixo são para desenvolvimento ou execução sem o instalador.
@@ -235,6 +246,11 @@ os pacotes.
 Cada sistema operacional deve ser compilado no próprio sistema. Os dados
 (banco, logs e downloads) ficam em `<instalação>\data` e são preservados em
 atualizações.
+
+Para publicar uma atualização do Windows, crie uma Release estável com uma tag
+como `chronosnap-v1.0.10` e anexe o instalador correspondente
+`ChronoSnap-Setup-1.0.10.exe`. O Manager valida o checksum SHA-256 publicado
+pelo GitHub antes de iniciar a instalação.
 
 ## Contribuições
 

@@ -53,15 +53,66 @@ Download AFD
     .afd-selecionar-todas {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 8px;
         margin: 0;
-        color: #555;
+        color: #405b70;
         cursor: pointer;
         font-size: 13px;
         font-weight: 400;
     }
 
-    .afd-selecionar-todas input[type="checkbox"],
+    .afd-selecionar-todas input[type="checkbox"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .afd-selecionar-switch {
+        position: relative;
+        display: inline-block;
+        flex: 0 0 32px;
+        width: 32px;
+        height: 18px;
+        border-radius: 999px;
+        background: #d1d5db;
+        transition: background 0.16s ease;
+    }
+
+    .afd-selecionar-switch::after {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        content: "";
+        transition: transform 0.16s ease;
+    }
+
+    .afd-selecionar-todas input:checked + .afd-selecionar-switch {
+        background: #006fff;
+    }
+
+    .afd-selecionar-todas input:checked + .afd-selecionar-switch::after {
+        transform: translateX(14px);
+    }
+
+    .afd-selecionar-todas input:focus-visible + .afd-selecionar-switch {
+        outline: 2px solid rgba(0, 111, 255, 0.35);
+        outline-offset: 2px;
+    }
+
+    .afd-selecionar-todas input:disabled + .afd-selecionar-switch {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
     .afd-loja-opcao input[type="checkbox"] {
         flex: 0 0 16px;
         width: 16px;
@@ -435,8 +486,11 @@ Download AFD
             <input
                 type="checkbox"
                 id="selectAllLojas"
+                role="switch"
+                aria-label="Selecionar todas as empresas"
             >
-            Selecionar todas
+            <span class="afd-selecionar-switch" aria-hidden="true"></span>
+            <span>Selecionar todas</span>
         </label>
 
         <div class="afd-lojas-grid">

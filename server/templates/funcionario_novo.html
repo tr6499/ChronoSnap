@@ -63,13 +63,6 @@ Novo funcionário
         color: #1f2937;
     }
 
-    .biometria-option input {
-        width: 18px;
-        height: 18px;
-        margin: 0;
-        accent-color: #198754;
-    }
-
     .funcionario-lojas-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
@@ -195,24 +188,33 @@ Novo funcionário
                 </select>
             </div>
 
-            <div class="form-group">
-                <label class="admin-toggle" for="administrador">
-                    Administrador
-                    <input type="checkbox" id="administrador" name="administrador" value="true">
-                    <span class="admin-switch" aria-hidden="true"></span>
-                </label>
-            </div>
-
         </div>
 
-        <label class="biometria-option">
-            <input type="checkbox" name="enviar_biometrias" value="true" checked>
-            Enviar biometrias ao cadastrar nos relógios selecionados
-        </label>
+        <div class="funcionario-opcoes">
+            <section class="funcionario-opcao-card">
+                <h3>Administrador</h3>
+                <p>Define se o funcionário terá privilégios de cadastramento nos relógios.</p>
+                <label class="admin-toggle funcionario-opcao-controle" for="administrador">
+                    <span>Ativar administrador</span>
+                    <input type="checkbox" id="administrador" name="administrador" value="true" role="switch">
+                    <span class="admin-switch" aria-hidden="true"></span>
+                </label>
+            </section>
+
+            <section class="funcionario-opcao-card">
+                <h3>Envio de biometria</h3>
+                <p>Controla o envio das biometrias para os relógios selecionados.</p>
+                <label class="biometria-option funcionario-opcao-controle">
+                    <span>Enviar biometrias ao cadastrar</span>
+                    <input type="checkbox" name="enviar_biometrias" value="true" role="switch" checked>
+                    <span class="biometria-switch" aria-hidden="true"></span>
+                </label>
+            </section>
+        </div>
 
         <h3>Relógios onde será cadastrado</h3>
 
-        <p>
+        <p class="funcionario-ajuda">
             Portaria 671 usa CPF. Relógio legado usa PIS.
         </p>
 

@@ -63,12 +63,6 @@ Editar Funcionário
         color: #1f2937;
     }
 
-    .biometria-option input {
-        width: 18px;
-        height: 18px;
-        margin: 0;
-        accent-color: #198754;
-    }
 </style>
 
 <h1 class="page-title">
@@ -204,31 +198,36 @@ Editar Funcionário
 
             </div>
 
-            <div class="form-group">
+        </div>
 
-                <label class="admin-toggle" for="administrador">
-                    Administrador
+        <div class="funcionario-opcoes">
+            <section class="funcionario-opcao-card">
+                <h3>Administrador</h3>
+                <p>Define se o funcionário terá privilégios de cadastramento nos relógios.</p>
+                <label class="admin-toggle funcionario-opcao-controle" for="administrador">
+                    <span>Ativar administrador</span>
                     <input
                         type="checkbox"
                         id="administrador"
                         name="administrador"
                         value="true"
+                        role="switch"
                         {% if funcionario.administrador %}checked{% endif %}
                     >
                     <span class="admin-switch" aria-hidden="true"></span>
                 </label>
+            </section>
 
-            </div>
-
+            <section class="funcionario-opcao-card">
+                <h3>Envio de biometria</h3>
+                <p>Controla o envio das biometrias para os relógios selecionados.</p>
+                <label class="biometria-option funcionario-opcao-controle">
+                    <span>Enviar biometrias aos relógios selecionados</span>
+                    <input type="checkbox" name="enviar_biometrias" value="true" role="switch" checked>
+                    <span class="biometria-switch" aria-hidden="true"></span>
+                </label>
+            </section>
         </div>
-
-
-        <br>
-
-        <label class="biometria-option">
-            <input type="checkbox" name="enviar_biometrias" value="true" checked>
-            Enviar biometrias aos relógios selecionados
-        </label>
 
         <h3>
             Empresas / Relógios

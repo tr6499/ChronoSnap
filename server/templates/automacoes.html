@@ -30,8 +30,10 @@ Automações
 
     .auto-field {
         display: grid;
-        gap: 8px;
-        padding: 14px;
+        align-content: start;
+        gap: 6px;
+        min-width: 0;
+        padding: 12px;
         border: 1px solid #d9e6f2;
         border-radius: 8px;
         background: #ffffff;
@@ -49,16 +51,21 @@ Automações
     .auto-field input[type="time"],
     .auto-field input[type="text"] {
         width: 100%;
+        min-height: 34px;
         box-sizing: border-box;
-        padding: 10px 12px;
+        padding: 6px 9px;
         border: 1px solid #cbd5e1;
-        border-radius: 8px;
+        border-radius: 6px;
         outline: none;
         background: white;
         color: #0f172a;
-        font-size: 14px;
+        font-size: 13px;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
+
+    #automacaoNome,
+    #automacaoHora,
+    #automacaoDiretorio { max-width: none; }
 
     .auto-field input[type="time"]:focus,
     .auto-field input[type="text"]:focus {
@@ -69,7 +76,8 @@ Automações
     .diretorio-controles {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 8px;
+        gap: 6px;
+        min-width: 0;
     }
 
     .diretorio-controles button {
@@ -164,30 +172,120 @@ Automações
     }
 
     .automacao-opcoes {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
         margin-top: 18px;
         padding-top: 16px;
         border-top: 1px solid #e3ebf3;
     }
 
-    .automacao-check {
-        display: inline-flex;
+    .automacao-opcao-card {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d9e6f2;
+        border-radius: 8px;
+        background: #f8fbff;
+    }
+
+    .automacao-opcao-card h3 {
+        margin: 0;
+        color: #183b5b;
+        font-size: 14px;
+    }
+
+    .automacao-opcao-card p {
+        margin: 0;
+        color: #607486;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .automacao-opcao-card .automacao-check {
+        justify-content: flex-start;
+        margin-top: 4px;
+    }
+
+    .automacao-intervalo {
+        display: flex;
         align-items: center;
         gap: 8px;
+        margin-top: 4px;
+        color: #475569;
+        font-size: 12px;
+    }
+
+    .automacao-intervalo input {
+        width: 80px !important;
+        flex: 0 0 80px;
+    }
+
+    .automacao-check {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 22px;
         margin: 0;
         cursor: pointer;
         color: #1e293b;
         font-weight: 600;
     }
 
-    .automacao-check input {
-        width: 16px;
-        height: 16px;
-        margin: 0;
-        accent-color: #0d6efd;
+    .automacao-select-todas {
+        margin-top: 10px;
+    }
+
+    .automacao-check input[type="checkbox"] {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .automacao-switch {
+        position: relative;
+        display: inline-block;
+        width: 32px;
+        min-width: 32px;
+        height: 18px;
+        border-radius: 999px;
+        background: #d1d5db;
+        transition: background 0.16s ease;
+    }
+
+    .automacao-switch::after {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        content: "";
+        transition: transform 0.16s ease;
+    }
+
+    .automacao-check input:checked + .automacao-switch {
+        background: #006fff;
+    }
+
+    .automacao-check input:checked + .automacao-switch::after {
+        transform: translateX(14px);
+    }
+
+    .automacao-check input:focus-visible + .automacao-switch {
+        outline: 2px solid rgba(0, 111, 255, 0.4);
+        outline-offset: 2px;
     }
 
     .automacao-acoes {
@@ -257,7 +355,14 @@ Automações
     .estado-badge.erro { background: #ffe4e6; color: #9f1239; }
 
     @media (max-width: 960px) {
+        .automacoes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .auto-field:last-child { grid-column: 1 / -1; }
+        .automacao-opcoes { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
         .automacoes-grid { grid-template-columns: 1fr; }
+        .auto-field:last-child { grid-column: auto; }
     }
 </style>
 {% endblock %}
@@ -305,9 +410,10 @@ Automações
 
         <div>
             <label class="label-strong">Empresas incluídas</label>
-            <label class="automacao-check" style="margin-top: 10px;">
-                <input type="checkbox" id="selectAllLojas">
+            <label class="automacao-check automacao-select-todas">
                 Selecionar todas
+                <input type="checkbox" id="selectAllLojas" role="switch">
+                <span class="automacao-switch" aria-hidden="true"></span>
             </label>
             <div class="automacao-lojas">
                 {% for loja in lojas %}
@@ -323,19 +429,29 @@ Automações
         </div>
 
         <div class="automacao-opcoes">
-            <label class="automacao-check">
-                <input type="checkbox" id="automacaoDiaAnterior" checked>
-                Capturar automaticamente o dia anterior
-            </label>
-            <label class="automacao-check">
-                <input type="checkbox" id="capturarMarcacoes">
-                Capturar novas marcações de todas as lojas no banco
-            </label>
-            <label class="automacao-check">
-                A cada
-                <input type="number" id="intervaloMarcacoes" min="1" max="1440" value="30" style="width: 80px;">
-                minutos
-            </label>
+            <section class="automacao-opcao-card">
+                <h3>Captura do dia anterior</h3>
+                <p>Inclui automaticamente na rotina as marcações do dia anterior.</p>
+                <label class="automacao-check">
+                    <input type="checkbox" id="automacaoDiaAnterior" role="switch" checked>
+                    <span class="automacao-switch" aria-hidden="true"></span>
+                    Capturar automaticamente o dia anterior
+                </label>
+            </section>
+            <section class="automacao-opcao-card">
+                <h3>Captura de novas marcações</h3>
+                <p>Busca novas marcações das lojas no banco em intervalos definidos.</p>
+                <label class="automacao-check">
+                    <input type="checkbox" id="capturarMarcacoes" role="switch">
+                    <span class="automacao-switch" aria-hidden="true"></span>
+                    Capturar novas marcações de todas as lojas no banco
+                </label>
+                <label class="automacao-intervalo" for="intervaloMarcacoes">
+                    Intervalo
+                    <input type="number" id="intervaloMarcacoes" min="1" max="1440" value="30">
+                    minutos
+                </label>
+            </section>
         </div>
 
         <div class="automacao-acoes">

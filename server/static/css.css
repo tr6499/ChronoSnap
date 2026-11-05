@@ -449,9 +449,115 @@ textarea {
 }
 
 .main .biometria-option {
+    position: relative;
+    display: flex;
+    align-items: center;
     gap: 8px !important;
     margin: 12px 0 !important;
     font-size: 13px;
+}
+
+.funcionario-opcoes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.funcionario-opcao-card {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #d9e6f2;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.funcionario-opcao-card h3 {
+    margin: 0;
+    color: #183b5b;
+    font-size: 14px;
+}
+
+.funcionario-opcao-card p {
+    margin: 0;
+    color: #607486;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.funcionario-ajuda {
+    margin: 6px 0 12px;
+    color: #607486;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.main .funcionario-opcao-controle {
+    width: 100%;
+    justify-content: space-between;
+    margin: 4px 0 0 !important;
+}
+
+.main .funcionario-opcao-controle > span:first-child {
+    margin-right: auto;
+}
+
+.main .biometria-option input[type="checkbox"] {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.biometria-switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    min-width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: #d1d5db;
+    transition: background 0.16s ease;
+}
+
+.biometria-switch::after {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    content: "";
+    transition: transform 0.16s ease;
+}
+
+.biometria-option input:checked + .biometria-switch {
+    background: #006fff;
+}
+
+.biometria-option input:checked + .biometria-switch::after {
+    transform: translateX(14px);
+}
+
+.biometria-option input:focus-visible + .biometria-switch {
+    outline: 2px solid rgba(0, 111, 255, 0.4);
+    outline-offset: 2px;
+}
+
+@media (max-width: 650px) {
+    .funcionario-opcoes {
+        grid-template-columns: 1fr;
+    }
 }
 
 .login-card button {

@@ -123,17 +123,17 @@ class EspelhoFuncionariosComMarcacoesTests(unittest.TestCase):
 class AtualizacaoTests(unittest.TestCase):
     def test_detecta_release_e_asset_windows(self):
         release = {
-            "tag_name": "chronosnap-v1.0.11",
-            "name": "ChronoSnap 1.0.11",
+            "tag_name": "chronosnap-v1.0.12",
+            "name": "ChronoSnap 1.0.12",
             "body": "Correções e melhorias",
-            "html_url": "https://github.com/tr6499/ChronoSnap/releases/tag/1.0.11",
+            "html_url": "https://github.com/tr6499/ChronoSnap/releases/tag/1.0.12",
             "published_at": "2026-11-05T12:00:00Z",
             "assets": [
                 {
-                    "name": "ChronoSnap-Setup-1.0.11.exe",
+                    "name": "ChronoSnap-Setup-1.0.12.exe",
                     "browser_download_url": (
                         "https://github.com/tr6499/ChronoSnap/releases/download/"
-                        "1.0.11/ChronoSnap-Setup-1.0.11.exe"
+                        "1.0.12/ChronoSnap-Setup-1.0.12.exe"
                     ),
                     "digest": "sha256:" + ("a" * 64),
                     "size": 20,
@@ -151,7 +151,7 @@ class AtualizacaoTests(unittest.TestCase):
         self.assertEqual(contexto.verify_mode, ssl.CERT_REQUIRED)
         self.assertTrue(contexto.check_hostname)
         self.assertTrue(resultado["atualizacao_disponivel"])
-        self.assertEqual(resultado["versao_disponivel"], "1.0.11")
+        self.assertEqual(resultado["versao_disponivel"], "1.0.12")
         self.assertIsNotNone(resultado["instalador"])
 
     def test_baixa_instalador_e_valida_sha256(self):
@@ -160,7 +160,7 @@ class AtualizacaoTests(unittest.TestCase):
             "instalador": {
                 "url": (
                     "https://github.com/tr6499/ChronoSnap/releases/download/"
-                    "1.0.11/ChronoSnap-Setup-1.0.11.exe"
+                    "1.0.12/ChronoSnap-Setup-1.0.12.exe"
                 ),
                 "sha256": hashlib.sha256(conteudo).hexdigest(),
             }

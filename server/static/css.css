@@ -490,28 +490,17 @@ textarea {
 table {
     overflow: hidden;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 0;
+    border-collapse: collapse;
     box-shadow: var(--shadow-soft);
+}
+
+thead {
+    background: #ffffff;
 }
 
 thead th {
     border: 1px solid #b8cbe0;
-}
-
-.lojas-table {
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-thead th:first-child {
-    border-top-left-radius: 4px;
-}
-
-thead th:last-child {
-    border-top-right-radius: 4px;
-}
-
-th {
     background: #ffffff;
     color: #0d4f82;
     padding: 10px;
@@ -519,6 +508,9 @@ th {
     font-size: 12px;
     font-weight: 600;
     letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
+    border-radius: 0;
 }
 
 thead th + th {

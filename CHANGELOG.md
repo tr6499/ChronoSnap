@@ -1,5 +1,12 @@
 # Histórico de versões
 
+## 1.0.11 — 05/11/2026
+
+### Corrigido
+
+- Cabeçalhos de tabelas padronizados em todas as páginas: fundo branco, texto
+  azul, borda azul fina e cantos retos.
+
 ## 1.0.10 — 04/11/2026
 
 ### Corrigido

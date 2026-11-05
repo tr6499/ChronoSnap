@@ -250,8 +250,8 @@ Cada sistema operacional deve ser compilado no próprio sistema. Os dados
 atualizações.
 
 Para publicar uma atualização do Windows, crie uma Release estável com uma tag
-como `chronosnap-v1.0.10` e anexe o instalador correspondente
-`ChronoSnap-Setup-1.0.10.exe`. O Manager valida o checksum SHA-256 publicado
+como `chronosnap-v1.0.11` e anexe o instalador correspondente
+`ChronoSnap-Setup-1.0.11.exe`. O Manager valida o checksum SHA-256 publicado
 pelo GitHub antes de iniciar a instalação.
 
 ## Contribuições

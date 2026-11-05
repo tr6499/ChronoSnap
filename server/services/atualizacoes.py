@@ -11,7 +11,7 @@ import certifi
 from app_paths import DATA_DIR
 
 
-VERSAO_ATUAL = "1.0.10"
+VERSAO_ATUAL = "1.0.11"
 RELEASE_API_URL = "https://api.github.com/repos/tr6499/ChronoSnap/releases/latest"
 RELEASES_URL = "https://github.com/tr6499/ChronoSnap/releases"
 MAX_INSTALLER_SIZE = 500 * 1024 * 1024

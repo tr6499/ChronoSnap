@@ -495,17 +495,17 @@ Dashboard
     <div class="card dashboard-stat dashboard-stat-online">
         <img class="dashboard-stat-icon" src="/static/ico2.svg" alt="">
         <h2 id="lojas-online">{{ lojas_online }}</h2>
-        <p>API autenticada</p>
+        <p>Relógios conectados</p>
     </div>
     <div class="card dashboard-stat dashboard-stat-offline">
         <img class="dashboard-stat-icon" src="/static/ico3.svg" alt="">
         <h2 id="lojas-offline">{{ lojas_offline }}</h2>
-        <p>API sem resposta</p>
+        <p>Relógios sem conexão</p>
     </div>
     <div class="card dashboard-stat">
-        <img class="dashboard-stat-icon" src="/static/ico3.svg" alt="">
+        <img class="dashboard-stat-icon" src="/static/ico4.svg" alt="">
         <h2 id="lojas-verificar">{{ lojas_sem_dados + lojas_com_erro }}</h2>
-        <p>Verificar / sem dados recentes</p>
+        <p>Precisam de atenção</p>
     </div>
 </div>
 
@@ -518,15 +518,15 @@ Dashboard
             </div>
             <div class="status-legend">
                 <div class="status-legend-item">
-                    <span class="status-legend-label"><span class="status-dot online"></span>Online</span>
+                    <span class="status-legend-label"><span class="status-dot online"></span>Conectados</span>
                     <strong id="chart-online">{{ lojas_online }}</strong>
                 </div>
                 <div class="status-legend-item">
-                    <span class="status-legend-label"><span class="status-dot offline"></span>Offline</span>
+                    <span class="status-legend-label"><span class="status-dot offline"></span>Sem conexão</span>
                     <strong id="chart-offline">{{ lojas_offline }}</strong>
                 </div>
                 <div class="status-legend-item">
-                    <span class="status-legend-label"><span class="status-dot attention"></span>Verificar</span>
+                    <span class="status-legend-label"><span class="status-dot attention"></span>Precisam de atenção</span>
                     <strong id="chart-verificar">{{ lojas_sem_dados + lojas_com_erro }}</strong>
                 </div>
                 <div class="status-legend-item">

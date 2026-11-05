@@ -472,7 +472,7 @@
 
     </style>
 
-    <link rel="stylesheet" href="/static/css.css?v=20261104-unifi-afd">
+    <link rel="stylesheet" href="/static/css.css?v=20261105-menu-design">
 
     {% block head %}
     {% endblock %}
@@ -494,10 +494,11 @@
 
             <a href="/" aria-label="Voltar para o dashboard">
                 <img
-                    src="/static/logo.jpg"
-                    alt="ChronoSnap"
-                    class="sidebar-logo"
+                    src="/static/favicon.svg"
+                    alt=""
+                    class="sidebar-app-icon"
                 >
+                <span class="sidebar-brand">ChronoSnap</span>
             </a>
 
         </div>
@@ -517,6 +518,7 @@
                 href="/"
                 class="{% if request.url.path == '/' %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                 Dashboard
             </a>
 
@@ -533,6 +535,7 @@
                 href="/lojas"
                 class="{% if request.url.path.startswith('/lojas') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v10h14V10"/><path d="m3 10 2-6h14l2 6"/><path d="M9 20v-6h6v6"/></svg>
                 Empresas
             </a>
 
@@ -540,6 +543,7 @@
                 href="/funcionarios"
                 class="{% if request.url.path.startswith('/funcionarios') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1z"/><path d="M16 5.5a3 3 0 0 1 0 5.8"/><path d="M18 14a5 5 0 0 1 3 4.5V20h-3"/></svg>
                 Funcionários
             </a>
 
@@ -556,14 +560,17 @@
                 href="/afd"
                 class="{% if request.url.path == '/afd' or request.url.path.startswith('/afd/download') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
                 Arquivos AFD
             </a>
 
             <a href="/afd">
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
                 AFD Original
             </a>
 
             <a href="/afd">
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                 RM TOTVS
             </a>
 
@@ -571,6 +578,7 @@
                 href="/afd/importacao"
                 class="{% if request.url.path.startswith('/afd/importacao') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 13v7h14v-7"/></svg>
                 Importação
             </a>
 
@@ -578,6 +586,7 @@
                 href="/afd/espelho"
                 class="{% if request.url.path.startswith('/afd/espelho') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                 Espelho de Ponto
             </a>
 
@@ -585,6 +594,7 @@
                 href="/afd/automacoes"
                 class="{% if request.url.path.startswith('/afd/automacoes') %}active{% endif %}"
             >
+                <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6"/><path d="M18.5 15A7 7 0 0 1 6 18l-2-6"/></svg>
                 Automações
             </a>
 
@@ -603,6 +613,7 @@
                     href="/system/datetime"
                     class="{% if request.url.path == '/system/datetime' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                     Data e Hora
                 </a>
 
@@ -610,6 +621,7 @@
                     href="/system/info"
                     class="{% if request.url.path == '/system/info' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
                     Informações do Sistema
                 </a>
 
@@ -617,6 +629,7 @@
                     href="/system/rep"
                     class="{% if request.url.path == '/system/rep' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                     Informações do REP
                 </a>
 
@@ -624,6 +637,7 @@
                     href="/system/network"
                     class="{% if request.url.path == '/system/network' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="m11 7-5 10m7-10 5 10M7 19h10"/></svg>
                     Configurações de Rede
                 </a>
 
@@ -631,6 +645,7 @@
                     href="/system/idcloud"
                     class="{% if request.url.path == '/system/idcloud' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9a4.5 4.5 0 0 0 1 9z"/></svg>
                     iDCloud
                 </a>
 
@@ -647,6 +662,7 @@
                     href="/config/auditoria"
                     class="{% if request.url.path.startswith('/config/auditoria') %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l2 2v15H6V4z"/><path d="M9 4V2h6v2M9 11h6M9 15h6"/></svg>
                     Auditoria
                 </a>
 
@@ -654,6 +670,7 @@
                     href="/config/atualizacoes"
                     class="{% if request.url.path.startswith('/config/atualizacoes') %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6"/><path d="M18.5 15A7 7 0 0 1 6 18l-2-6"/></svg>
                     Atualizações
                 </a>
 
@@ -661,6 +678,7 @@
                     href="/config/banco"
                     class="{% if request.url.path.startswith('/config/banco') %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg>
                     Banco de dados
                 </a>
 
@@ -668,6 +686,7 @@
                     href="/config/usuarios"
                     class="{% if request.url.path == '/config/usuarios' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1z"/><path d="M17 8h4M17 12h4M17 16h4"/></svg>
                     Listar Usuários
                 </a>
 
@@ -675,6 +694,7 @@
                     href="/config/senha-admin"
                     class="{% if request.url.path == '/config/senha-admin' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
                     Mudar Senha Admin
                 </a>
 
@@ -682,6 +702,7 @@
                     href="/config/modo-admin"
                     class="{% if request.url.path == '/config/modo-admin' %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
                     Modo Admin
                 </a>
 
@@ -689,6 +710,7 @@
                     href="/config/layout-rm"
                     class="{% if request.url.path.startswith('/config/layout-rm') %}active{% endif %}"
                 >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>
                     Editor de Layout AFD
                 </a>
 
@@ -723,7 +745,7 @@
             <div class="topbar-status" style="display: flex; align-items: center; gap: 16px;">
                 <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
                     <strong>{{ request.state.usuario or "Usuário" }}</strong>
-                    <span class="status {% if request.state.perfil == 'Completo' %}status-online{% else %}status-warning{% endif %}" style="padding: 3px 8px;">
+                    <span class="status topbar-role {% if request.state.perfil == 'Completo' %}topbar-role-admin{% else %}topbar-role-user{% endif %}">
                         {{ "Admin" if request.state.perfil == "Completo" else "Usuário" }}
                     </span>
                 </span>

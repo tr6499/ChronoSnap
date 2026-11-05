@@ -69,6 +69,68 @@ Novo funcionário
         margin: 0;
         accent-color: #198754;
     }
+
+    .funcionario-lojas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .funcionario-loja-opcao {
+        display: flex;
+        min-width: 0;
+        min-height: 104px;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid #dbe3ec;
+        border-radius: 6px;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .funcionario-loja-opcao:hover {
+        border-color: #8db9df;
+        background: #f4f9fd;
+    }
+
+    .funcionario-loja-opcao:has(input:checked) {
+        border-color: #006fc9;
+        background: #eef7ff;
+        box-shadow: 0 0 0 2px rgba(0, 111, 201, 0.1);
+    }
+
+    .funcionario-loja-opcao input[type="checkbox"] {
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        padding: 0;
+        accent-color: #006fc9;
+    }
+
+    .funcionario-loja-info {
+        display: grid;
+        align-content: start;
+        min-width: 0;
+        flex: 1;
+        gap: 6px;
+    }
+
+    .funcionario-loja-info strong {
+        overflow-wrap: anywhere;
+        color: #183b5b;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .funcionario-loja-info small {
+        color: #697887;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
 </style>
 
 <h1 class="page-title">
@@ -103,7 +165,7 @@ Novo funcionário
 
             <div class="form-group">
                 <label for="cpf">CPF</label>
-                <input type="text" id="cpf" name="cpf" placeholder="Ex.: 06445230695">
+                <input type="text" id="cpf" name="cpf" placeholder="Ex.: 123456789-00">
                 <small>Usado nos relógios Portaria 671.</small>
             </div>
 
@@ -154,14 +216,15 @@ Novo funcionário
             Portaria 671 usa CPF. Relógio legado usa PIS.
         </p>
 
-        <div class="grid grid-3">
+        <div class="funcionario-lojas-grid">
 
             {% for loja in lojas %}
-            <label style="border:1px solid #ddd; padding:12px; border-radius:6px; cursor:pointer; display:block;">
+            <label class="funcionario-loja-opcao">
                 <input type="checkbox" name="lojas" value="{{ loja.id }}">
-                <strong>{{ "%02d"|format(loja.numero) }}</strong> - {{ loja.nome }}
-                <br>
-                <small>{{ loja.ip }}</small>
+                <span class="funcionario-loja-info">
+                    <strong>{{ "%02d"|format(loja.numero) }} - {{ loja.nome }}</strong>
+                    <small>{{ loja.ip }}</small>
+                </span>
             </label>
             {% else %}
             <p>Nenhuma empresa cadastrada.</p>

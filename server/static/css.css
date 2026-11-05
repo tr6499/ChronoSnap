@@ -333,16 +333,16 @@ textarea {
 
 .main button:not(.auto-dia):not(.tab-btn).button-success,
 .main a.button.button-success {
-    border-color: #b9d8c3 !important;
-    background: transparent !important;
-    color: #16834a !important;
+    border-color: #006fff !important;
+    background: #006fff !important;
+    color: #ffffff !important;
 }
 
 .main button:not(.auto-dia):not(.tab-btn).button-success:hover:not(:disabled),
 .main a.button.button-success:hover {
-    border-color: #88bf99 !important;
-    background: #edf8f1 !important;
-    color: #126b3d !important;
+    border-color: #0056cc !important;
+    background: #0056cc !important;
+    color: #ffffff !important;
 }
 
 .main #btnDownload {
@@ -494,10 +494,35 @@ table {
     box-shadow: var(--shadow-soft);
 }
 
+thead th {
+    border: 1px solid #b8cbe0;
+}
+
+.lojas-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+thead th:first-child {
+    border-top-left-radius: 4px;
+}
+
+thead th:last-child {
+    border-top-right-radius: 4px;
+}
+
 th {
-    background: linear-gradient(135deg, #0d4f82, #0d6b9d);
+    background: #ffffff;
+    color: #0d4f82;
     padding: 10px;
-    letter-spacing: 0.03em;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: normal;
+}
+
+thead th + th {
+    border-left: 0;
 }
 
 td {

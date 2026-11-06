@@ -1,5 +1,66 @@
 # Histórico de versões
 
+## 1.0.11 — 05/11/2026
+
+### Adicionado
+
+- Backup administrativo em ZIP, com opções para gerar e restaurar cópias,
+  configurar agendamento automático (desativado por padrão) e definir retenção.
+- Cartão de métricas na dashboard com a quantidade de marcações e o espaço
+  ocupado pelo banco de dados.
+- Opção para selecionar todas as empresas no cadastro de funcionário.
+
+### Melhorado
+
+- Backups armazenados na pasta `backups` na raiz da instalação, com acesso de
+  gravação para usuários do aplicativo e preservação ao desinstalar.
+- Erros de validação no cadastro de empresas agora retornam ao formulário com
+  uma mensagem clara, preservando os dados preenchidos.
+
+### Corrigido
+
+- Cabeçalhos de tabelas padronizados em todas as páginas: fundo branco, texto
+  azul, borda azul fina e cantos retos.
+
+## 1.0.10 — 04/11/2026
+
+### Corrigido
+
+- Espelho de ponto: ao consultar todas as empresas ou buscar um funcionário,
+  omitir empresas sem marcações correspondentes no período, mesmo quando há
+  registros de outros funcionários.
+- Botões padronizados entre as páginas do sistema, seguindo o estilo de
+  Empresas, com exceção dos controles especiais.
+- Favicon disponibilizado nas rotas `/favicon.ico` e `/static/favicon.svg`.
+
+## 1.0.9 — 04/11/2026
+
+### Adicionado
+
+- Página de atualizações para administradores, com notas das Releases do GitHub
+  e seleção entre os modos manual e automático.
+- Manager verifica novas versões; no modo automático, baixa o instalador e
+  solicita confirmação local antes de instalar. O download é validado por
+  checksum SHA-256.
+
+### Corrigido
+
+- Horário dos registros de auditoria exibido no fuso local do Brasil (UTC−3),
+  em vez de mostrar diretamente o horário UTC armazenado no banco.
+- Espelho de ponto: ao consultar todas as lojas, omitir as lojas sem marcações
+  no período e os funcionários sem marcações no intervalo.
+- Auditoria com ações em linguagem clara e detalhes técnicos recolhidos; as
+  consultas do espelho e os downloads de AFD registram empresas e período.
+- Inicialização do Manager compilado corrigida para manter ativa a verificação
+  automática de atualizações.
+- Consulta às atualizações do GitHub compatível com instalações sem certificados
+  raiz no ambiente do Python, usando também o pacote confiável `certifi`.
+- Janela de atualização do Manager reorganizada para que os botões se ajustem
+  à largura disponível; a instalação encerra o servidor e atualiza a pasta
+  existente, preservando os dados.
+- Opção para iniciar o servidor automaticamente ao abrir o Manager.
+- Versão do servidor, Manager e instaladores alinhada para 1.0.9.
+
 ## 1.0.8 — 31/10/2026
 
 ### Corrigido

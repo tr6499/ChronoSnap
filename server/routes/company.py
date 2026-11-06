@@ -151,9 +151,34 @@ async def criar_empresa(
             url=f"/lojas?sucesso=Empresa adicionada com sucesso.",
             status_code=303
         )
-    except HTTPException:
+    except HTTPException as erro:
         db.rollback()
-        raise
+        return templates.TemplateResponse(
+            request=request,
+            name="empresa.html",
+            context={
+                "loja": None,
+                "empresa": {
+                    "name": name,
+                    "address": address,
+                    "tipo_doc": tipo_doc,
+                    "cpf_cnpj": cpf_cnpj,
+                    "cei": cei,
+                    "cpf": cpf
+                },
+                "form": {
+                    "numero": numero,
+                    "loja_nome": loja_nome,
+                    "ip": ip,
+                    "porta": porta,
+                    "usuario": usuario,
+                    "afd_layout": afd_layout
+                },
+                "novo": True,
+                "erro": erro.detail
+            },
+            status_code=erro.status_code
+        )
     except Exception as erro:
         db.rollback()
         return templates.TemplateResponse(
@@ -335,4 +360,3 @@ async def get_company(numero: int):
     finally:
 
         db.close()
-

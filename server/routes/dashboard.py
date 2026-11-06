@@ -9,9 +9,12 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
-from models import Loja
-from services.banco_dados import configuracao_publica
+from database import DATABASE_CONFIG, SQLITE_DATABASE_FILE, SessionLocal
+from models import Loja, MarcacaoAFD
+from services.banco_dados import (
+    configuracao_publica,
+    informacoes_servidor as informacoes_banco_servidor,
+)
 from services.monitor import (
     estado_atual_loja,
     intervalo_ping,
@@ -129,6 +132,15 @@ async def dashboard(request: Request):
         }
         total = len(lojas)
         resumo = resumir_status(status_por_loja)
+        banco_servidor = informacoes_banco_servidor()
+        banco_tamanho = (
+            SQLITE_DATABASE_FILE.stat().st_size
+            if (
+                DATABASE_CONFIG["backend"] == "sqlite"
+                and SQLITE_DATABASE_FILE.exists()
+            )
+            else banco_servidor["tamanho"]
+        )
 
         return templates.TemplateResponse(
             request=request,
@@ -151,6 +163,8 @@ async def dashboard(request: Request):
                 "ping_interval": intervalo_ping(),
                 "servidor": informacoes_servidor(),
                 "banco": configuracao_publica(),
+                "marcacoes_total": db.query(MarcacaoAFD).count(),
+                "banco_tamanho": banco_tamanho,
             }
         )
 

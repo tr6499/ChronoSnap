@@ -29,6 +29,9 @@ ACOES_AUDITORIA = {
     "baixou_afd": "Baixou um arquivo AFD",
     "consultou_espelho": "Consultou o espelho de ponto",
     "configurar_atualizacao": "Alterou o modo de atualização do sistema",
+    "criar_backup": "Gerou um backup",
+    "restaurar_backup": "Restaurou um backup",
+    "configurar_backup": "Alterou a configuração de backup",
 }
 
 RECURSOS_AUDITORIA = {
@@ -37,6 +40,7 @@ RECURSOS_AUDITORIA = {
     "banco": "Banco de dados",
     "rm_totvs": "Exportação RM TOTVS",
     "auditoria": "Auditoria",
+    "backup": "Backup",
     "atualizacoes": "Atualizações",
     "marcacoes": "Marcações",
     "espelho_ponto": "Espelho de ponto",

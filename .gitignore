@@ -26,6 +26,8 @@ server/logs/
 afd/
 downloads/
 logs/
+/backups/
+/data/backups/
 *.log
 *.tmp
 *.temp

@@ -28,6 +28,7 @@
 {% endblock %}
 
 {% block content %}
+{% set dados_formulario = form|default({}) %}
 <div class="empresa-header">
 	<h1 class="page-title">{% if novo %}Adicionar empresa{% else %}Empregador do relógio {{ "%02d"|format(loja.numero) }}{% endif %}</h1>
 	<p class="page-description">{% if novo %}Configure o relógio e os dados do empregador em uma única tela.{% else %}{{ loja.nome }} · {{ loja.ip }}{% endif %}</p>
@@ -53,28 +54,28 @@
 			{% if novo %}
 			<div class="form-group">
 				<label for="numero">Número da empresa</label>
-				<input id="numero" name="numero" type="number" min="1" max="100" required>
+				<input id="numero" name="numero" type="number" min="1" max="100" value="{{ dados_formulario.get('numero', '') }}" required>
 			</div>
 			{% endif %}
 
 			<div class="form-group wide">
 				<label for="loja_nome">Nome da empresa no sistema</label>
-				<input id="loja_nome" name="loja_nome" value="{{ loja.nome if loja else '' }}" required>
+				<input id="loja_nome" name="loja_nome" value="{{ dados_formulario.get('loja_nome', loja.nome if loja else '') }}" required>
 			</div>
 
 			<div class="form-group wide">
 				<label for="ip">IP / Host</label>
-				<input id="ip" name="ip" value="{{ loja.ip if loja else '' }}" required>
+				<input id="ip" name="ip" value="{{ dados_formulario.get('ip', loja.ip if loja else '') }}" required>
 			</div>
 
 			<div class="form-group">
 				<label for="porta">Porta</label>
-				<input id="porta" name="porta" type="number" value="{{ loja.porta if loja else 443 }}" min="1" max="65535" required>
+				<input id="porta" name="porta" type="number" value="{{ dados_formulario.get('porta', loja.porta if loja else 443) }}" min="1" max="65535" required>
 			</div>
 
 			<div class="form-group">
 				<label for="usuario">Usuário do relógio</label>
-				<input id="usuario" name="usuario" value="{{ loja.usuario if loja else '' }}" required>
+				<input id="usuario" name="usuario" value="{{ dados_formulario.get('usuario', loja.usuario if loja else '') }}" required>
 			</div>
 
 			<div class="form-group">
@@ -85,8 +86,8 @@
 			<div class="form-group">
 				<label for="afd_layout">Tipo do relógio / AFD</label>
 				<select id="afd_layout" name="afd_layout" required>
-					<option value="legado" {% if not loja or loja.afd_layout == 'legado' %}selected{% endif %}>Legado / PIS</option>
-					<option value="671" {% if loja and loja.afd_layout == '671' %}selected{% endif %}>Portaria 671 / CPF</option>
+					<option value="legado" {% if dados_formulario.get('afd_layout', loja.afd_layout if loja else 'legado') == 'legado' %}selected{% endif %}>Legado / PIS</option>
+					<option value="671" {% if dados_formulario.get('afd_layout', loja.afd_layout if loja else 'legado') == '671' %}selected{% endif %}>Portaria 671 / CPF</option>
 				</select>
 			</div>
 
@@ -94,35 +95,35 @@
 
 			<div class="form-group wide">
 				<label for="name">Nome da empresa</label>
-				<input id="name" name="name" value="{{ empresa.get('name', '') }}" {% if novo %}required{% endif %}>
+				<input id="name" name="name" value="{{ dados_formulario.get('name', empresa.get('name', '')) }}" {% if novo %}required{% endif %}>
 			</div>
 
 			<div class="form-group wide">
 				<label for="address">Endereço</label>
-				<input id="address" name="address" value="{{ empresa.get('address', '') }}">
+				<input id="address" name="address" value="{{ dados_formulario.get('address', empresa.get('address', '')) }}">
 			</div>
 
 			<div class="form-group">
 				<label for="tipo_doc">Documento principal</label>
 				<select id="tipo_doc" name="tipo_doc" required>
-					<option value="1" {% if empresa.get('tipo_doc')|int == 1 %}selected{% endif %}>CNPJ</option>
-					<option value="2" {% if empresa.get('tipo_doc')|int == 2 %}selected{% endif %}>CPF</option>
+					<option value="1" {% if dados_formulario.get('tipo_doc', empresa.get('tipo_doc'))|int == 1 %}selected{% endif %}>CNPJ</option>
+					<option value="2" {% if dados_formulario.get('tipo_doc', empresa.get('tipo_doc'))|int == 2 %}selected{% endif %}>CPF</option>
 				</select>
 			</div>
 
 			<div class="form-group">
 				<label for="cpf_cnpj">CPF/CNPJ</label>
-				<input id="cpf_cnpj" name="cpf_cnpj" value="{{ empresa.get('cpf_cnpj', '') }}" {% if novo %}required{% endif %}>
+				<input id="cpf_cnpj" name="cpf_cnpj" value="{{ dados_formulario.get('cpf_cnpj', empresa.get('cpf_cnpj', '')) }}" {% if novo %}required{% endif %}>
 			</div>
 
 			<div class="form-group">
 				<label for="cei">CEI / CAEPF / CNO</label>
-				<input id="cei" name="cei" value="{{ empresa.get('cei', '') }}">
+				<input id="cei" name="cei" value="{{ dados_formulario.get('cei', empresa.get('cei', '')) }}">
 			</div>
 
 			<div class="form-group">
 				<label for="cpf">CPF do responsável</label>
-				<input id="cpf" name="cpf" value="{{ empresa.get('cpf', '') }}">
+				<input id="cpf" name="cpf" value="{{ dados_formulario.get('cpf', empresa.get('cpf', '')) }}">
 			</div>
 		</div>
 

@@ -23,9 +23,11 @@ from routes.dashboard import router as dashboard_router
 from routes.funcionarios import router as funcionarios_router
 from routes.auth import router as auth_router
 from routes.config import router as config_router
+from routes.backup import router as backup_router
 from routes.licenca import router as licenca_router
 from services.monitor import monitorar_lojas
 from services.retencao_banco import executar_retencao_banco
+from services.backup import executar_agendador_backup
 from services.autenticacao import (
     hash_password,
     sessao_manager,
@@ -48,6 +50,7 @@ async def lifespan(app):
         asyncio.create_task(monitorar_lojas()),
         asyncio.create_task(executar_agendador_automacoes()),
         asyncio.create_task(executar_retencao_banco()),
+        asyncio.create_task(executar_agendador_backup()),
     ]
 
     try:
@@ -286,4 +289,5 @@ app.include_router(dashboard_router)
 app.include_router(funcionarios_router)
 app.include_router(auth_router)
 app.include_router(config_router)
+app.include_router(backup_router)
 app.include_router(licenca_router)

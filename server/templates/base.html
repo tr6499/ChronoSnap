@@ -715,6 +715,14 @@
                     Editor de Layout AFD
                 </a>
 
+                <a
+                    href="/backup"
+                    class="{% if request.url.path.startswith('/backup') %}active{% endif %}"
+                >
+                    <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v5h8V4M8 20v-6h8v6M12 14v6"/></svg>
+                    Backup
+                </a>
+
             {% endif %}
 
         </nav>

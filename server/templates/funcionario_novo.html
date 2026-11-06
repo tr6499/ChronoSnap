@@ -63,6 +63,11 @@ Novo funcionário
         color: #1f2937;
     }
 
+    .funcionario-selecionar-todas {
+        justify-content: space-between;
+        max-width: 320px;
+    }
+
     .funcionario-lojas-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
@@ -214,6 +219,14 @@ Novo funcionário
 
         <h3>Relógios onde será cadastrado</h3>
 
+        {% if lojas %}
+        <label class="biometria-option funcionario-selecionar-todas">
+            <span>Selecionar todas as empresas</span>
+            <input type="checkbox" id="selecionar-todas-lojas" role="switch">
+            <span class="biometria-switch" aria-hidden="true"></span>
+        </label>
+        {% endif %}
+
         <p class="funcionario-ajuda">
             Portaria 671 usa CPF. Relógio legado usa PIS.
         </p>
@@ -247,5 +260,29 @@ Novo funcionário
     </form>
 
 </div>
+
+<script>
+const selecionarTodasLojas = document.getElementById('selecionar-todas-lojas');
+const caixasLojas = Array.from(
+    document.querySelectorAll('.funcionario-lojas-grid input[name="lojas"]')
+);
+
+if (selecionarTodasLojas) {
+    selecionarTodasLojas.addEventListener('change', () => {
+        caixasLojas.forEach(checkbox => {
+            checkbox.checked = selecionarTodasLojas.checked;
+        });
+    });
+
+    caixasLojas.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            selecionarTodasLojas.checked = (
+                caixasLojas.length > 0
+                && caixasLojas.every(loja => loja.checked)
+            );
+        });
+    });
+}
+</script>
 
 {% endblock %}

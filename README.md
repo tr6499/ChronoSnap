@@ -23,7 +23,8 @@ Contribuições enviadas por pull request também exigem a assinatura do
 - importação manual de marcações por arquivo AFD (Legado/595 e Portaria 671);
 - consulta de espelhos de ponto e geração de arquivos RM/TOTVS;
 - dashboard, auditoria e configurações de retenção do banco;
-- agendamento de capturas automáticas de AFD e marcações.
+- agendamento de capturas automáticas de AFD e marcações;
+- geração e restauração de backups ZIP, com agendamento automático para administradores.
 
 Consulte o [Manual de operação do ChronoSnap](./docs/manual-operacao.pdf) para
 orientações de uso das funções disponíveis no aplicativo.

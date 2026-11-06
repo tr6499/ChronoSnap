@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Backup - ChronoSnap{% endblock %}
+{% block topbar_title %}Backup{% endblock %}
+
+{% block head %}
+<style>
+    .backup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .backup-card {
+        min-width: 0;
+        margin: 0;
+    }
+
+    .backup-card h2 {
+        margin: 0 0 8px;
+        color: #0d4f82;
+        font-size: 18px;
+    }
+
+    .backup-card p {
+        color: #526b7f;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .backup-path {
+        padding: 10px;
+        overflow-wrap: anywhere;
+        border: 1px solid #dfe7f1;
+        border-radius: 5px;
+        background: #f8fbff;
+        color: #526b7f;
+        font-family: Consolas, monospace;
+        font-size: 12px;
+    }
+
+    .backup-warning {
+        padding: 12px;
+        border-left: 4px solid #d69e2e;
+        background: #fffbea;
+        color: #744210 !important;
+    }
+
+    .backup-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 16px;
+        color: #1e293b;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .backup-switch input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .backup-switch-track {
+        position: relative;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 22px;
+        border-radius: 999px;
+        background: #d1d5db;
+        transition: background 0.16s ease;
+    }
+
+    .backup-switch-track::after {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        content: "";
+        transition: transform 0.16s ease;
+    }
+
+    .backup-switch input:checked + .backup-switch-track {
+        background: #006fff;
+    }
+
+    .backup-switch input:checked + .backup-switch-track::after {
+        transform: translateX(18px);
+    }
+
+    .backup-switch input:focus-visible + .backup-switch-track {
+        outline: 2px solid rgba(0, 111, 255, 0.4);
+        outline-offset: 2px;
+    }
+
+    .backup-schedule-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .backup-schedule-fields[hidden] {
+        display: none;
+    }
+
+    .backup-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .backup-table-wrap {
+        overflow-x: auto;
+    }
+
+    .backup-table td {
+        vertical-align: middle;
+    }
+
+    .backup-confirm {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 14px;
+        color: #744210;
+        font-size: 13px;
+    }
+
+    .backup-confirm input {
+        width: auto;
+        flex: 0 0 auto;
+        margin: 2px 0 0;
+    }
+
+    .backup-empty {
+        color: #718096;
+    }
+
+    @media (max-width: 760px) {
+        .backup-grid,
+        .backup-schedule-fields {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Backup</h1>
+<p class="page-description">Gere, restaure e programe cópias de segurança do ChronoSnap.</p>
+
+{% if erro %}
+<div class="alert alert-error">{{ erro }}</div>
+{% endif %}
+{% if sucesso %}
+<div class="alert alert-success">{{ sucesso }}</div>
+{% endif %}
+
+<div class="backup-grid">
+    <section class="card backup-card">
+        <h2>Gerar backup</h2>
+        <p>Cria um arquivo ZIP com o banco de dados atual e os arquivos de dados e configuração.</p>
+        <p class="backup-path">{{ backup_dir }}</p>
+        <p class="backup-warning">
+            O ZIP pode conter configurações e credenciais. Guarde-o em local seguro e não o compartilhe publicamente.
+        </p>
+        <form method="post" action="/backup/gerar">
+            <button type="submit" class="button-success">Gerar backup agora</button>
+        </form>
+    </section>
+
+    <section class="card backup-card">
+        <h2>Restaurar backup</h2>
+        <p>A restauração substitui os dados atuais do banco. A configuração da conexão do banco e o agendamento de backup deste computador serão preservados.</p>
+        <form method="post" action="/backup/restaurar" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="arquivo-backup">Arquivo de backup (.zip)</label>
+                <input id="arquivo-backup" name="arquivo" type="file" accept=".zip,application/zip" required>
+            </div>
+            <label class="backup-confirm">
+                <input type="checkbox" name="confirmar" value="true" required>
+                Confirmo que desejo substituir os dados atuais pelo backup.
+            </label>
+            <div class="backup-actions">
+                <button type="submit" class="button-danger">Restaurar backup</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card backup-card">
+        <h2>Backup automático</h2>
+        <p>A geração automática começa somente quando o switch for ativado.</p>
+        <form method="post" action="/backup/configuracao">
+            <label class="backup-switch" for="backup-enabled">
+                <span>Ativar backup automático</span>
+                <input
+                    id="backup-enabled"
+                    name="enabled"
+                    type="checkbox"
+                    value="true"
+                    role="switch"
+                    {% if configuracao.enabled %}checked{% endif %}
+                >
+                <span class="backup-switch-track" aria-hidden="true"></span>
+            </label>
+            <div class="backup-schedule-fields" id="backup-schedule-fields">
+                <div class="form-group">
+                    <label for="backup-period">Periodicidade</label>
+                    <select id="backup-period" name="period">
+                        <option value="daily" {% if configuracao.period == "daily" %}selected{% endif %}>Diário</option>
+                        <option value="weekly" {% if configuracao.period == "weekly" %}selected{% endif %}>Semanal</option>
+                    </select>
+                </div>
+                <div class="form-group" id="backup-weekday-group">
+                    <label for="backup-weekday">Dia da semana</label>
+                    <select id="backup-weekday" name="weekday">
+                        {% for numero, dia in dias_semana %}
+                        <option value="{{ numero }}" {% if configuracao.weekday == numero %}selected{% endif %}>{{ dia }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="backup-time">Horário</label>
+                    <input id="backup-time" name="horario" type="time" value="{{ configuracao.time }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="backup-retention">Manter backups</label>
+                    <select id="backup-retention" name="retention">
+                        <option value="7" {% if configuracao.retention == 7 %}selected{% endif %}>Últimos 7</option>
+                        <option value="30" {% if configuracao.retention == 30 %}selected{% endif %}>Últimos 30</option>
+                        <option value="90" {% if configuracao.retention == 90 %}selected{% endif %}>Últimos 90</option>
+                        <option value="unlimited" {% if configuracao.retention == "unlimited" %}selected{% endif %}>Sem limite</option>
+                    </select>
+                </div>
+            </div>
+            <p class="backup-empty">O backup automático está desligado por padrão. O padrão inicial, quando ativado, é semanal aos domingos às 02:00, mantendo até 30 arquivos.</p>
+            <div class="backup-actions">
+                <button type="submit" class="button-success">Salvar configuração</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card backup-card">
+        <h2>Backups disponíveis</h2>
+        {% if backups %}
+        <div class="backup-table-wrap">
+            <table class="backup-table">
+                <thead>
+                    <tr><th>Arquivo</th><th>Data</th><th>Tamanho</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr>
+                        <td>{{ backup.nome }}</td>
+                        <td>{{ backup.criado_em.strftime("%d/%m/%Y %H:%M") }}</td>
+                        <td>{{ "%.1f"|format(backup.tamanho / 1048576) }} MB</td>
+                        <td><a class="button button-secondary" href="/backup/baixar/{{ backup.nome }}">Baixar</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="backup-empty">Nenhum backup gerado.</p>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+const backupPeriod = document.getElementById('backup-period');
+const backupWeekdayGroup = document.getElementById('backup-weekday-group');
+const atualizarDiaBackup = () => {
+    backupWeekdayGroup.hidden = backupPeriod.value !== 'weekly';
+};
+backupPeriod.addEventListener('change', atualizarDiaBackup);
+atualizarDiaBackup();
+</script>
+{% endblock %}

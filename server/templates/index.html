@@ -61,6 +61,33 @@ Dashboard
         margin: 0 0 14px;
     }
 
+    .database-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .database-summary-item {
+        padding: 14px;
+        border: 1px solid #dfe7f1;
+        border-radius: 6px;
+        background: #f8fbff;
+    }
+
+    .database-summary-item span {
+        display: block;
+        color: #718096;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    .database-summary-item strong {
+        display: block;
+        margin-top: 6px;
+        color: #102a43;
+        font-size: 20px;
+    }
+
     .dashboard-visuals {
         display: grid;
         grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr);
@@ -475,6 +502,10 @@ Dashboard
         .dashboard-stat {
             margin-bottom: 0;
         }
+
+        .database-summary {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
@@ -589,6 +620,20 @@ Dashboard
         <span class="health-note">Servidor: {{ servidor.nome }}</span>
     </section>
 
+</div>
+
+<div class="card dashboard-section">
+    <h2>Banco de dados</h2>
+    <div class="database-summary">
+        <div class="database-summary-item">
+            <span>Marcações armazenadas</span>
+            <strong>{{ "{:,}".format(marcacoes_total).replace(",", ".") }}</strong>
+        </div>
+        <div class="database-summary-item">
+            <span>{% if banco.backend == "sqlite" %}Espaço ocupado pelo arquivo{% else %}Espaço ocupado no servidor{% endif %}</span>
+            <strong>{% if banco_tamanho is none %}Não disponível{% elif banco.backend == "sqlite" %}{{ "%.1f"|format(banco_tamanho / 1024) }} KB{% else %}{{ "%.1f"|format(banco_tamanho / 1048576) }} MB{% endif %}</strong>
+        </div>
+    </div>
 </div>
 
 <div class="card dashboard-section">

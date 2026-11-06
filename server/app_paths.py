@@ -16,5 +16,9 @@ else:
     LOGS_DIR = APP_DIR / "logs"
     DOWNLOADS_DIR = APP_DIR / "downloads"
 
+INSTALL_DIR = Path(
+    os.environ.get("CHRONOSNAP_INSTALL_DIR", str(DATA_DIR if _data else APP_DIR.parent))
+)
+
 for _d in (DATA_DIR, DB_DIR, LOGS_DIR, DOWNLOADS_DIR):
     _d.mkdir(parents=True, exist_ok=True)

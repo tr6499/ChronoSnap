@@ -4,8 +4,10 @@ import os
 import sys
 from pathlib import Path
 
-if "CHRONOSNAP_DATA" not in os.environ and "__compiled__" in globals():
-    os.environ["CHRONOSNAP_DATA"] = str(Path(sys.argv[0]).resolve().parent.parent / "data")
+if "__compiled__" in globals():
+    install_dir = Path(sys.argv[0]).resolve().parent.parent
+    os.environ.setdefault("CHRONOSNAP_INSTALL_DIR", str(install_dir))
+    os.environ.setdefault("CHRONOSNAP_DATA", str(install_dir / "data"))
 
 import app_paths  # noqa: E402
 

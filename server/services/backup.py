@@ -15,7 +15,7 @@ from pathlib import Path, PurePosixPath
 
 from sqlalchemy import inspect, select, text
 
-from app_paths import DATA_DIR
+from app_paths import DATA_DIR, INSTALL_DIR
 from database import DATABASE_CONFIG, DATABASE_CONFIG_FILE, Base, engine
 import models  # noqa: F401  registra as tabelas em Base.metadata
 import models_usuarios  # noqa: F401
@@ -23,7 +23,7 @@ from services.atualizacoes import VERSAO_ATUAL
 from services.banco_dados import _reiniciar_sequencia
 
 
-BACKUP_DIR = DATA_DIR / "backups"
+BACKUP_DIR = INSTALL_DIR / "backups"
 BACKUP_SETTINGS_FILE = DATA_DIR / "backup_settings.json"
 BACKUP_PATTERN = re.compile(r"chronosnap_backup_\d{8}_\d{6}_\d{6}\.zip")
 FORMAT_VERSION = 1

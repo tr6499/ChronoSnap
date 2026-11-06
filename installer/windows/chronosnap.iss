@@ -44,6 +44,8 @@ Name: "desktopicon"; Description: "Criar atalho do Manager na área de trabalho"
 [Dirs]
 ; Dados locais; gravável por usuários comuns e preservado em atualizações e na desinstalação.
 Name: "{app}\data"; Permissions: users-modify
+; Backups ficam na raiz da instalação; usuários comuns precisam poder criá-los e restaurá-los.
+Name: "{app}\backups"; Permissions: users-modify; Flags: uninsneveruninstall
 
 [Files]
 Source: "{#StageDir}\server\*"; DestDir: "{app}\server"; Flags: recursesubdirs createallsubdirs ignoreversion

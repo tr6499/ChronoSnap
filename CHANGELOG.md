@@ -2,6 +2,21 @@
 
 ## 1.0.11 — 05/11/2026
 
+### Adicionado
+
+- Backup administrativo em ZIP, com opções para gerar e restaurar cópias,
+  configurar agendamento automático (desativado por padrão) e definir retenção.
+- Cartão de métricas na dashboard com a quantidade de marcações e o espaço
+  ocupado pelo banco de dados.
+- Opção para selecionar todas as empresas no cadastro de funcionário.
+
+### Melhorado
+
+- Backups armazenados na pasta `backups` na raiz da instalação, com acesso de
+  gravação para usuários do aplicativo e preservação ao desinstalar.
+- Erros de validação no cadastro de empresas agora retornam ao formulário com
+  uma mensagem clara, preservando os dados preenchidos.
+
 ### Corrigido
 
 - Cabeçalhos de tabelas padronizados em todas as páginas: fundo branco, texto
